@@ -1,14 +1,12 @@
+#include <ranges>
 #include <span>
 
-// T is a floating point type
-// AccFunc is a function object that returns a span of T
-template <typename T, typename AccFunc>
-void euler_step(std::span<T> pos, std::span<T> vel, T dt, AccFunc acc_func)
+template <typename StateElement, typename StepType, typename DerivFunc>
+auto euler_step(std::span<StateElement> state, StepType dt, DerivFunc f)
 {
-    auto const& acc = acc_func();
-    for (std::size_t i = 0; i < pos.size(); ++i)
+    auto const& derivative = f();
+    for (auto&& [x, dx_dt] : std::views::zip(state, derivative))
     {
-        pos[i] += vel[i] * dt;
-        vel[i] += acc[i] * dt;
+        x += dx_dt * dt;
     }
 }

@@ -1,3 +1,4 @@
+include_directories(${CMAKE_SOURCE_DIR}/src)
 add_executable(ode_test ode_test.cpp)
-target_link_libraries(ode_test GTest::GTest GTest::Main)
+target_link_libraries(ode_test GTest::GTest GTest::Main ode)
 add_test(NAME ode_test COMMAND ode_test)

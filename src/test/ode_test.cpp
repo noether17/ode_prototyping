@@ -15,7 +15,7 @@ TEST(EulerTest, EulerStepIncrementsOneDimensionalState)
     auto const dt = 0.1;
     auto const f = []() { return std::vector<double>{2.0}; };
 
-    euler_step(std::span{state}, dt, f);
+    euler_step(state, dt, f);
 
     EXPECT_DOUBLE_EQ(state[0], 1.2);
 }
@@ -26,7 +26,7 @@ TEST(EulerTest, EulerStepIncrementsTwoDimensionalState)
     auto const dt = 0.1;
     auto const f = []() { return std::vector<double>{2.0, 3.0}; };
 
-    euler_step(std::span{state}, dt, f);
+    euler_step(state, dt, f);
 
     EXPECT_DOUBLE_EQ(state[0], 1.2);
     EXPECT_DOUBLE_EQ(state[1], 2.3);

@@ -1,14 +1,17 @@
 #include <concepts>
 #include <ranges>
 
+namespace rng = std::ranges;
+
 template <typename Callable, typename StateType>
 concept DerivativeFunc = std::invocable<Callable> &&
-    std::ranges::random_access_range<std::invoke_result_t<Callable>> &&
-    std::ranges::random_access_range<StateType> &&
-    std::convertible_to<std::invoke_result_t<Callable>, StateType>;
+    rng::random_access_range<std::invoke_result_t<Callable>> &&
+    rng::random_access_range<StateType> &&
+    std::same_as<std::ranges::range_value_t<std::invoke_result_t<Callable>>,
+        std::ranges::range_value_t<StateType>>;
 
-template <std::ranges::random_access_range StateType, std::floating_point StepType, DerivativeFunc<StateType> F>
-auto euler_step(StateType& state, StepType dt, F f)
+auto euler_step(rng::random_access_range auto& state, std::floating_point auto dt, auto f)
+requires DerivativeFunc<decltype(f), decltype(state)>
 {
     auto const& derivative = f();
     for (auto&& [x, dx_dt] : std::views::zip(state, derivative))

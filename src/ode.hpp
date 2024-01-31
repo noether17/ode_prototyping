@@ -10,7 +10,7 @@ concept DerivativeFunc = std::invocable<Callable> &&
     std::same_as<std::ranges::range_value_t<std::invoke_result_t<Callable>>,
         std::ranges::range_value_t<StateType>>;
 
-auto euler_step(rng::random_access_range auto& state, std::floating_point auto dt, auto f)
+auto euler_step(rng::random_access_range auto& state, auto f, std::floating_point auto dt)
 requires DerivativeFunc<decltype(f), decltype(state)>
 {
     auto const& derivative = f();

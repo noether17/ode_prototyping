@@ -20,7 +20,7 @@ auto euler_step_impl(std::floating_point auto dt, auto&& state_tuple, std::index
             x += dx_dt*dt;
         }
     };
-    (increment(std::get<I>(state_tuple), std::get<I + 1>(state_tuple)), ...);
+    (..., increment(std::get<I>(state_tuple), std::get<I + 1>(state_tuple)));
 }
 
 auto euler_step(auto dt, auto&&... states)

@@ -15,7 +15,7 @@ TEST(EulerTest, EulerStepImplWorksWithFirstOrderEquation)
     auto const derivative = std::vector<double>{2.0, 3.0};
     auto const dt = 0.1;
 
-    euler_step_impl(std::forward_as_tuple(state, derivative), dt, std::make_index_sequence<1>{});
+    euler_step_impl(dt, std::forward_as_tuple(state, derivative), std::make_index_sequence<1>{});
 
     EXPECT_DOUBLE_EQ(state[0], 1.2);
     EXPECT_DOUBLE_EQ(state[1], 2.3);
@@ -29,7 +29,7 @@ TEST(EulerTest, EulerStepImplWorksWithSecondOrderEquation)
     auto const acc = std::vector<double>{7.0, 8.0, 9.0};
     auto const dt = 0.1;
 
-    euler_step_impl(std::forward_as_tuple(pos, vel, acc), dt, std::make_index_sequence<2>{});
+    euler_step_impl(dt, std::forward_as_tuple(pos, vel, acc), std::make_index_sequence<2>{});
 
     EXPECT_DOUBLE_EQ(pos[0], 1.4);
     EXPECT_DOUBLE_EQ(pos[1], 2.5);
@@ -45,7 +45,7 @@ TEST(EulerTest, EulerStepIncrementsOneDimensionalState)
     auto const dt = 0.1;
     auto const f = []() { return std::vector<double>{2.0}; };
 
-    euler_step(dt, f, state);
+    euler_step(dt, state, f());
 
     EXPECT_DOUBLE_EQ(state[0], 1.2);
 }
@@ -56,7 +56,7 @@ TEST(EulerTest, EulerStepIncrementsTwoDimensionalState)
     auto const dt = 0.1;
     auto const f = []() { return std::vector<double>{2.0, 3.0}; };
 
-    euler_step(dt, f, state);
+    euler_step(dt, state, f());
 
     EXPECT_DOUBLE_EQ(state[0], 1.2);
     EXPECT_DOUBLE_EQ(state[1], 2.3);
@@ -69,7 +69,7 @@ TEST(EulerTest, EulerStepIncrementsSecondOrderEquation)
     auto const dt = 0.1;
     auto const f = []() { return std::vector<double>{7.0, 8.0, 9.0}; };
 
-    euler_step(dt, f, pos, vel);
+    euler_step(dt, pos, vel, f());
 
     EXPECT_DOUBLE_EQ(pos[0], 1.4);
     EXPECT_DOUBLE_EQ(pos[1], 2.5);

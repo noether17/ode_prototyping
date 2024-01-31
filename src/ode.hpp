@@ -11,7 +11,7 @@ concept DerivativeFunc = std::invocable<Callable> &&
         std::ranges::range_value_t<StateType>>;
 
 template <std::size_t... I>
-auto euler_step_impl(auto&& state_tuple, std::floating_point auto dt, std::index_sequence<I...>)
+auto euler_step_impl(std::floating_point auto dt, auto&& state_tuple, std::index_sequence<I...>)
 {
     auto increment = [dt](auto&& state, auto&& derivative)
     {
@@ -23,7 +23,7 @@ auto euler_step_impl(auto&& state_tuple, std::floating_point auto dt, std::index
     (increment(std::get<I>(state_tuple), std::get<I + 1>(state_tuple)), ...);
 }
 
-auto euler_step(auto dt, auto&& f, auto&... states)
+auto euler_step(auto dt, auto&&... states)
 {
-    euler_step_impl(std::forward_as_tuple(states..., f()), dt, std::make_index_sequence<sizeof...(states)>{});
+    euler_step_impl(dt, std::forward_as_tuple(states...), std::make_index_sequence<sizeof...(states) - 1>{});
 }

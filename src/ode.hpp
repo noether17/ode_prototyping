@@ -23,7 +23,9 @@ auto euler_step_impl(std::floating_point auto dt, auto&& state_tuple, std::index
     (..., increment(std::get<I>(state_tuple), std::get<I + 1>(state_tuple)));
 }
 
-auto euler_step(std::floating_point auto dt, rng::random_access_range auto&&... states)
+auto euler_step(std::floating_point auto dt, rng::random_access_range auto& state,
+    rng::random_access_range auto&&... derivatives)
 {
-    euler_step_impl(dt, std::forward_as_tuple(states...), std::make_index_sequence<sizeof...(states) - 1>{});
+    euler_step_impl(dt, std::forward_as_tuple(state, derivatives...),
+        std::make_index_sequence<sizeof...(derivatives)>{});
 }

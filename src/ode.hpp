@@ -2,6 +2,7 @@
 #include <ranges>
 
 namespace rng = std::ranges;
+namespace vws = std::views;
 
 //template <typename Callable, typename StateType>
 //concept DerivativeFunc = std::invocable<Callable> &&
@@ -15,7 +16,7 @@ auto euler_step_impl(std::floating_point auto dt, auto&& state_tuple, std::index
 {
     auto increment = [dt](auto&& state, auto&& derivative)
     {
-        for (auto&& [x, dx_dt] : std::views::zip(state, derivative))
+        for (auto&& [x, dx_dt] : vws::zip(state, derivative))
         {
             x += dx_dt*dt;
         }

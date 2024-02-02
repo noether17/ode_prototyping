@@ -23,3 +23,12 @@ auto euler_step(std::floating_point auto dt, rng::random_access_range auto& stat
     euler_step_impl(dt, std::forward_as_tuple(state, derivatives...),
         std::make_index_sequence<sizeof...(derivatives)>{});
 }
+
+auto integrate_euler_fixed(std::floating_point auto ti, std::floating_point auto tf,
+    std::floating_point auto dt, auto&& f, rng::random_access_range auto&&... states)
+{
+    for (auto t = ti; t < tf; t += dt)
+    {
+        euler_step(dt, states..., f());
+    }
+}

@@ -1,5 +1,6 @@
 #include "ode.hpp"
 
+#include <cmath>
 #include <vector>
 
 #include <gtest/gtest.h>
@@ -77,4 +78,19 @@ TEST(EulerTest, EulerStepIncrementsSecondOrderEquation)
     EXPECT_DOUBLE_EQ(vel[0], 4.7);
     EXPECT_DOUBLE_EQ(vel[1], 5.8);
     EXPECT_DOUBLE_EQ(vel[2], 6.9);
+}
+
+TEST(EulerTest, IntegrateEulerFixedUnitCircle)
+{
+    auto constexpr ti = 0.0;
+    auto constexpr tf = 2.0*M_PI;
+    auto constexpr dt = (tf - ti) / 1e3;
+    auto pos = std::array<double, 2>{1.0, 0.0};
+    auto vel = std::array<double, 2>{0.0, 1.0};
+    auto const acc = [&pos]() { return std::array<double, 2>{-pos[0], -pos[1]}; };
+
+    integrate_euler_fixed(ti, tf, dt, acc, pos, vel);
+
+    EXPECT_DOUBLE_EQ(pos[0], 1.0199354441667383e+00); // From Python prototype
+    EXPECT_DOUBLE_EQ(pos[1], 6.3241103741151529e-03);
 }

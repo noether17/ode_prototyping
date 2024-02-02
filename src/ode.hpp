@@ -4,13 +4,6 @@
 namespace rng = std::ranges;
 namespace vws = std::views;
 
-//template <typename Callable, typename StateType>
-//concept DerivativeFunc = std::invocable<Callable> &&
-//    rng::random_access_range<std::invoke_result_t<Callable>> &&
-//    rng::random_access_range<StateType> &&
-//    std::same_as<std::ranges::range_value_t<std::invoke_result_t<Callable>>,
-//        std::ranges::range_value_t<StateType>>;
-
 template <std::size_t... I>
 auto euler_step_impl(std::floating_point auto dt, auto&& state_tuple, std::index_sequence<I...>)
 {

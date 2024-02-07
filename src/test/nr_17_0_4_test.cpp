@@ -30,5 +30,10 @@ TEST(ODEIntegratorTest, VanDerPolTest)
     RHSVan d(1.0e-3);
     ODEIntegrator<StepperDopr5<RHSVan>> ode(ystart, x1, x2, atol, rtol, h1,
         hmin, out, d);
+
     ode.integrate();
+
+    // Values take from initial run. Testing for consistency.
+    EXPECT_DOUBLE_EQ( 1.7644320190605265,  ystart[0]);
+    EXPECT_DOUBLE_EQ(-0.83427005245677999, ystart[1]);
 }

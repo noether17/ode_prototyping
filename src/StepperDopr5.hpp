@@ -1,5 +1,6 @@
 #pragma once
 
+#include <cmath>
 #include <vector>
 
 #include "StepperBase.hpp"
@@ -147,5 +148,94 @@ void StepperDopr5<D>::dy(const double h, D& derivs)
     for (i = 0; i < n; ++i)
     {
         yerr[i] = h*(e1*dydx[i] + e3*k3[i] + e4*k4[i] + e5*k5[i] + e6*k6[i] + e7*dydxnew[i]);
+    }
+}
+
+template <typename D>
+void StepperDopr5<D>::prepare_dense(const double h, D& derivs)
+{
+    std::vector<double> ytemp(n);
+    static const double d1 = -12715105075.0/11282082432.0;
+    static const double d3 = 87487479700.0/32700410799.0;
+    static const double d4 = -10690763975.0/1880347072.0;
+    static const double d5 = 701980252875.0/199316789632.0;
+    static const double d6 = -1453857185.0 / 822651844.0;
+    static const double d7 = 69997945.0 / 29380423.0;
+    for (int i = 0; i < n; ++i)
+    {
+        rcont1[i] = y[i];
+        double ydiff = yout[i] - y[i];
+        rcont2[i] = ydiff;
+        double bspl = h*dydx[i] - ydiff;
+        rcont3[i] = bspl;
+        rcont4[i] = ydiff - h*dxdynew[i] - bspl;
+        rcont5[i] = h*(d1*dydx[i] + d3*k3[i] + d4*k4[i] + d5*k5[i] + d6*k6[i] + d7*dydxnew[i]);
+    }
+}
+
+template <typename D>
+double StepperDopr5<D>::dense_out(const int i, const double x, const double h)
+{
+    double s = (x - xold)/h;
+    double s1 = 1.0 - s;
+    return rcont1[i] + s*(rcont2[i] + s1*(rcont3[i] + s*(rcont4[i] + s1*rcont5[i])));
+}
+
+template <typename D>
+double StepperDopr5<D>::error()
+{
+    double err = 0.0;
+    for (int i = 0; i < n; ++i)
+    {
+        double sk = atol + rtol*std::max(fabs(y[i]), fabs(yout[i]));
+        err += pow(yerr[i]/sk, 2);
+    }
+    return sqrt(err/n);
+}
+
+template <typename D>
+StepperDopr5<D>::Controller::Controller()
+    : reject(false), errold(1.0e-4)
+{}
+
+template <typename D>
+StepperDopr5<D>::Controller::success(const double err, double& h)
+{
+    static const double beta = 0.0;
+    static const double alpha = 0.2 - beta*0.75;
+    static const double safe = 0.9;
+    static const double minscale = 0.2;
+    static const double maxscale = 10.0;
+    double scale;
+    if (err <= 1.0)
+    {
+        if (err == 0.0)
+        {
+            scale = maxscale;
+        }
+        else
+        {
+            scale = safe*pow(err, -alpha)*pow(errold, beta);
+            if (scale < minscale) { scale = minscale; }
+            if (scale > maxscale) { scale = maxscale; }
+        }
+        if (reject)
+        {
+            hnext = h*min(scale, 1.0);
+        }
+        else
+        {
+            hnext = h*scale;
+        }
+        errold = max(err, 1.0e-4);
+        reject = false;
+        return true;
+    }
+    else
+    {
+        scale = max(safe*pow(err, -alpha), minscale);
+        h *= scale;
+        reject = true;
+        return false;
     }
 }

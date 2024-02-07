@@ -28,7 +28,11 @@ struct Output
     {
         nvar = neqn;
         if (kmax == -1) { return; }
-        ysave.resize(nvar, kmax);
+        ysave.resize(nvar);
+        for (auto& y : ysave)
+        {
+            y.resize(kmax);
+        }
         if (dense)
         {
             x1 = xlo;

@@ -168,7 +168,7 @@ void StepperDopr5<D>::prepare_dense(const double h, D& derivs)
         rcont2[i] = ydiff;
         double bspl = h*dydx[i] - ydiff;
         rcont3[i] = bspl;
-        rcont4[i] = ydiff - h*dxdynew[i] - bspl;
+        rcont4[i] = ydiff - h*dydxnew[i] - bspl;
         rcont5[i] = h*(d1*dydx[i] + d3*k3[i] + d4*k4[i] + d5*k5[i] + d6*k6[i] + d7*dydxnew[i]);
     }
 }
@@ -199,7 +199,7 @@ StepperDopr5<D>::Controller::Controller()
 {}
 
 template <typename D>
-StepperDopr5<D>::Controller::success(const double err, double& h)
+bool StepperDopr5<D>::Controller::success(const double err, double& h)
 {
     static const double beta = 0.0;
     static const double alpha = 0.2 - beta*0.75;
@@ -221,19 +221,19 @@ StepperDopr5<D>::Controller::success(const double err, double& h)
         }
         if (reject)
         {
-            hnext = h*min(scale, 1.0);
+            hnext = h*std::min(scale, 1.0);
         }
         else
         {
             hnext = h*scale;
         }
-        errold = max(err, 1.0e-4);
+        errold = std::max(err, 1.0e-4);
         reject = false;
         return true;
     }
     else
     {
-        scale = max(safe*pow(err, -alpha), minscale);
+        scale = std::max(safe*pow(err, -alpha), minscale);
         h *= scale;
         reject = true;
         return false;

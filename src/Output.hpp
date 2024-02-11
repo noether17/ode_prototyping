@@ -23,7 +23,7 @@ class Output {
 
   /* Constructor provides dense output at nsave equally spaced intervals. If
    * nsave <= 0, output is saved only at the actual integration steps. */
-  Output(int nsavee) : suppress_output{false}, nsave(nsavee), xsave{} {
+  explicit Output(int nsavee) : suppress_output{false}, nsave(nsavee), xsave{} {
     dense = nsave > 0;
     xsave.reserve(init_cap);
   }

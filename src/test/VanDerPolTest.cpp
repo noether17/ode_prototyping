@@ -34,19 +34,19 @@ TEST_F(VanDerPolTest, ActualIntegrationStepsAreConsistent) {
 
   ode.integrate();
 
-  EXPECT_EQ(1177, out.count);
+  EXPECT_EQ(1177, out.n_steps());
 
-  EXPECT_DOUBLE_EQ(0.0, out.xsave[0]);
-  EXPECT_DOUBLE_EQ(0.98436957642198519, out.xsave[out.count / 2]);
-  EXPECT_DOUBLE_EQ(2.0, out.xsave[out.count - 1]);
+  EXPECT_DOUBLE_EQ(0.0, out.x_values()[0]);
+  EXPECT_DOUBLE_EQ(0.98436957642198519, out.x_values()[out.n_steps() / 2]);
+  EXPECT_DOUBLE_EQ(2.0, out.x_values()[out.n_steps() - 1]);
 
-  EXPECT_DOUBLE_EQ(2.0, out.ysave[0][0]);
-  EXPECT_DOUBLE_EQ(-1.9010597230846302, out.ysave[0][out.count / 2]);
-  EXPECT_DOUBLE_EQ(1.7644320190605265, out.ysave[0][out.count - 1]);
+  EXPECT_DOUBLE_EQ(2.0, out.y_values()[0][0]);
+  EXPECT_DOUBLE_EQ(-1.9010597230846302, out.y_values()[0][out.n_steps() / 2]);
+  EXPECT_DOUBLE_EQ(1.7644320190605265, out.y_values()[0][out.n_steps() - 1]);
 
-  EXPECT_DOUBLE_EQ(0.0, out.ysave[1][0]);
-  EXPECT_DOUBLE_EQ(0.72447110662737324, out.ysave[1][out.count / 2]);
-  EXPECT_DOUBLE_EQ(-0.83427005245677999, out.ysave[1][out.count - 1]);
+  EXPECT_DOUBLE_EQ(0.0, out.y_values()[1][0]);
+  EXPECT_DOUBLE_EQ(0.72447110662737324, out.y_values()[1][out.n_steps() / 2]);
+  EXPECT_DOUBLE_EQ(-0.83427005245677999, out.y_values()[1][out.n_steps() - 1]);
 
   EXPECT_DOUBLE_EQ(1.7644320190605265, ystart[0]);
   EXPECT_DOUBLE_EQ(-0.83427005245677999, ystart[1]);
@@ -126,13 +126,15 @@ TEST_F(VanDerPolTest, DenseOutputMatchesPython) {
   constexpr auto comp_tol =
       1.0e-9;  // Stricter accuracy requirement for comparison to Python
                // function that should be performing similar calculation.
-  for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.xsave)) {
+  for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.x_values())) {
     EXPECT_DOUBLE_EQ(ref_x, x);  // Independent variable should compare equal.
   }
-  for (const auto& [ref_y0, y0] : vws::zip(reference_y0_values, out.ysave[0])) {
+  for (const auto& [ref_y0, y0] :
+       vws::zip(reference_y0_values, out.y_values()[0])) {
     EXPECT_NEAR(ref_y0, y0, comp_tol);
   }
-  for (const auto& [ref_y1, y1] : vws::zip(reference_y1_values, out.ysave[1])) {
+  for (const auto& [ref_y1, y1] :
+       vws::zip(reference_y1_values, out.y_values()[1])) {
     EXPECT_NEAR(ref_y1, y1, comp_tol);
   }
   EXPECT_NEAR(1.7644320186384204, ystart[0], comp_tol);
@@ -210,13 +212,15 @@ TEST_F(VanDerPolTest, DenseOutputIsConsistent) {
                                                   -0.71620744619303756,
                                                   -0.7682889892922099,
                                                   -0.83427005245677999};
-  for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.xsave)) {
+  for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.x_values())) {
     EXPECT_DOUBLE_EQ(ref_x, x);
   }
-  for (const auto& [ref_y0, y0] : vws::zip(reference_y0_values, out.ysave[0])) {
+  for (const auto& [ref_y0, y0] :
+       vws::zip(reference_y0_values, out.y_values()[0])) {
     EXPECT_DOUBLE_EQ(ref_y0, y0);
   }
-  for (const auto& [ref_y1, y1] : vws::zip(reference_y1_values, out.ysave[1])) {
+  for (const auto& [ref_y1, y1] :
+       vws::zip(reference_y1_values, out.y_values()[1])) {
     EXPECT_DOUBLE_EQ(ref_y1, y1);
   }
   EXPECT_DOUBLE_EQ(1.7644320190605265, ystart[0]);

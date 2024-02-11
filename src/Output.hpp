@@ -4,12 +4,13 @@
 #include <vector>
 
 /* Structure for output from ODE solver such as ODEIntegrator. */
-struct Output {
+class Output {
   int kmax;  // Current capacity of storage arrays.
   int nvar;
   int nsave;   // Number of intervals to save at for dense output.
   bool dense;  // true if dense output requested.
-  int count;   // Number of values actually saved.
+  bool suppress_output;
+  int count;  // Number of values actually saved.
   double x1;
   double x2;
   double xout;
@@ -18,12 +19,18 @@ struct Output {
   std::vector<std::vector<double>>
       ysave;  // and the matrix ysave[0...nvar-1][0...count-1].
 
+ public:
   /* Default constructor gives no output. */
-  Output() : kmax(-1), dense(false), count(0) {}
+  Output() : kmax(-1), suppress_output{true}, dense(false), count(0) {}
 
   /* Constructor provides dense output at nsave equally spaced intervals. If
    * nsave <= 0, output is saved only at the actual integration steps. */
-  Output(int nsavee) : kmax(500), nsave(nsavee), count(0), xsave(kmax) {
+  Output(int nsavee)
+      : kmax(500),
+        suppress_output{false},
+        nsave(nsavee),
+        count(0),
+        xsave(kmax) {
     dense = nsave > 0;
   }
 
@@ -116,4 +123,19 @@ struct Output {
       }
     }
   }
+
+  /* Returns whether output is suppressed. */
+  auto output_suppressed() const { return suppress_output; }
+
+  /* Returns whether dense output is generated. */
+  auto is_dense() const { return dense; }
+
+  /* Returns the number of steps taken. */
+  auto n_steps() const { return count; }
+
+  /* Returns the saved independent variable values. */
+  auto const& x_values() const { return xsave; }
+
+  /* Returns the saved dependent variable values. */
+  auto const& y_values() const { return ysave; }
 };

@@ -33,19 +33,19 @@ TEST_F(SimpleOscillatorTest, ActualIntegrationStepsAreConsistent) {
 
   ode.integrate();
 
-  EXPECT_EQ(49, out.count);
+  EXPECT_EQ(49, out.n_steps());
 
-  EXPECT_DOUBLE_EQ(0.0, out.xsave[0]);
-  EXPECT_DOUBLE_EQ(1.0004288786936162, out.xsave[out.count / 2]);
-  EXPECT_DOUBLE_EQ(2.0, out.xsave[out.count - 1]);
+  EXPECT_DOUBLE_EQ(0.0, out.x_values()[0]);
+  EXPECT_DOUBLE_EQ(1.0004288786936162, out.x_values()[out.n_steps() / 2]);
+  EXPECT_DOUBLE_EQ(2.0, out.x_values()[out.n_steps() - 1]);
 
-  EXPECT_DOUBLE_EQ(1.0, out.ysave[0][0]);
-  EXPECT_DOUBLE_EQ(0.53994136718681807, out.ysave[0][out.count / 2]);
-  EXPECT_DOUBLE_EQ(-0.41614683651997603, out.ysave[0][out.count - 1]);
+  EXPECT_DOUBLE_EQ(1.0, out.y_values()[0][0]);
+  EXPECT_DOUBLE_EQ(0.53994136718681807, out.y_values()[0][out.n_steps() / 2]);
+  EXPECT_DOUBLE_EQ(-0.41614683651997603, out.y_values()[0][out.n_steps() - 1]);
 
-  EXPECT_DOUBLE_EQ(0.0, out.ysave[1][0]);
-  EXPECT_DOUBLE_EQ(-0.84170263152593661, out.ysave[1][out.count / 2]);
-  EXPECT_DOUBLE_EQ(-0.90929742675256664, out.ysave[1][out.count - 1]);
+  EXPECT_DOUBLE_EQ(0.0, out.y_values()[1][0]);
+  EXPECT_DOUBLE_EQ(-0.84170263152593661, out.y_values()[1][out.n_steps() / 2]);
+  EXPECT_DOUBLE_EQ(-0.90929742675256664, out.y_values()[1][out.n_steps() - 1]);
 
   EXPECT_DOUBLE_EQ(-0.41614683651997603, ystart[0]);
   EXPECT_DOUBLE_EQ(-0.90929742675256664, ystart[1]);
@@ -125,13 +125,15 @@ TEST_F(SimpleOscillatorTest, DenseOutputMatchesPython) {
   constexpr auto comp_tol =
       1.0e-15;  // Stricter accuracy requirement for comparison to Python
                 // function that should be performing similar calculation.
-  for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.xsave)) {
+  for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.x_values())) {
     EXPECT_DOUBLE_EQ(ref_x, x);  // Independent variable should compare equal.
   }
-  for (const auto& [ref_y0, y0] : vws::zip(reference_y0_values, out.ysave[0])) {
+  for (const auto& [ref_y0, y0] :
+       vws::zip(reference_y0_values, out.y_values()[0])) {
     EXPECT_NEAR(ref_y0, y0, comp_tol);
   }
-  for (const auto& [ref_y1, y1] : vws::zip(reference_y1_values, out.ysave[1])) {
+  for (const auto& [ref_y1, y1] :
+       vws::zip(reference_y1_values, out.y_values()[1])) {
     EXPECT_NEAR(ref_y1, y1, comp_tol);
   }
   EXPECT_NEAR(-0.41614683651997625, ystart[0], comp_tol);
@@ -209,13 +211,15 @@ TEST_F(SimpleOscillatorTest, DenseOutputIsConsistent) {
                                                   -0.97384763080764247,
                                                   -0.94630008760441731,
                                                   -0.9092974267525671};
-  for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.xsave)) {
+  for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.x_values())) {
     EXPECT_DOUBLE_EQ(ref_x, x);  // independent variable should compare equal
   }
-  for (const auto& [ref_y0, y0] : vws::zip(reference_y0_values, out.ysave[0])) {
+  for (const auto& [ref_y0, y0] :
+       vws::zip(reference_y0_values, out.y_values()[0])) {
     EXPECT_DOUBLE_EQ(ref_y0, y0);
   }
-  for (const auto& [ref_y1, y1] : vws::zip(reference_y1_values, out.ysave[1])) {
+  for (const auto& [ref_y1, y1] :
+       vws::zip(reference_y1_values, out.y_values()[1])) {
     EXPECT_DOUBLE_EQ(ref_y1, y1);
   }
   EXPECT_DOUBLE_EQ(-0.41614683651997625, ystart[0]);

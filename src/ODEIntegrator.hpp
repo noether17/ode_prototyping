@@ -65,7 +65,7 @@ ODEIntegrator<Stepper>::ODEIntegrator(std::vector<double>& ystartt,
       x1(xx1),
       x2(xx2),
       hmin(hminn),
-      dense(outt.dense),
+      dense(outt.is_dense()),
       out(outt),
       derivs(derivss),
       stepper(y, dydx, x, atol, rtol, dense) {
@@ -100,8 +100,8 @@ void ODEIntegrator<Stepper>::integrate() {
     }
     if ((x - x2) * (x2 - x1) >= 0.0) {  // Are we done?
       ystart = y;                       // Update ystart.
-      if (out.kmax > 0 &&
-          fabs(out.xsave[out.count - 1] - x2) > 100.0 * fabs(x2) * eps) {
+      if (!out.output_suppressed() && fabs(out.x_values()[out.n_steps() - 1] -
+                                           x2) > 100.0 * fabs(x2) * eps) {
         out.save(x, y);  // Make sure last step gets saved.
       }
       return;  // Normal exit.

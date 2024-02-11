@@ -20,17 +20,18 @@ class Output {
       ysave;  // and the matrix ysave[0...nvar-1][0...count-1].
 
  public:
+  static constexpr auto init_cap = 500;  // Initial capacity of storage arrays.
   /* Default constructor gives no output. */
   Output() : kmax(-1), suppress_output{true}, dense(false), count(0) {}
 
   /* Constructor provides dense output at nsave equally spaced intervals. If
    * nsave <= 0, output is saved only at the actual integration steps. */
   Output(int nsavee)
-      : kmax(500),
+      : kmax(init_cap),
         suppress_output{false},
         nsave(nsavee),
         count(0),
-        xsave(kmax) {
+        xsave(init_cap) {
     dense = nsave > 0;
   }
 
@@ -39,12 +40,12 @@ class Output {
    * point. */
   void init(int neqn, double xlo, double xhi) {
     nvar = neqn;
-    if (kmax == -1) {
+    if (suppress_output) {
       return;
     }
     ysave.resize(nvar);
     for (auto& y : ysave) {
-      y.resize(kmax);
+      y.resize(init_cap);
     }
     if (dense) {
       x1 = xlo;

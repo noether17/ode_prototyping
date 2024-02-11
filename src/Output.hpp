@@ -9,24 +9,21 @@ class Output {
   int nsave;   // Number of intervals to save at for dense output.
   bool dense;  // true if dense output requested.
   bool suppress_output;
-  int count;  // Number of values actually saved.
   double x1;
   double x2;
   double xout;
   double dxout;
-  std::vector<double> xsave;  // Results stored in the vector xsave[0...count-1]
-  std::vector<std::vector<double>>
-      ysave;  // and the matrix ysave[0...nvar-1][0...count-1].
+  std::vector<double> xsave;               // Results stored in the vector xsave
+  std::vector<std::vector<double>> ysave;  // and the matrix ysave[0...nvar-1].
 
  public:
   static constexpr auto init_cap = 500;  // Initial capacity of storage arrays.
   /* Default constructor gives no output. */
-  Output() : suppress_output{true}, dense(false), count(0) {}
+  Output() : suppress_output{true}, dense(false) {}
 
   /* Constructor provides dense output at nsave equally spaced intervals. If
    * nsave <= 0, output is saved only at the actual integration steps. */
-  Output(int nsavee)
-      : suppress_output{false}, nsave(nsavee), count(0), xsave{} {
+  Output(int nsavee) : suppress_output{false}, nsave(nsavee), xsave{} {
     dense = nsave > 0;
     xsave.reserve(init_cap);
   }
@@ -61,7 +58,6 @@ class Output {
       ysave[i].push_back(stepper.dense_out(i, xout, h));
     }
     xsave.push_back(xout);
-    count++;
   }
 
   /* Saves values of current x and y. */
@@ -73,7 +69,6 @@ class Output {
       ysave[i].push_back(y[i]);
     }
     xsave.push_back(x);
-    count++;
   }
 
   /* Typically called by ODEIntegrator to produce dense output. Input variables
@@ -105,7 +100,7 @@ class Output {
   auto is_dense() const { return dense; }
 
   /* Returns the number of steps taken. */
-  auto n_steps() const { return count; }
+  auto n_steps() const { return xsave.size(); }
 
   /* Returns the saved independent variable values. */
   auto const& x_values() const { return xsave; }

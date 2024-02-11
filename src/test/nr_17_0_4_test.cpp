@@ -1,6 +1,7 @@
 #include "ODEIntegrator.hpp"
 #include "StepperDopr5.hpp"
 
+#include <array>
 #include <ranges>
 
 #include <gtest/gtest.h>
@@ -54,22 +55,22 @@ TEST(ODEIntegratorTest, VanDerPolTest)
         0.79157138516551, 0.868805850565066, 0.9688135932292358, 1.131427622338704,
         1.4281071047886105, 2.339031986623704, -0.6741234554050665, -0.7162074462396393,
         -0.7682889897929661, -0.8342700528712028 };
-    constexpr auto dep_var_tol = 1.0e-9; // stricter accuracy requirement for comparison to Python
-                                         // function that should be performing similar calculation
+    constexpr auto comp_tol = 1.0e-9; // stricter accuracy requirement for comparison to Python
+                                      // function that should be performing similar calculation
     for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.xsave))
     {
         EXPECT_DOUBLE_EQ(ref_x, x); // independent variable should compare equal
     }
     for (const auto& [ref_y0, y0] : vws::zip(reference_y0_values, out.ysave[0]))
     {
-        EXPECT_NEAR(ref_y0, y0, dep_var_tol);
+        EXPECT_NEAR(ref_y0, y0, comp_tol);
     }
     for (const auto& [ref_y1, y1] : vws::zip(reference_y1_values, out.ysave[1]))
     {
-        EXPECT_NEAR(ref_y1, y1, dep_var_tol);
+        EXPECT_NEAR(ref_y1, y1, comp_tol);
     }
-    EXPECT_NEAR(1.7644320186384204, ystart[0], dep_var_tol);
-    EXPECT_NEAR(-0.8342700528712028, ystart[1], dep_var_tol);
+    EXPECT_NEAR(1.7644320186384204, ystart[0], comp_tol);
+    EXPECT_NEAR(-0.8342700528712028, ystart[1], comp_tol);
 }
 
 struct RHSOsc
@@ -100,7 +101,37 @@ TEST(ODEIntegratorTest, SimpleOscillatorTest)
 
     ode.integrate();
 
-    // Values take from initial run. Testing for consistency.
-    EXPECT_NEAR(-0.4161468365, ystart[0], atol);
-    EXPECT_NEAR(-0.9092974268, ystart[1], atol);
+    // Reference values generated using scipy.integrate.solve_ivp
+    const auto reference_x_values = std::vector{ 0.0, 0.1, 0.2, 0.30000000000000004, 0.4, 0.5, 0.6,
+        0.7, 0.7999999999999999, 0.8999999999999999, 0.9999999999999999, 1.0999999999999999, 1.2,
+        1.3, 1.4000000000000001, 1.5000000000000002, 1.6000000000000003, 1.7000000000000004,
+        1.8000000000000005, 1.9000000000000006, 2.0 };
+    const auto reference_y0_values = std::vector{ 1.0, 0.995004165274381, 0.9800665778342761,
+        0.9553364891156162, 0.9210609939762899, 0.8775825618689674, 0.8253356148906368,
+        0.7648421872376728, 0.6967067092917164, 0.6216099682354068, 0.540302305843194,
+        0.4535961213685925, 0.3623577544196516, 0.2674988286034845, 0.1699671428597921,
+        0.07073720163741866, -0.029199522309753125, -0.1288444943201804, -0.22720209468205058,
+        -0.32328956688476085, -0.41614683651997625 };
+    const auto reference_y1_values = std::vector{ 0.0, -0.09983341667072441, -0.19866933081341775,
+        -0.29552020666230877, -0.38941834234718053, -0.47942553861305215, -0.5646424733839779,
+        -0.6442176872563701, -0.7173560909168458, -0.7833269096128057, -0.8414709847747586,
+        -0.8912073600416666, -0.9320390859400902, -0.9635581853673072, -0.9854497299379401,
+        -0.9974949865471938, -0.9995736029766767, -0.9916648103839413, -0.973847630807643,
+        -0.9463000876044179, -0.9092974267525671 };
+    constexpr auto comp_tol = 1.0e-15; // stricter accuracy requirement for comparison to Python
+                                       // function that should be performing similar calculation
+    for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.xsave))
+    {
+        EXPECT_DOUBLE_EQ(ref_x, x); // independent variable should compare equal
+    }
+    for (const auto& [ref_y0, y0] : vws::zip(reference_y0_values, out.ysave[0]))
+    {
+        EXPECT_NEAR(ref_y0, y0, comp_tol);
+    }
+    for (const auto& [ref_y1, y1] : vws::zip(reference_y1_values, out.ysave[1]))
+    {
+        EXPECT_NEAR(ref_y1, y1, comp_tol);
+    }
+    EXPECT_NEAR(-0.41614683651997625, ystart[0], comp_tol);
+    EXPECT_NEAR(-0.9092974267525671, ystart[1], comp_tol);
 }

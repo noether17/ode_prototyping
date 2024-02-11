@@ -27,6 +27,23 @@ class VanDerPolTest : public testing::Test {
   std::vector<double> ystart{2.0, 0.0};
 };
 
+TEST_F(VanDerPolTest, DefaultOutputCtorSuppressesOutput) {
+  auto out = Output{};  // Default constructor gives no output.
+  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_van)>>(
+      ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
+
+  ode.integrate();
+
+  EXPECT_TRUE(out.output_suppressed());
+  EXPECT_FALSE(out.is_dense());
+  EXPECT_EQ(0, out.n_steps());
+  EXPECT_TRUE(out.x_values().empty());
+  EXPECT_TRUE(out.y_values().empty());
+
+  EXPECT_DOUBLE_EQ(1.7644320190605265, ystart[0]);
+  EXPECT_DOUBLE_EQ(-0.83427005245677999, ystart[1]);
+}
+
 TEST_F(VanDerPolTest, ActualIntegrationStepsAreConsistent) {
   auto out = Output(-1);  // -1 for actual integration steps.
   auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_van)>>(

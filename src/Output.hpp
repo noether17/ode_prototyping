@@ -6,9 +6,9 @@
 /* Structure for output from ODE solver such as ODEIntegrator. */
 class Output {
   int nvar;
-  int nsave;   // Number of intervals to save at for dense output.
-  bool dense;  // true if dense output requested.
-  bool suppress_output;
+  int nsave;          // Number of intervals to save at for dense output.
+  bool dense{false};  // true if dense output requested.
+  bool suppress_output{true};  // Default is no output.
   double x1;
   double x2;
   double xout;
@@ -19,8 +19,9 @@ class Output {
 
  public:
   static constexpr auto init_cap = 500;  // Initial capacity of storage arrays.
+
   /* Default constructor gives no output. */
-  Output() : suppress_output{true}, dense(false) {}
+  Output() = default;
 
   /* Constructor provides dense output at nsave equally spaced intervals. If
    * nsave <= 0, output is saved only at the actual integration steps. */

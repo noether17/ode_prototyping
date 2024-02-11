@@ -13,8 +13,9 @@ class Output {
   double x2;
   double xout;
   double dxout;
-  std::vector<double> xsave;               // Results stored in the vector xsave
-  std::vector<std::vector<double>> ysave;  // and the matrix ysave[0...nvar-1].
+  std::vector<double> xsave{};  // Results stored in the vector xsave
+  std::vector<std::vector<double>>
+      ysave{};  // and the matrix ysave[0...nvar-1].
 
  public:
   static constexpr auto init_cap = 500;  // Initial capacity of storage arrays.
@@ -23,7 +24,7 @@ class Output {
 
   /* Constructor provides dense output at nsave equally spaced intervals. If
    * nsave <= 0, output is saved only at the actual integration steps. */
-  explicit Output(int nsavee) : suppress_output{false}, nsave(nsavee), xsave{} {
+  explicit Output(int nsavee) : suppress_output{false}, nsave(nsavee) {
     dense = nsave > 0;
     xsave.reserve(init_cap);
   }

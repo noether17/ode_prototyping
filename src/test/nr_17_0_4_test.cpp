@@ -18,6 +18,40 @@ struct RHSVan {
   }
 };
 
+TEST(VanDerPolTest, ActualIntegrationStepsAreConsistent) {
+  constexpr auto nvar = 2;
+  constexpr auto atol = 1.0e-3;
+  constexpr auto rtol = atol;
+  constexpr auto h1 = 0.01;
+  constexpr auto hmin = 0.0;
+  constexpr auto x1 = 0.0;
+  constexpr auto x2 = 2.0;
+  auto ystart = std::vector<double>{2.0, 0.0};
+  auto out = Output(-1);  // -1 for actual integration steps
+  auto d = RHSVan(1.0e-3);
+  auto ode = ODEIntegrator<StepperDopr5<RHSVan>>(ystart, x1, x2, atol, rtol, h1,
+                                                 hmin, out, d);
+
+  ode.integrate();
+
+  EXPECT_EQ(1177, out.count);
+
+  EXPECT_DOUBLE_EQ(0.0, out.xsave[0]);
+  EXPECT_DOUBLE_EQ(0.98436957642198519, out.xsave[out.count / 2]);
+  EXPECT_DOUBLE_EQ(2.0, out.xsave[out.count - 1]);
+
+  EXPECT_DOUBLE_EQ(2.0, out.ysave[0][0]);
+  EXPECT_DOUBLE_EQ(-1.9010597230846302, out.ysave[0][out.count / 2]);
+  EXPECT_DOUBLE_EQ(1.7644320190605265, out.ysave[0][out.count - 1]);
+
+  EXPECT_DOUBLE_EQ(0.0, out.ysave[1][0]);
+  EXPECT_DOUBLE_EQ(0.72447110662737324, out.ysave[1][out.count / 2]);
+  EXPECT_DOUBLE_EQ(-0.83427005245677999, out.ysave[1][out.count - 1]);
+
+  EXPECT_DOUBLE_EQ(1.7644320190605265, ystart[0]);
+  EXPECT_DOUBLE_EQ(-0.83427005245677999, ystart[1]);
+}
+
 TEST(VanDerPolTest, DenseOutputMatchesPython) {
   const int nvar = 2;
   const double atol = 1.0e-3;
@@ -218,6 +252,40 @@ struct RHSOsc {
     dydx[1] = -y[0];
   }
 };
+
+TEST(SimpleOscillatorTest, ActualIntegrationStepsAreConsistent) {
+  constexpr auto nvar = 2;
+  constexpr auto atol = 1.0e-10;
+  constexpr auto rtol = atol;
+  constexpr auto h1 = 0.01;
+  constexpr auto hmin = 0.0;
+  constexpr auto x1 = 0.0;
+  constexpr auto x2 = 2.0;
+  auto ystart = std::vector<double>{1.0, 0.0};
+  auto out = Output(-1);  // -1 for actual integration steps
+  auto d = RHSOsc{};
+  auto ode = ODEIntegrator<StepperDopr5<RHSOsc>>(ystart, x1, x2, atol, rtol, h1,
+                                                 hmin, out, d);
+
+  ode.integrate();
+
+  EXPECT_EQ(49, out.count);
+
+  EXPECT_DOUBLE_EQ(0.0, out.xsave[0]);
+  EXPECT_DOUBLE_EQ(1.0004288786936162, out.xsave[out.count / 2]);
+  EXPECT_DOUBLE_EQ(2.0, out.xsave[out.count - 1]);
+
+  EXPECT_DOUBLE_EQ(1.0, out.ysave[0][0]);
+  EXPECT_DOUBLE_EQ(0.53994136718681807, out.ysave[0][out.count / 2]);
+  EXPECT_DOUBLE_EQ(-0.41614683651997603, out.ysave[0][out.count - 1]);
+
+  EXPECT_DOUBLE_EQ(0.0, out.ysave[1][0]);
+  EXPECT_DOUBLE_EQ(-0.84170263152593661, out.ysave[1][out.count / 2]);
+  EXPECT_DOUBLE_EQ(-0.90929742675256664, out.ysave[1][out.count - 1]);
+
+  EXPECT_DOUBLE_EQ(-0.41614683651997603, ystart[0]);
+  EXPECT_DOUBLE_EQ(-0.90929742675256664, ystart[1]);
+}
 
 TEST(SimpleOscillatorTest, DenseOutputMatchesPython) {
   const int nvar = 2;

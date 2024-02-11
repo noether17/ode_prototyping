@@ -18,7 +18,7 @@ class VanDerPolTest : public testing::Test {
   static constexpr auto x1 = 0.0;
   static constexpr auto x2 = 2.0;
   static constexpr auto eps = 1.0e-3;
-  static constexpr auto rhs_van = [](const double x, std::vector<double>& y,
+  static constexpr auto rhs_van = [](double x, std::vector<double> const& y,
                                      std::vector<double>& dydx) {
     dydx[0] = y[1];
     dydx[1] = ((1.0 - y[0] * y[0]) * y[1] - y[0]) / eps;

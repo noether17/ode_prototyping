@@ -223,27 +223,28 @@ TEST_F(VanDerPolTest, DenseOutputIsConsistent) {
   EXPECT_DOUBLE_EQ(-0.83427005245677999, ystart[1]);
 }
 
-struct RHSOsc {
-  void operator()(const double x, std::vector<double>& y,
-                  std::vector<double>& dydx) {
+class SimpleOscillatorTest : public testing::Test {
+ protected:
+  static constexpr auto nvar = 2;
+  static constexpr auto atol = 1.0e-10;
+  static constexpr auto rtol = atol;
+  static constexpr auto h1 = 0.01;
+  static constexpr auto hmin = 0.0;
+  static constexpr auto x1 = 0.0;
+  static constexpr auto x2 = 2.0;
+  static constexpr auto rhs_osc = [](const double x, std::vector<double>& y,
+                                     std::vector<double>& dydx) {
     dydx[0] = y[1];
     dydx[1] = -y[0];
-  }
+  };
+
+  std::vector<double> ystart{1.0, 0.0};
 };
 
-TEST(SimpleOscillatorTest, ActualIntegrationStepsAreConsistent) {
-  constexpr auto nvar = 2;
-  constexpr auto atol = 1.0e-10;
-  constexpr auto rtol = atol;
-  constexpr auto h1 = 0.01;
-  constexpr auto hmin = 0.0;
-  constexpr auto x1 = 0.0;
-  constexpr auto x2 = 2.0;
-  auto ystart = std::vector<double>{1.0, 0.0};
-  auto out = Output(-1);  // -1 for actual integration steps
-  auto d = RHSOsc{};
-  auto ode = ODEIntegrator<StepperDopr5<RHSOsc>>(ystart, x1, x2, atol, rtol, h1,
-                                                 hmin, out, d);
+TEST_F(SimpleOscillatorTest, ActualIntegrationStepsAreConsistent) {
+  auto out = Output(-1);  // -1 for actual integration steps.
+  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_osc)>>(
+      ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_osc);
 
   ode.integrate();
 
@@ -265,25 +266,14 @@ TEST(SimpleOscillatorTest, ActualIntegrationStepsAreConsistent) {
   EXPECT_DOUBLE_EQ(-0.90929742675256664, ystart[1]);
 }
 
-TEST(SimpleOscillatorTest, DenseOutputMatchesPython) {
-  const int nvar = 2;
-  const double atol = 1.0e-10;
-  const double rtol = atol;
-  const double h1 = 0.01;
-  const double hmin = 0.0;
-  const double x1 = 0.0;
-  const double x2 = 2.0;
-  std::vector<double> ystart(nvar);
-  ystart[0] = 1.0;
-  ystart[1] = 0.0;
-  Output out(20);
-  RHSOsc d;
-  ODEIntegrator<StepperDopr5<RHSOsc>> ode(ystart, x1, x2, atol, rtol, h1, hmin,
-                                          out, d);
+TEST_F(SimpleOscillatorTest, DenseOutputMatchesPython) {
+  auto out = Output(20);
+  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_osc)>>(
+      ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_osc);
 
   ode.integrate();
 
-  // Reference values generated using scipy.integrate.solve_ivp
+  // Reference values generated using scipy.integrate.solve_ivp().
   constexpr auto reference_x_values = std::array{0.0,
                                                  0.1,
                                                  0.2,
@@ -348,10 +338,10 @@ TEST(SimpleOscillatorTest, DenseOutputMatchesPython) {
                                                   -0.9463000876044179,
                                                   -0.9092974267525671};
   constexpr auto comp_tol =
-      1.0e-15;  // stricter accuracy requirement for comparison to Python
-                // function that should be performing similar calculation
+      1.0e-15;  // Stricter accuracy requirement for comparison to Python
+                // function that should be performing similar calculation.
   for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.xsave)) {
-    EXPECT_DOUBLE_EQ(ref_x, x);  // independent variable should compare equal
+    EXPECT_DOUBLE_EQ(ref_x, x);  // Independent variable should compare equal.
   }
   for (const auto& [ref_y0, y0] : vws::zip(reference_y0_values, out.ysave[0])) {
     EXPECT_NEAR(ref_y0, y0, comp_tol);
@@ -363,25 +353,14 @@ TEST(SimpleOscillatorTest, DenseOutputMatchesPython) {
   EXPECT_NEAR(-0.9092974267525671, ystart[1], comp_tol);
 }
 
-/* Test for equality to initial run for consistency. */
-TEST(SimpleOscillatorTest, DenseOutputIsConsistent) {
-  const int nvar = 2;
-  const double atol = 1.0e-10;
-  const double rtol = atol;
-  const double h1 = 0.01;
-  const double hmin = 0.0;
-  const double x1 = 0.0;
-  const double x2 = 2.0;
-  std::vector<double> ystart(nvar);
-  ystart[0] = 1.0;
-  ystart[1] = 0.0;
-  Output out(20);
-  RHSOsc d;
-  ODEIntegrator<StepperDopr5<RHSOsc>> ode(ystart, x1, x2, atol, rtol, h1, hmin,
-                                          out, d);
+TEST_F(SimpleOscillatorTest, DenseOutputIsConsistent) {
+  auto out = Output(20);
+  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_osc)>>(
+      ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_osc);
 
   ode.integrate();
 
+  // Reference values from initial run to test for consistency.
   constexpr auto reference_x_values = std::array{0.0,
                                                  0.1,
                                                  0.2,

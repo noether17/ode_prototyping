@@ -23,14 +23,14 @@ struct Output {
 
   /* Constructor provides dense output at nsave equally spaced intervals. If
    * nsave <= 0, output is saved only at the actual integration steps. */
-  Output(const int nsavee) : kmax(500), nsave(nsavee), count(0), xsave(kmax) {
+  Output(int nsavee) : kmax(500), nsave(nsavee), count(0), xsave(kmax) {
     dense = nsave > 0;
   }
 
   /* Called by the ODEIntegrator constructor, which passes neqn, the number of
    * equations, xlo, the starting point of the integration, and xhi, the ending
    * point. */
-  void init(const int neqn, const double xlo, const double xhi) {
+  void init(int neqn, double xlo, double xhi) {
     nvar = neqn;
     if (kmax == -1) {
       return;
@@ -71,7 +71,7 @@ struct Output {
    * xold and xold + h, where the stepper must keep track of xold, the location
    * of the previous step, and x = xold + h, the current step. */
   template <typename Stepper>
-  void save_dense(Stepper& stepper, const double xout, const double h) {
+  void save_dense(Stepper const& stepper, double xout, double h) {
     if (count == kmax) {
       resize();
     }
@@ -82,7 +82,7 @@ struct Output {
   }
 
   /* Saves values of current x and y. */
-  void save(const double x, std::vector<double>& y) {
+  void save(double x, std::vector<double> const& y) {
     if (kmax <= 0) {
       return;
     }
@@ -101,8 +101,8 @@ struct Output {
    * values. The routine checks whether x is greater than the desired output
    * point xout. If so, it calls save_dense. */
   template <typename Stepper>
-  void out(const int nstp, const double x, std::vector<double>& y,
-           Stepper& stepper, const double h) {
+  void out(int nstp, double x, std::vector<double> const& y,
+           Stepper const& stepper, double h) {
     if (!dense) {
       throw std::runtime_error("dense output not set in Output");
     }

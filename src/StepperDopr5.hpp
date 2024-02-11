@@ -28,7 +28,7 @@ struct StepperDopr5 : StepperBase {
   void step(const double htry, D& derivs);
   void dy(const double h, D& derivs);
   void prepare_dense(const double h, D& derivs);
-  double dense_out(const int i, const double x, const double h);
+  double dense_out(const int i, const double x, const double h) const;
   double error();
   struct Controller {
     double hnext;
@@ -191,7 +191,8 @@ void StepperDopr5<D>::prepare_dense(const double h, D& derivs) {
 /* Evaluate interpolating polynomial for y[i] at location x, where xold <= x <=
  * xold + h. */
 template <typename D>
-double StepperDopr5<D>::dense_out(const int i, const double x, const double h) {
+double StepperDopr5<D>::dense_out(const int i, const double x,
+                                  const double h) const {
   double s = (x - xold) / h;
   double s1 = 1.0 - s;
   return rcont1[i] +

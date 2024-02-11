@@ -8,29 +8,29 @@
 
 namespace vws = std::views;
 
-struct RHSVan {
-  double eps;
-  RHSVan(double epss) : eps(epss) {}
-  void operator()(const double x, std::vector<double>& y,
-                  std::vector<double>& dydx) {
+class VanDerPolTest : public testing::Test {
+ protected:
+  static constexpr auto nvar = 2;
+  static constexpr auto atol = 1.0e-3;
+  static constexpr auto rtol = atol;
+  static constexpr auto h1 = 0.01;
+  static constexpr auto hmin = 0.0;
+  static constexpr auto x1 = 0.0;
+  static constexpr auto x2 = 2.0;
+  static constexpr auto eps = 1.0e-3;
+  static constexpr auto rhs_van = [](const double x, std::vector<double>& y,
+                                     std::vector<double>& dydx) {
     dydx[0] = y[1];
     dydx[1] = ((1.0 - y[0] * y[0]) * y[1] - y[0]) / eps;
-  }
+  };
+
+  std::vector<double> ystart{2.0, 0.0};
 };
 
-TEST(VanDerPolTest, ActualIntegrationStepsAreConsistent) {
-  constexpr auto nvar = 2;
-  constexpr auto atol = 1.0e-3;
-  constexpr auto rtol = atol;
-  constexpr auto h1 = 0.01;
-  constexpr auto hmin = 0.0;
-  constexpr auto x1 = 0.0;
-  constexpr auto x2 = 2.0;
-  auto ystart = std::vector<double>{2.0, 0.0};
-  auto out = Output(-1);  // -1 for actual integration steps
-  auto d = RHSVan(1.0e-3);
-  auto ode = ODEIntegrator<StepperDopr5<RHSVan>>(ystart, x1, x2, atol, rtol, h1,
-                                                 hmin, out, d);
+TEST_F(VanDerPolTest, ActualIntegrationStepsAreConsistent) {
+  auto out = Output(-1);  // -1 for actual integration steps.
+  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_van)>>(
+      ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
 
   ode.integrate();
 
@@ -52,25 +52,14 @@ TEST(VanDerPolTest, ActualIntegrationStepsAreConsistent) {
   EXPECT_DOUBLE_EQ(-0.83427005245677999, ystart[1]);
 }
 
-TEST(VanDerPolTest, DenseOutputMatchesPython) {
-  const int nvar = 2;
-  const double atol = 1.0e-3;
-  const double rtol = atol;
-  const double h1 = 0.01;
-  const double hmin = 0.0;
-  const double x1 = 0.0;
-  const double x2 = 2.0;
-  std::vector<double> ystart(nvar);
-  ystart[0] = 2.0;
-  ystart[1] = 0.0;
-  Output out(20);
-  RHSVan d(1.0e-3);
-  ODEIntegrator<StepperDopr5<RHSVan>> ode(ystart, x1, x2, atol, rtol, h1, hmin,
-                                          out, d);
+TEST_F(VanDerPolTest, DenseOutputMatchesPython) {
+  auto out = Output(20);
+  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_van)>>(
+      ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
 
   ode.integrate();
 
-  // Reference values generated using scipy.integrate.solve_ivp
+  // Reference values generated using scipy.integrate.solve_ivp().
   constexpr auto reference_x_values = std::array{0.0,
                                                  0.1,
                                                  0.2,
@@ -135,10 +124,10 @@ TEST(VanDerPolTest, DenseOutputMatchesPython) {
                                                   -0.7682889897929661,
                                                   -0.8342700528712028};
   constexpr auto comp_tol =
-      1.0e-9;  // stricter accuracy requirement for comparison to Python
-               // function that should be performing similar calculation
+      1.0e-9;  // Stricter accuracy requirement for comparison to Python
+               // function that should be performing similar calculation.
   for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.xsave)) {
-    EXPECT_DOUBLE_EQ(ref_x, x);  // independent variable should compare equal
+    EXPECT_DOUBLE_EQ(ref_x, x);  // Independent variable should compare equal.
   }
   for (const auto& [ref_y0, y0] : vws::zip(reference_y0_values, out.ysave[0])) {
     EXPECT_NEAR(ref_y0, y0, comp_tol);
@@ -150,25 +139,14 @@ TEST(VanDerPolTest, DenseOutputMatchesPython) {
   EXPECT_NEAR(-0.8342700528712028, ystart[1], comp_tol);
 }
 
-/* Test for equality to initial run for consistency. */
-TEST(VanDerPolTest, DenseOutputIsConsistent) {
-  const int nvar = 2;
-  const double atol = 1.0e-3;
-  const double rtol = atol;
-  const double h1 = 0.01;
-  const double hmin = 0.0;
-  const double x1 = 0.0;
-  const double x2 = 2.0;
-  std::vector<double> ystart(nvar);
-  ystart[0] = 2.0;
-  ystart[1] = 0.0;
-  Output out(20);
-  RHSVan d(1.0e-3);
-  ODEIntegrator<StepperDopr5<RHSVan>> ode(ystart, x1, x2, atol, rtol, h1, hmin,
-                                          out, d);
+TEST_F(VanDerPolTest, DenseOutputIsConsistent) {
+  auto out = Output(20);
+  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_van)>>(
+      ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
 
   ode.integrate();
 
+  // Reference values from initial run to test for consistency.
   constexpr auto reference_x_values = std::array{0.0,
                                                  0.1,
                                                  0.2,
@@ -233,7 +211,7 @@ TEST(VanDerPolTest, DenseOutputIsConsistent) {
                                                   -0.7682889892922099,
                                                   -0.83427005245677999};
   for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.xsave)) {
-    EXPECT_DOUBLE_EQ(ref_x, x);  // independent variable should compare equal
+    EXPECT_DOUBLE_EQ(ref_x, x);
   }
   for (const auto& [ref_y0, y0] : vws::zip(reference_y0_values, out.ysave[0])) {
     EXPECT_DOUBLE_EQ(ref_y0, y0);

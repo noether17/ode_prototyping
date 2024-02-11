@@ -24,7 +24,7 @@ struct Output {
   /* Constructor provides dense output at nsave equally spaced intervals. If
    * nsave <= 0, output is saved only at the actual integration steps. */
   Output(const int nsavee) : kmax(500), nsave(nsavee), count(0), xsave(kmax) {
-    dense = nsave > 0 ? true : false;
+    dense = nsave > 0;
   }
 
   /* Called by the ODEIntegrator constructor, which passes neqn, the number of

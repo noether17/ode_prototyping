@@ -1,11 +1,13 @@
 #pragma once
 
+#include <ranges>
 #include <stdexcept>
 #include <vector>
 
+namespace vws = std::views;
+
 /* Structure for output from ODE solver such as ODEIntegrator. */
 class Output {
-  int nvar;
   int nsave;          // Number of intervals to save at for dense output.
   bool dense{false};  // true if dense output requested.
   bool suppress_output{true};  // Default is no output.
@@ -14,8 +16,7 @@ class Output {
   double xout;
   double dxout;
   std::vector<double> xsave{};  // Results stored in the vector xsave
-  std::vector<std::vector<double>>
-      ysave{};  // and the matrix ysave[0...nvar-1].
+  std::vector<std::vector<double>> ysave{};  // and the matrix ysave.
 
  public:
   static constexpr auto init_cap = 500;  // Initial capacity of storage arrays.
@@ -34,11 +35,10 @@ class Output {
    * equations, xlo, the starting point of the integration, and xhi, the ending
    * point. */
   void init(int neqn, double xlo, double xhi) {
-    nvar = neqn;
     if (suppress_output) {
       return;
     }
-    ysave.resize(nvar);
+    ysave.resize(neqn);
     for (auto& y : ysave) {
       y.reserve(init_cap);
     }
@@ -56,8 +56,8 @@ class Output {
    * of the previous step, and x = xold + h, the current step. */
   template <typename Stepper>
   void save_dense(Stepper const& stepper, double xout, double h) {
-    for (int i = 0; i < nvar; ++i) {
-      ysave[i].push_back(stepper.dense_out(i, xout, h));
+    for (auto&& [i, y_i] : ysave | vws::enumerate) {
+      y_i.push_back(stepper.dense_out(i, xout, h));
     }
     xsave.push_back(xout);
   }
@@ -67,8 +67,8 @@ class Output {
     if (suppress_output) {
       return;
     }
-    for (int i = 0; i < nvar; ++i) {
-      ysave[i].push_back(y[i]);
+    for (auto&& [saved_i, y_i] : vws::zip(ysave, y)) {
+      saved_i.push_back(y_i);
     }
     xsave.push_back(x);
   }

@@ -7,9 +7,12 @@
 
 #include "Output.hpp"
 
+/* Driver for ODE solvers with adaptive stepsize control. The template parameter
+ * should be one of the derived classes of StepperBase defining a particular
+ * integration algorithm. */
 template <typename Stepper>
 struct ODEIntegrator {
-  static constexpr auto max_step = 50'000;
+  static constexpr auto max_step = 50'000;  // Take at most max_step steps.
   double eps;
   int nok;
   int nbad;
@@ -17,23 +20,32 @@ struct ODEIntegrator {
   double x1;
   double x2;
   double hmin;
-  bool dense;
+  bool dense;  // true if dense output is requested by out.
   std::vector<double> y;
   std::vector<double> dydx;
   std::vector<double>& ystart;
   Output& out;
-  typename Stepper::Dtype& derivs;
+  typename Stepper::Dtype& derivs;  // Get the type of derivs from the stepper.
   Stepper stepper;
   int nstp;
   double x;
   double h;
 
+  /* Constructor sets everything up. The routine integrates starting values
+   * ystart[0...nvar-1] from xx1 to xx2 with absolute tolerance atol and
+   * relative tolerance rtol. The quantity h1 should be set as a guessed first
+   * stepsize, hmin as the minimum allowed stepsize (can be zero). An Output
+   * object out should be input to control the saving of intermediate values. On
+   * output, nok and nbad are the number of good and bad (but retried and fixed)
+   * steps taken, and ystart is replaced by values at the end of the integration
+   * interval. derivs is the user-supplied routine (function or functor) for
+   * calculating the right-hand side derivative. */
   ODEIntegrator(std::vector<double>& ystartt, const double xx1,
                 const double xx2, const double atol, const double rtol,
                 const double h1, const double hminn, Output& outt,
                 typename Stepper::Dtype& derivss);
 
-  void integrate();
+  void integrate();  // Does the actual integration.
 };
 
 template <typename Stepper>
@@ -67,15 +79,15 @@ template <typename Stepper>
 void ODEIntegrator<Stepper>::integrate() {
   derivs(x, y, dydx);
   if (dense) {
-    out.out(-1, x, y, stepper, h);
+    out.out(-1, x, y, stepper, h);  // Store initial values.
   } else {
     out.save(x, y);
   }
   for (nstp = 0; nstp < max_step; ++nstp) {
     if ((x + h * 1.0001 - x2) * (x2 - x1) > 0.0) {
-      h = x2 - x;
+      h = x2 - x;  // If stepsize can overshoot, decrease.
     }
-    stepper.step(h, derivs);
+    stepper.step(h, derivs);  // Take a step.
     if (stepper.hdid == h) {
       ++nok;
     } else {
@@ -86,13 +98,13 @@ void ODEIntegrator<Stepper>::integrate() {
     } else {
       out.save(x, y);
     }
-    if ((x - x2) * (x2 - x1) >= 0.0) {
-      ystart = y;
+    if ((x - x2) * (x2 - x1) >= 0.0) {  // Are we done?
+      ystart = y;                       // Update ystart.
       if (out.kmax > 0 &&
           fabs(out.xsave[out.count - 1] - x2) > 100.0 * fabs(x2) * eps) {
-        out.save(x, y);
+        out.save(x, y);  // Make sure last step gets saved.
       }
-      return;
+      return;  // Normal exit.
     }
     if (fabs(stepper.hnext) <= hmin) {
       throw std::runtime_error("Step size too small in ODEIntegrator");

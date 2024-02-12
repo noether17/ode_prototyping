@@ -8,16 +8,6 @@ namespace vws = std::views;
 
 /* Structure for output from ODE solver such as ODEIntegrator. */
 class Output {
-  int n_intervals_;    // Number of intervals to save at for dense output.
-  bool dense_{false};  // true if dense output requested.
-  bool suppress_output_{true};  // Default is no output.
-  double x1_;
-  double x2_;
-  double xout_;
-  double interval_width_;
-  std::vector<double> x_values_{};  // Results stored in the vector x_values_
-  std::vector<std::vector<double>> y_values_{};  // and the matrix y_values_.
-
  public:
   static constexpr auto init_cap = 500;  // Initial capacity of storage arrays.
 
@@ -47,7 +37,7 @@ class Output {
     if (dense_) {
       x1_ = xlo;
       x2_ = xhi;
-      xout_ = x1_;
+      next_x_ = x1_;
       interval_width_ = (x2_ - x1_) / n_intervals_;
     }
   }
@@ -79,7 +69,7 @@ class Output {
    * are nstp, the current step number, the current values of x and y, the
    * stepper, and the stepsize h. A call with nstp = -1 saves the initial
    * values. The routine checks whether x is greater than the desired output
-   * point xout_. If so, it calls save_dense. */
+   * point next_x_. If so, it calls save_dense. */
   template <typename Stepper>
   void out(int nstp, double x, std::vector<double> const& y,
            Stepper const& stepper, double h) {
@@ -88,11 +78,11 @@ class Output {
     }
     if (nstp == -1) {
       save(x, y);
-      xout_ += interval_width_;
+      next_x_ += interval_width_;
     } else {
-      while ((x - xout_) * (x2_ - x1_) > 0.0) {
-        save_dense(stepper, xout_, h);
-        xout_ += interval_width_;
+      while ((x - next_x_) * (x2_ - x1_) > 0.0) {
+        save_dense(stepper, next_x_, h);
+        next_x_ += interval_width_;
       }
     }
   }
@@ -111,4 +101,15 @@ class Output {
 
   /* Returns the saved dependent variable values. */
   auto const& y_values() const { return y_values_; }
+
+ private:
+  std::vector<double> x_values_{};  // Results stored in the vector x_values_
+  std::vector<std::vector<double>> y_values_{};  // and the matrix y_values_.
+  double x1_;
+  double x2_;
+  double next_x_;
+  double interval_width_;
+  int n_intervals_;    // Number of intervals to save at for dense output.
+  bool dense_{false};  // true if dense output requested.
+  bool suppress_output_{true};  // Default is no output.
 };

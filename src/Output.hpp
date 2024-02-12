@@ -8,15 +8,15 @@ namespace vws = std::views;
 
 /* Structure for output from ODE solver such as ODEIntegrator. */
 class Output {
-  int nsave;          // Number of intervals to save at for dense output.
-  bool dense{false};  // true if dense output requested.
-  bool suppress_output{true};  // Default is no output.
-  double x1;
-  double x2;
-  double xout;
-  double dxout;
-  std::vector<double> xsave{};  // Results stored in the vector xsave
-  std::vector<std::vector<double>> ysave{};  // and the matrix ysave.
+  int n_intervals_;    // Number of intervals to save at for dense output.
+  bool dense_{false};  // true if dense output requested.
+  bool suppress_output_{true};  // Default is no output.
+  double x1_;
+  double x2_;
+  double xout_;
+  double interval_width_;
+  std::vector<double> x_values_{};  // Results stored in the vector x_values_
+  std::vector<std::vector<double>> y_values_{};  // and the matrix y_values_.
 
  public:
   static constexpr auto init_cap = 500;  // Initial capacity of storage arrays.
@@ -24,29 +24,31 @@ class Output {
   /* Default constructor gives no output. */
   Output() = default;
 
-  /* Constructor provides dense output at nsave equally spaced intervals. If
-   * nsave <= 0, output is saved only at the actual integration steps. */
-  explicit Output(int nsavee) : suppress_output{false}, nsave(nsavee) {
-    dense = nsave > 0;
-    xsave.reserve(init_cap);
+  /* Constructor provides dense output at n_intervals_ equally spaced intervals.
+   * If n_intervals_ <= 0, output is saved only at the actual integration steps.
+   */
+  explicit Output(int n_intervals)
+      : suppress_output_{false}, n_intervals_{n_intervals} {
+    dense_ = n_intervals_ > 0;
+    x_values_.reserve(init_cap);
   }
 
   /* Called by the ODEIntegrator constructor, which passes neqn, the number of
    * equations, xlo, the starting point of the integration, and xhi, the ending
    * point. */
   void init(int neqn, double xlo, double xhi) {
-    if (suppress_output) {
+    if (suppress_output_) {
       return;
     }
-    ysave.resize(neqn);
-    for (auto& y : ysave) {
+    y_values_.resize(neqn);
+    for (auto& y : y_values_) {
       y.reserve(init_cap);
     }
-    if (dense) {
-      x1 = xlo;
-      x2 = xhi;
-      xout = x1;
-      dxout = (x2 - x1) / nsave;
+    if (dense_) {
+      x1_ = xlo;
+      x2_ = xhi;
+      xout_ = x1_;
+      interval_width_ = (x2_ - x1_) / n_intervals_;
     }
   }
 
@@ -56,57 +58,57 @@ class Output {
    * of the previous step, and x = xold + h, the current step. */
   template <typename Stepper>
   void save_dense(Stepper const& stepper, double xout, double h) {
-    for (auto&& [i, y_i] : ysave | vws::enumerate) {
+    for (auto&& [i, y_i] : y_values_ | vws::enumerate) {
       y_i.push_back(stepper.dense_out(i, xout, h));
     }
-    xsave.push_back(xout);
+    x_values_.push_back(xout);
   }
 
   /* Saves values of current x and y. */
   void save(double x, std::vector<double> const& y) {
-    if (suppress_output) {
+    if (suppress_output_) {
       return;
     }
-    for (auto&& [saved_i, y_i] : vws::zip(ysave, y)) {
+    for (auto&& [saved_i, y_i] : vws::zip(y_values_, y)) {
       saved_i.push_back(y_i);
     }
-    xsave.push_back(x);
+    x_values_.push_back(x);
   }
 
   /* Typically called by ODEIntegrator to produce dense output. Input variables
    * are nstp, the current step number, the current values of x and y, the
    * stepper, and the stepsize h. A call with nstp = -1 saves the initial
    * values. The routine checks whether x is greater than the desired output
-   * point xout. If so, it calls save_dense. */
+   * point xout_. If so, it calls save_dense. */
   template <typename Stepper>
   void out(int nstp, double x, std::vector<double> const& y,
            Stepper const& stepper, double h) {
-    if (!dense) {
+    if (!dense_) {
       throw std::runtime_error("dense output not set in Output");
     }
     if (nstp == -1) {
       save(x, y);
-      xout += dxout;
+      xout_ += interval_width_;
     } else {
-      while ((x - xout) * (x2 - x1) > 0.0) {
-        save_dense(stepper, xout, h);
-        xout += dxout;
+      while ((x - xout_) * (x2_ - x1_) > 0.0) {
+        save_dense(stepper, xout_, h);
+        xout_ += interval_width_;
       }
     }
   }
 
   /* Returns whether output is suppressed. */
-  auto output_suppressed() const { return suppress_output; }
+  auto output_suppressed() const { return suppress_output_; }
 
   /* Returns whether dense output is generated. */
-  auto is_dense() const { return dense; }
+  auto is_dense() const { return dense_; }
 
   /* Returns the number of steps taken. */
-  auto n_steps() const { return xsave.size(); }
+  auto n_steps() const { return x_values_.size(); }
 
   /* Returns the saved independent variable values. */
-  auto const& x_values() const { return xsave; }
+  auto const& x_values() const { return x_values_; }
 
   /* Returns the saved dependent variable values. */
-  auto const& y_values() const { return ysave; }
+  auto const& y_values() const { return y_values_; }
 };

@@ -1,3 +1,5 @@
+#pragma once
+
 #include <concepts>
 #include <ranges>
 
@@ -6,7 +8,7 @@ namespace vws = std::views;
 
 template <std::size_t... I>
 auto euler_step_impl(std::floating_point auto dt, auto&& state_tuple,
-                     std::index_sequence<I...>) {
+                     std::index_sequence<I...> /*unused*/) {
   auto increment = [dt](auto&& state, auto&& derivative) {
     for (auto&& [x, dx_dt] : vws::zip(state, derivative)) {
       x += dx_dt * dt;

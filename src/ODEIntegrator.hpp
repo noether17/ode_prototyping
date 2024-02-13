@@ -13,23 +13,24 @@
 template <typename Stepper>
 struct ODEIntegrator {
   static constexpr auto max_step = 50'000;  // Take at most max_step steps.
-  double eps;
-  int nok;
-  int nbad;
-  int nvar;
-  double x1;
-  double x2;
-  double hmin;
-  bool dense;  // true if dense output is requested by out.
+
   std::vector<double> y;
   std::vector<double> dydx;
   std::vector<double>& ystart;
   Output& out;
   typename Stepper::Dtype& derivs;  // Get the type of derivs from the stepper.
   Stepper stepper;
-  int nstp;
+  double eps;
+  double x1;
+  double x2;
+  double hmin;
   double x;
   double h;
+  int nok;
+  int nbad;
+  int nvar;
+  int nstp;
+  bool dense;  // true if dense output is requested by out.
 
   /* Constructor sets everything up. The routine integrates starting values
    * ystart[0...nvar-1] from xx1 to xx2 with absolute tolerance atol and
@@ -55,20 +56,20 @@ ODEIntegrator<Stepper>::ODEIntegrator(std::vector<double>& ystartt,
                                       const double h1, const double hminn,
                                       Output& outt,
                                       typename Stepper::Dtype& derivss)
-    : nvar(ystartt.size()),
-      y(nvar),
-      dydx(nvar),
+    : y(ystartt.size()),
+      dydx(ystartt.size()),
       ystart(ystartt),
-      x(xx1),
-      nok(0),
-      nbad(0),
+      out(outt),
+      derivs(derivss),
+      stepper(y, dydx, x, atol, rtol, dense),
       x1(xx1),
       x2(xx2),
       hmin(hminn),
-      dense(outt.is_dense()),
-      out(outt),
-      derivs(derivss),
-      stepper(y, dydx, x, atol, rtol, dense) {
+      x(xx1),
+      nok(0),
+      nbad(0),
+      nvar(ystartt.size()),
+      dense(outt.is_dense()) {
   eps = std::numeric_limits<double>::epsilon();
   h = x2 - x1 > 0.0 ? fabs(h1) : -fabs(h1);
   y = ystart;

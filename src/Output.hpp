@@ -18,7 +18,7 @@ class Output {
    * If n_intervals_ <= 0, output is saved only at the actual integration steps.
    */
   explicit Output(int n_intervals)
-      : suppress_output_{false}, n_intervals_{n_intervals} {
+      : n_intervals_{n_intervals}, suppress_output_{false} {
     dense_ = n_intervals_ > 0;
     x_values_.reserve(init_cap);
   }

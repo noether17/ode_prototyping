@@ -213,7 +213,7 @@ double StepperDopr5<D>::error() {
 
 /* Step size controller for fifth-order Dormand-Prince method. */
 template <typename D>
-StepperDopr5<D>::Controller::Controller() : reject(false), errold(1.0e-4) {}
+StepperDopr5<D>::Controller::Controller() : errold(1.0e-4), reject(false) {}
 
 /* Returns true if err <= 1, false otherwise. If step was successful, sets hnext
  * to the estimated optimal stepsize for the next step. If the step failed,

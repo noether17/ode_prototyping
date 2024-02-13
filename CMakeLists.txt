@@ -3,7 +3,7 @@ project(ODEPrototyping)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Werror")
+set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Werror")
 
 enable_testing()
 find_package(GTest 1.14.0 REQUIRED)

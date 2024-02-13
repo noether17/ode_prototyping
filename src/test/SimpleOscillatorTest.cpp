@@ -17,7 +17,7 @@ class SimpleOscillatorTest : public testing::Test {
   static constexpr auto hmin = 0.0;
   static constexpr auto x1 = 0.0;
   static constexpr auto x2 = 2.0;
-  static constexpr auto rhs_osc = [](double x, std::vector<double> const& y,
+  static constexpr auto rhs_osc = [](double, std::vector<double> const& y,
                                      std::vector<double>& dydx) {
     dydx[0] = y[1];
     dydx[1] = -y[0];

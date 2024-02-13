@@ -168,7 +168,7 @@ void StepperDopr5<D>::dy(const double h, D& derivs) {
 /* Store coefficients of interpolating polynomial for dense output in
  * rcont1...rcont5. */
 template <typename D>
-void StepperDopr5<D>::prepare_dense(const double h, D& derivs) {
+void StepperDopr5<D>::prepare_dense(const double h, D&) {
   std::vector<double> ytemp(n);
   static const double d1 = -12715105075.0 / 11282082432.0;
   static const double d3 = 87487479700.0 / 32700410799.0;

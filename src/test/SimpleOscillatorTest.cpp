@@ -26,6 +26,10 @@ class SimpleOscillatorTest : public testing::Test {
   std::vector<double> ystart{1.0, 0.0};
 };
 
+/* Consistency tests (testing for double equality) are to ensure no accidental
+ * algorithm changes are made during refactoring. These tests are far stricter
+ * than the actual requirements. If an intentional change in algorithm results
+ * in small differences in output, these values may be updated. */
 TEST_F(SimpleOscillatorTest, ActualIntegrationStepsAreConsistent) {
   auto out = Output(-1);  // -1 for actual integration steps.
   auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_osc)>>(

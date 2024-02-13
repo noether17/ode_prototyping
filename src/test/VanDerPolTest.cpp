@@ -44,6 +44,10 @@ TEST_F(VanDerPolTest, DefaultOutputCtorSuppressesOutput) {
   EXPECT_DOUBLE_EQ(-0.83427005245677999, ystart[1]);
 }
 
+/* Consistency tests (testing for double equality) are to ensure no accidental
+ * algorithm changes are made during refactoring. These tests are far stricter
+ * than the actual requirements. If an intentional change in algorithm results
+ * in small differences in output, these values may be updated. */
 TEST_F(VanDerPolTest, ActualIntegrationStepsAreConsistent) {
   auto out = Output(-1);  // -1 for actual integration steps.
   auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_van)>>(

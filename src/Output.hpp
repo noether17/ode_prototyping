@@ -37,8 +37,8 @@ class Output {
     if (dense_) {
       x1_ = xlo;
       x2_ = xhi;
-      next_x_ = x1_;
       interval_width_ = (x2_ - x1_) / n_intervals_;
+      next_x_ = interval_width_;
     }
   }
 
@@ -66,24 +66,17 @@ class Output {
   }
 
   /* Typically called by ODEIntegrator to produce dense output. Input variables
-   * are nstp, the current step number, the current values of x and y, the
-   * stepper, and the stepsize h. A call with nstp = -1 saves the initial
-   * values. The routine checks whether x is greater than the desired output
-   * point next_x_. If so, it calls save_dense. */
+   * are the current value of x, the stepper, and the stepsize h. The routine
+   * checks whether x is greater than the desired output point next_x_. If so,
+   * it calls save_dense. */
   template <typename Stepper>
-  void out(int nstp, double x, std::vector<double> const& y,
-           Stepper const& stepper, double h) {
+  void out(double x, Stepper const& stepper, double h) {
     if (!dense_) {
       throw std::runtime_error("dense output not set in Output");
     }
-    if (nstp == -1) {
-      save(x, y);
+    while ((x - next_x_) * (x2_ - x1_) > 0.0) {
+      save_dense(stepper, next_x_, h);
       next_x_ += interval_width_;
-    } else {
-      while ((x - next_x_) * (x2_ - x1_) > 0.0) {
-        save_dense(stepper, next_x_, h);
-        next_x_ += interval_width_;
-      }
     }
   }
 

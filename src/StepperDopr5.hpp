@@ -23,7 +23,7 @@ struct StepperDopr5 : StepperBase {
   std::vector<double> dydxnew;
 
   StepperDopr5(std::vector<double>& yy, std::vector<double>& dydxx, double& xx,
-               const double atoll, const double rtoll, bool dens);
+               const double atoll, const double rtoll, bool dens, Output& outt);
 
   void step(const double htry, D& derivs);
   void dy(const double h, D& derivs);
@@ -48,8 +48,9 @@ struct StepperDopr5 : StepperBase {
 template <typename D>
 StepperDopr5<D>::StepperDopr5(std::vector<double>& yy,
                               std::vector<double>& dydxx, double& xx,
-                              const double atoll, const double rtoll, bool dens)
-    : StepperBase(yy, dydxx, xx, atoll, rtoll, dens),
+                              const double atoll, const double rtoll, bool dens,
+                              Output& outt)
+    : StepperBase(yy, dydxx, xx, atoll, rtoll, dens, outt),
       k2(n),
       k3(n),
       k4(n),

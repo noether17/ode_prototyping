@@ -17,7 +17,6 @@ struct ODEIntegrator {
   std::vector<double> y;
   std::vector<double> dydx;
   std::vector<double>& ystart;
-  Output& out;
   typename Stepper::Dtype& derivs;  // Get the type of derivs from the stepper.
   Stepper stepper;
   double eps;
@@ -59,9 +58,8 @@ ODEIntegrator<Stepper>::ODEIntegrator(std::vector<double>& ystartt,
     : y(ystartt.size()),
       dydx(ystartt.size()),
       ystart(ystartt),
-      out(outt),
       derivs(derivss),
-      stepper(y, dydx, x, atol, rtol, dense),
+      stepper(y, dydx, x, atol, rtol, dense, outt),
       x1(xx1),
       x2(xx2),
       hmin(hminn),
@@ -73,13 +71,13 @@ ODEIntegrator<Stepper>::ODEIntegrator(std::vector<double>& ystartt,
   eps = std::numeric_limits<double>::epsilon();
   h = x2 - x1 > 0.0 ? fabs(h1) : -fabs(h1);
   y = ystart;
-  out.init(stepper.neqn, x1, x2);
+  stepper.out.init(stepper.neqn, x1, x2);
 }
 
 template <typename Stepper>
 void ODEIntegrator<Stepper>::integrate() {
   derivs(x, y, dydx);
-  out.save(x, y);
+  stepper.out.save(x, y);
   for (nstp = 0; nstp < max_step; ++nstp) {
     if ((x + h * 1.0001 - x2) * (x2 - x1) > 0.0) {
       h = x2 - x;  // If stepsize can overshoot, decrease.
@@ -91,9 +89,9 @@ void ODEIntegrator<Stepper>::integrate() {
       ++nbad;
     }
     if (dense) {
-      out.out(x, stepper, stepper.hdid);
+      stepper.out.out(x, stepper, stepper.hdid);
     } else {
-      out.save(x, y);
+      stepper.out.save(x, y);
     }
     if ((x - x2) * (x2 - x1) >= 0.0) {  // Are we done?
       ystart = y;                       // Update ystart.

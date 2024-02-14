@@ -10,14 +10,14 @@ namespace vws = std::views;
 
 class SimpleOscillatorTest : public testing::Test {
  protected:
-  static constexpr auto nvar = 2;
-  static constexpr auto atol = 1.0e-10;
-  static constexpr auto rtol = atol;
-  static constexpr auto h1 = 0.01;
-  static constexpr auto hmin = 0.0;
-  static constexpr auto x1 = 0.0;
-  static constexpr auto x2 = 2.0;
-  static constexpr auto rhs_osc = [](double, std::vector<double> const& y,
+  static auto constexpr nvar = 2;
+  static auto constexpr atol = 1.0e-10;
+  static auto constexpr rtol = atol;
+  static auto constexpr h1 = 0.01;
+  static auto constexpr hmin = 0.0;
+  static auto constexpr x1 = 0.0;
+  static auto constexpr x2 = 2.0;
+  static auto constexpr rhs_osc = [](double, std::vector<double> const& y,
                                      std::vector<double>& dydx) {
     dydx[0] = y[1];
     dydx[1] = -y[0];
@@ -63,7 +63,7 @@ TEST_F(SimpleOscillatorTest, DenseOutputMatchesPython) {
   ode.integrate();
 
   // Reference values generated using scipy.integrate.solve_ivp().
-  constexpr auto reference_x_values = std::array{0.0,
+  auto constexpr reference_x_values = std::array{0.0,
                                                  0.1,
                                                  0.2,
                                                  0.30000000000000004,
@@ -84,7 +84,7 @@ TEST_F(SimpleOscillatorTest, DenseOutputMatchesPython) {
                                                  1.8000000000000005,
                                                  1.9000000000000006,
                                                  2.0};
-  constexpr auto reference_y0_values = std::array{1.0,
+  auto constexpr reference_y0_values = std::array{1.0,
                                                   0.995004165274381,
                                                   0.9800665778342761,
                                                   0.9553364891156162,
@@ -105,7 +105,7 @@ TEST_F(SimpleOscillatorTest, DenseOutputMatchesPython) {
                                                   -0.22720209468205058,
                                                   -0.32328956688476085,
                                                   -0.41614683651997625};
-  constexpr auto reference_y1_values = std::array{0.0,
+  auto constexpr reference_y1_values = std::array{0.0,
                                                   -0.09983341667072441,
                                                   -0.19866933081341775,
                                                   -0.29552020666230877,
@@ -126,17 +126,17 @@ TEST_F(SimpleOscillatorTest, DenseOutputMatchesPython) {
                                                   -0.973847630807643,
                                                   -0.9463000876044179,
                                                   -0.9092974267525671};
-  constexpr auto comp_tol =
+  auto constexpr comp_tol =
       1.0e-15;  // Stricter accuracy requirement for comparison to Python
                 // function that should be performing similar calculation.
-  for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.x_values())) {
+  for (auto const& [ref_x, x] : vws::zip(reference_x_values, out.x_values())) {
     EXPECT_DOUBLE_EQ(ref_x, x);  // Independent variable should compare equal.
   }
-  for (const auto& [ref_y0, y0] :
+  for (auto const& [ref_y0, y0] :
        vws::zip(reference_y0_values, out.y_values()[0])) {
     EXPECT_NEAR(ref_y0, y0, comp_tol);
   }
-  for (const auto& [ref_y1, y1] :
+  for (auto const& [ref_y1, y1] :
        vws::zip(reference_y1_values, out.y_values()[1])) {
     EXPECT_NEAR(ref_y1, y1, comp_tol);
   }
@@ -152,7 +152,7 @@ TEST_F(SimpleOscillatorTest, DenseOutputIsConsistent) {
   ode.integrate();
 
   // Reference values from initial run to test for consistency.
-  constexpr auto reference_x_values = std::array{0.0,
+  auto constexpr reference_x_values = std::array{0.0,
                                                  0.1,
                                                  0.2,
                                                  0.30000000000000004,
@@ -173,7 +173,7 @@ TEST_F(SimpleOscillatorTest, DenseOutputIsConsistent) {
                                                  1.8000000000000005,
                                                  1.9000000000000006,
                                                  2.0};
-  constexpr auto reference_y0_values = std::array{1.0,
+  auto constexpr reference_y0_values = std::array{1.0,
                                                   0.995004165274381,
                                                   0.9800665778342761,
                                                   0.9553364891156162,
@@ -194,7 +194,7 @@ TEST_F(SimpleOscillatorTest, DenseOutputIsConsistent) {
                                                   -0.22720209468205022,
                                                   -0.32328956688476052,
                                                   -0.41614683651997625};
-  constexpr auto reference_y1_values = std::array{0.0,
+  auto constexpr reference_y1_values = std::array{0.0,
                                                   -0.09983341667072441,
                                                   -0.19866933081341775,
                                                   -0.29552020666230877,
@@ -215,17 +215,58 @@ TEST_F(SimpleOscillatorTest, DenseOutputIsConsistent) {
                                                   -0.97384763080764247,
                                                   -0.94630008760441731,
                                                   -0.9092974267525671};
-  for (const auto& [ref_x, x] : vws::zip(reference_x_values, out.x_values())) {
-    EXPECT_DOUBLE_EQ(ref_x, x);  // independent variable should compare equal
+  for (auto const& [ref_x, x] : vws::zip(reference_x_values, out.x_values())) {
+    EXPECT_DOUBLE_EQ(ref_x, x);
   }
-  for (const auto& [ref_y0, y0] :
+  for (auto const& [ref_y0, y0] :
        vws::zip(reference_y0_values, out.y_values()[0])) {
     EXPECT_DOUBLE_EQ(ref_y0, y0);
   }
-  for (const auto& [ref_y1, y1] :
+  for (auto const& [ref_y1, y1] :
        vws::zip(reference_y1_values, out.y_values()[1])) {
     EXPECT_DOUBLE_EQ(ref_y1, y1);
   }
   EXPECT_DOUBLE_EQ(-0.41614683651997625, ystart[0]);
   EXPECT_DOUBLE_EQ(-0.9092974267525671, ystart[1]);
+}
+
+/* Need to test with non-zero starting point to ensure that bugs are not hidden
+ * by default-initialization. */
+TEST_F(SimpleOscillatorTest, ConsistentWithNonzeroStartingPoint) {
+  auto constexpr xstart = 1.0;
+  auto out = Output(5);
+  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_osc)>>(
+      ystart, xstart, x2, atol, rtol, h1, hmin, out, rhs_osc);
+
+  ode.integrate();
+
+  // Reference values from initial run to test for consistency.
+  auto constexpr reference_x_values = std::array{
+      1.0, 1.2, 1.3999999999999999, 1.5999999999999999, 1.7999999999999998,
+      2.0};
+  auto constexpr reference_y0_values = std::array{1.0,
+                                                  0.9800665778342762,
+                                                  0.92106099397628982,
+                                                  0.82533561489063678,
+                                                  0.6967067092917163,
+                                                  0.54030230584326977};
+  auto constexpr reference_y1_values = std::array{0.0,
+                                                  -0.19866933081341756,
+                                                  -0.38941834234718037,
+                                                  -0.56464247338397766,
+                                                  -0.71735609091684549,
+                                                  -0.8414709847748435};
+  for (auto const& [ref_x, x] : vws::zip(reference_x_values, out.x_values())) {
+    EXPECT_DOUBLE_EQ(ref_x, x);  // independent variable should compare equal
+  }
+  for (auto const& [ref_y0, y0] :
+       vws::zip(reference_y0_values, out.y_values()[0])) {
+    EXPECT_DOUBLE_EQ(ref_y0, y0);
+  }
+  for (auto const& [ref_y1, y1] :
+       vws::zip(reference_y1_values, out.y_values()[1])) {
+    EXPECT_DOUBLE_EQ(ref_y1, y1);
+  }
+  EXPECT_DOUBLE_EQ(0.54030230584326955, ystart[0]);
+  EXPECT_DOUBLE_EQ(-0.84147098477484361, ystart[1]);
 }

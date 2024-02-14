@@ -111,36 +111,36 @@ void StepperDopr5<D>::save() {
  * using the embedded fourth-order method. */
 template <typename D>
 void StepperDopr5<D>::dy(const double h, D& derivs) {
-  static const double c2 = 0.2;
-  static const double c3 = 0.3;
-  static const double c4 = 0.8;
-  static const double c5 = 8.0 / 9.0;
-  static const double a21 = 0.2;
-  static const double a31 = 3.0 / 40.0;
-  static const double a32 = 9.0 / 40.0;
-  static const double a41 = 44.0 / 45.0;
-  static const double a42 = -56.0 / 15.0;
-  static const double a43 = 32.0 / 9.0;
-  static const double a51 = 19372.0 / 6561.0;
-  static const double a52 = -25360.0 / 2187.0;
-  static const double a53 = 64448.0 / 6561.0;
-  static const double a54 = -212.0 / 729.0;
-  static const double a61 = 9017.0 / 3168.0;
-  static const double a62 = -355.0 / 33.0;
-  static const double a63 = 46732.0 / 5247.0;
-  static const double a64 = 49.0 / 176.0;
-  static const double a65 = -5103.0 / 18656.0;
-  static const double a71 = 35.0 / 384.0;
-  static const double a73 = 500.0 / 1113.0;
-  static const double a74 = 125.0 / 192.0;
-  static const double a75 = -2187.0 / 6784.0;
-  static const double a76 = 11.0 / 84.0;
-  static const double e1 = 71.0 / 57600.0;
-  static const double e3 = -71.0 / 16695.0;
-  static const double e4 = 71.0 / 1920.0;
-  static const double e5 = -17253.0 / 339200.0;
-  static const double e6 = 22.0 / 525.0;
-  static const double e7 = -1.0 / 40.0;
+  static auto constexpr c2 = 0.2;
+  static auto constexpr c3 = 0.3;
+  static auto constexpr c4 = 0.8;
+  static auto constexpr c5 = 8.0 / 9.0;
+  static auto constexpr a21 = 0.2;
+  static auto constexpr a31 = 3.0 / 40.0;
+  static auto constexpr a32 = 9.0 / 40.0;
+  static auto constexpr a41 = 44.0 / 45.0;
+  static auto constexpr a42 = -56.0 / 15.0;
+  static auto constexpr a43 = 32.0 / 9.0;
+  static auto constexpr a51 = 19372.0 / 6561.0;
+  static auto constexpr a52 = -25360.0 / 2187.0;
+  static auto constexpr a53 = 64448.0 / 6561.0;
+  static auto constexpr a54 = -212.0 / 729.0;
+  static auto constexpr a61 = 9017.0 / 3168.0;
+  static auto constexpr a62 = -355.0 / 33.0;
+  static auto constexpr a63 = 46732.0 / 5247.0;
+  static auto constexpr a64 = 49.0 / 176.0;
+  static auto constexpr a65 = -5103.0 / 18656.0;
+  static auto constexpr a71 = 35.0 / 384.0;
+  static auto constexpr a73 = 500.0 / 1113.0;
+  static auto constexpr a74 = 125.0 / 192.0;
+  static auto constexpr a75 = -2187.0 / 6784.0;
+  static auto constexpr a76 = 11.0 / 84.0;
+  static auto constexpr e1 = 71.0 / 57600.0;
+  static auto constexpr e3 = -71.0 / 16695.0;
+  static auto constexpr e4 = 71.0 / 1920.0;
+  static auto constexpr e5 = -17253.0 / 339200.0;
+  static auto constexpr e6 = 22.0 / 525.0;
+  static auto constexpr e7 = -1.0 / 40.0;
 
   std::vector<double> ytemp(n);
   int i;
@@ -183,12 +183,12 @@ void StepperDopr5<D>::dy(const double h, D& derivs) {
  * rcont1...rcont5. */
 template <typename D>
 void StepperDopr5<D>::prepare_dense(const double h, D&) {
-  static const double d1 = -12715105075.0 / 11282082432.0;
-  static const double d3 = 87487479700.0 / 32700410799.0;
-  static const double d4 = -10690763975.0 / 1880347072.0;
-  static const double d5 = 701980252875.0 / 199316789632.0;
-  static const double d6 = -1453857185.0 / 822651844.0;
-  static const double d7 = 69997945.0 / 29380423.0;
+  static auto constexpr d1 = -12715105075.0 / 11282082432.0;
+  static auto constexpr d3 = 87487479700.0 / 32700410799.0;
+  static auto constexpr d4 = -10690763975.0 / 1880347072.0;
+  static auto constexpr d5 = 701980252875.0 / 199316789632.0;
+  static auto constexpr d6 = -1453857185.0 / 822651844.0;
+  static auto constexpr d7 = 69997945.0 / 29380423.0;
   for (int i = 0; i < n; ++i) {
     rcont1[i] = y[i];
     double ydiff = yout[i] - y[i];
@@ -233,13 +233,13 @@ StepperDopr5<D>::Controller::Controller() : errold(1.0e-4), reject(false) {}
  * reduces h appropriately for another try. */
 template <typename D>
 bool StepperDopr5<D>::Controller::success(const double err, double& h) {
-  static const double beta =
+  static auto constexpr beta =
       0.0;  // Set beta to a nonzero value for PI control. beta = 0.04-0.08 is a
             // good default.
-  static const double alpha = 0.2 - beta * 0.75;
-  static const double safe = 0.9;
-  static const double minscale = 0.2;
-  static const double maxscale = 10.0;
+  static auto constexpr alpha = 0.2 - beta * 0.75;
+  static auto constexpr safe = 0.9;
+  static auto constexpr minscale = 0.2;
+  static auto constexpr maxscale = 10.0;
   double scale;
   if (err <= 1.0) {  // Step succeeded. Compute hnext.
     if (err == 0.0) {

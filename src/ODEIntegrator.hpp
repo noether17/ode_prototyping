@@ -29,7 +29,6 @@ struct ODEIntegrator {
   int nbad;
   int nvar;
   int nstp;
-  bool dense;  // true if dense output is requested by out.
 
   /* Constructor sets everything up. The routine integrates starting values
    * ystart[0...nvar-1] from xx1 to xx2 with absolute tolerance atol and
@@ -66,8 +65,7 @@ ODEIntegrator<Stepper>::ODEIntegrator(std::vector<double>& ystartt,
       x(xx1),
       nok(0),
       nbad(0),
-      nvar(ystartt.size()),
-      dense(outt.is_dense()) {
+      nvar(ystartt.size()) {
   eps = std::numeric_limits<double>::epsilon();
   h = x2 - x1 > 0.0 ? fabs(h1) : -fabs(h1);
   y = ystart;
@@ -88,7 +86,7 @@ void ODEIntegrator<Stepper>::integrate() {
     } else {
       ++nbad;
     }
-    if (dense) {
+    if (stepper.out.is_dense()) {
       stepper.out.out(x, stepper, stepper.hdid);
     } else {
       stepper.out.save(x, y);

@@ -19,7 +19,6 @@ struct ODEIntegrator {
   std::vector<double>& ystart;
   typename Stepper::Dtype& derivs;  // Get the type of derivs from the stepper.
   Stepper stepper;
-  double eps;
   double x1;
   double x2;
   double hmin;
@@ -27,11 +26,9 @@ struct ODEIntegrator {
   double h;
   int nok;
   int nbad;
-  int nvar;
-  int nstp;
 
   /* Constructor sets everything up. The routine integrates starting values
-   * ystart[0...nvar-1] from xx1 to xx2 with absolute tolerance atol and
+   * ystart from xx1 to xx2 with absolute tolerance atol and
    * relative tolerance rtol. The quantity h1 should be set as a guessed first
    * stepsize, hmin as the minimum allowed stepsize (can be zero). An Output
    * object out should be input to control the saving of intermediate values. On
@@ -64,9 +61,7 @@ ODEIntegrator<Stepper>::ODEIntegrator(std::vector<double>& ystartt,
       hmin(hminn),
       x(xx1),
       nok(0),
-      nbad(0),
-      nvar(ystartt.size()) {
-  eps = std::numeric_limits<double>::epsilon();
+      nbad(0) {
   h = x2 - x1 > 0.0 ? fabs(h1) : -fabs(h1);
   y = ystart;
   stepper.out.init(stepper.neqn, x1, x2);
@@ -76,7 +71,7 @@ template <typename Stepper>
 void ODEIntegrator<Stepper>::integrate() {
   derivs(x, y, dydx);
   stepper.save();
-  for (nstp = 0; nstp < max_step; ++nstp) {
+  for (auto nstp = 0; nstp < max_step; ++nstp) {
     if ((x + h * 1.0001 - x2) * (x2 - x1) > 0.0) {
       h = x2 - x;  // If stepsize can overshoot, decrease.
     }

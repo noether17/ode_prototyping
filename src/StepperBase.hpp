@@ -11,7 +11,6 @@ struct StepperBase {
   std::vector<double>& dydx;
   double atol;
   double rtol;
-  bool dense;
   double hdid;   // Actual stepsize accomplished by the step routine.
   double hnext;  // Step size predicted by the controller for the next step.
   double eps;
@@ -25,14 +24,13 @@ struct StepperBase {
    * variable x. Also input are the absolute and relative tolerances, atol and
    * rtol, and the boolean dense, which is true if dense output is required. */
   StepperBase(std::vector<double>& yy, std::vector<double>& dydxx, double& xx,
-              const double atoll, const double rtoll, bool dens, Output& outt)
+              const double atoll, const double rtoll, Output& outt)
       : out{outt},
         x(xx),
         y(yy),
         dydx(dydxx),
         atol(atoll),
         rtol(rtoll),
-        dense(dens),
         n(y.size()),
         neqn(n),
         yout(n),

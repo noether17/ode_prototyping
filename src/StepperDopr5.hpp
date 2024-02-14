@@ -23,7 +23,7 @@ struct StepperDopr5 : StepperBase {
   std::vector<double> dydxnew;
 
   StepperDopr5(std::vector<double>& yy, std::vector<double>& dydxx, double& xx,
-               const double atoll, const double rtoll, bool dens, Output& outt);
+               const double atoll, const double rtoll, Output& outt);
 
   void step(const double htry, D& derivs);
   void dy(const double h, D& derivs);
@@ -48,9 +48,9 @@ struct StepperDopr5 : StepperBase {
 template <typename D>
 StepperDopr5<D>::StepperDopr5(std::vector<double>& yy,
                               std::vector<double>& dydxx, double& xx,
-                              const double atoll, const double rtoll, bool dens,
+                              const double atoll, const double rtoll,
                               Output& outt)
-    : StepperBase(yy, dydxx, xx, atoll, rtoll, dens, outt),
+    : StepperBase(yy, dydxx, xx, atoll, rtoll, outt),
       k2(n),
       k3(n),
       k4(n),
@@ -81,7 +81,8 @@ void StepperDopr5<D>::step(const double htry, D& derivs) {
       throw std::runtime_error("step size underflow in StepperDopr5");
     }
   }
-  if (dense) {  // Step succeeded. Compute coefficients for dense output.
+  if (out.is_dense()) {  // Step succeeded. Compute coefficients for dense
+                         // output.
     prepare_dense(h, derivs);
   }
   dydx = dydxnew;  // Reuse last derivative evaluation for next step.

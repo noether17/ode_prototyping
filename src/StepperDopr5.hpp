@@ -21,12 +21,14 @@ struct StepperDopr5 : StepperBase {
   std::vector<double> rcont4;
   std::vector<double> rcont5;
   std::vector<double> dydxnew;
+  bool first_step{true};
 
   StepperDopr5(std::vector<double>& yy, std::vector<double>& dydxx, double& xx,
                double x2, const double atoll, const double rtoll, bool dens,
                Output& outt);
 
   void step(const double htry, D& derivs);
+  void save();
   void dy(const double h, D& derivs);
   void prepare_dense(const double h, D& derivs);
   double dense_out(const int i, const double x, const double h) const;
@@ -90,6 +92,16 @@ void StepperDopr5<D>::step(const double htry, D& derivs) {
   xold = x;  // Used for dense output.
   x += (hdid = h);
   hnext = con.hnext;
+}
+
+template <typename D>
+void StepperDopr5<D>::save() {
+  if (out.is_dense() && !first_step) {
+    out.out(x, *this, hdid);
+  } else {
+    out.save(x, y);
+    first_step = false;
+  }
 }
 
 /* Given values for n variables y[0...n-1] and their derivatives dydx[0...n-1]

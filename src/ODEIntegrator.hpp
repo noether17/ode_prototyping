@@ -76,7 +76,7 @@ ODEIntegrator<Stepper>::ODEIntegrator(std::vector<double>& ystartt,
 template <typename Stepper>
 void ODEIntegrator<Stepper>::integrate() {
   derivs(x, y, dydx);
-  stepper.out.save(x, y);
+  stepper.save();
   for (nstp = 0; nstp < max_step; ++nstp) {
     if ((x + h * 1.0001 - x2) * (x2 - x1) > 0.0) {
       h = x2 - x;  // If stepsize can overshoot, decrease.
@@ -87,11 +87,7 @@ void ODEIntegrator<Stepper>::integrate() {
     } else {
       ++nbad;
     }
-    if (dense) {
-      stepper.out.out(x, stepper, stepper.hdid);
-    } else {
-      stepper.out.save(x, y);
-    }
+    stepper.save();
     if ((x - x2) * (x2 - x1) >= 0.0) {  // Are we done?
       ystart = y;                       // Update ystart.
       return;                           // Normal exit.

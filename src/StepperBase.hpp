@@ -4,6 +4,7 @@
 
 /* Base class for all ODE algorithms. */
 struct StepperBase {
+  Output& out;
   double& x;
   double xold;  // Used for dense output.
   std::vector<double>& y;
@@ -24,8 +25,10 @@ struct StepperBase {
    * variable x. Also input are the absolute and relative tolerances, atol and
    * rtol, and the boolean dense, which is true if dense output is required. */
   StepperBase(std::vector<double>& yy, std::vector<double>& dydxx, double& xx,
-              const double atoll, const double rtoll, bool dens)
-      : x(xx),
+              double x2, const double atoll, const double rtoll, bool dens,
+              Output& outt)
+      : out{outt},
+        x(xx),
         y(yy),
         dydx(dydxx),
         atol(atoll),
@@ -34,5 +37,7 @@ struct StepperBase {
         n(y.size()),
         neqn(n),
         yout(n),
-        yerr(n) {}
+        yerr(n) {
+    out.init(n, x, x2);
+  }
 };

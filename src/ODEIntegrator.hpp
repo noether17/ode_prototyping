@@ -97,11 +97,7 @@ void ODEIntegrator<Stepper>::integrate() {
     }
     if ((x - x2) * (x2 - x1) >= 0.0) {  // Are we done?
       ystart = y;                       // Update ystart.
-      if (!out.output_suppressed() && fabs(out.x_values()[out.n_steps() - 1] -
-                                           x2) > 100.0 * fabs(x2) * eps) {
-        out.save(x, y);  // Make sure last step gets saved.
-      }
-      return;  // Normal exit.
+      return;                           // Normal exit.
     }
     if (fabs(stepper.hnext) <= hmin) {
       throw std::runtime_error("Step size too small in ODEIntegrator");

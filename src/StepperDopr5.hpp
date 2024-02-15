@@ -95,7 +95,7 @@ template <typename D>
 void StepperDopr5<D>::save(D& derivs) {
   if (out.is_dense() && !first_step) {
     prepare_dense(hdid, derivs);
-    out.out(x, *this, hdid);
+    out.out(*this);
   } else {
     out.save(x, yout);
     first_step = false;

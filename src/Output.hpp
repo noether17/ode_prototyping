@@ -70,12 +70,12 @@ class Output {
    * checks whether x is greater than the desired output point next_x_. If so,
    * it calls save_dense. */
   template <typename Stepper>
-  void out(double x, Stepper const& stepper, double h) {
+  void out(Stepper const& stepper) {
     if (!dense_) {
       throw std::runtime_error("dense output not set in Output");
     }
-    while ((x - next_x_) * (x2_ - x1_) > 0.0) {
-      save_dense(stepper, next_x_, h);
+    while ((stepper.x - next_x_) * (x2_ - x1_) > 0.0) {
+      save_dense(stepper, next_x_, stepper.hdid);
       next_x_ += interval_width_;
     }
   }

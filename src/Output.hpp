@@ -20,14 +20,10 @@ class Output {
  public:
   static constexpr auto init_cap = 500;  // Initial capacity of storage arrays.
 
-  /* Default constructor gives no output. */
-  Output() = default;
-
   /* Constructor provides dense output at n_intervals_ equally spaced intervals.
    * If n_intervals_ <= 0, output is saved only at the actual integration steps.
    */
-  explicit Output(int n_intervals)
-      : n_intervals_{n_intervals}, suppress_output_{false} {
+  explicit Output(int n_intervals) : n_intervals_{n_intervals} {
     dense_ = n_intervals_ > 0;
     x_values_.reserve(init_cap);
   }
@@ -36,9 +32,6 @@ class Output {
    * equations, xlo, the starting point of the integration, and xhi, the ending
    * point. */
   void init(int neqn, double xlo, double xhi) {
-    if (suppress_output_) {
-      return;
-    }
     y_values_.resize(neqn);
     for (auto& y : y_values_) {
       y.reserve(init_cap);
@@ -66,9 +59,6 @@ class Output {
   /* Saves values of current x and y. */
   template <typename Stepper>
   void save(Stepper& stepper) {
-    if (suppress_output_) {
-      return;
-    }
     if (dense_ && !first_call) {
       stepper.prepare_dense(stepper.hdid);
       out(stepper);
@@ -96,9 +86,6 @@ class Output {
     }
   }
 
-  /* Returns whether output is suppressed. */
-  auto output_suppressed() const { return suppress_output_; }
-
   /* Returns whether dense output is generated. */
   auto is_dense() const { return dense_; }
 
@@ -118,8 +105,7 @@ class Output {
   double x2_;
   double next_x_;
   double interval_width_;
-  int n_intervals_;    // Number of intervals to save at for dense output.
-  bool dense_{false};  // true if dense output requested.
-  bool suppress_output_{true};  // Default is no output.
-  bool first_call{true};        // true if first call to save.
+  int n_intervals_;       // Number of intervals to save at for dense output.
+  bool dense_{false};     // true if dense output requested.
+  bool first_call{true};  // true if first call to save.
 };

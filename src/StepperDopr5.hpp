@@ -83,16 +83,16 @@ void StepperDopr5<D>::step(const double htry, D& derivs) {
       throw std::runtime_error("step size underflow in StepperDopr5");
     }
   }
+  xold = x;  // Used for dense output.
+  x += (hdid = h);
   if (out.is_dense()) {  // Step succeeded. Compute coefficients for dense
                          // output.
     prepare_dense(h, derivs);
   }
+  save();
   dydx = dydxnew;  // Reuse last derivative evaluation for next step.
   y = yout;
-  xold = x;  // Used for dense output.
-  x += (hdid = h);
   hnext = con.hnext;
-  save();
 }
 
 template <typename D>
@@ -100,7 +100,7 @@ void StepperDopr5<D>::save() {
   if (out.is_dense() && !first_step) {
     out.out(x, *this, hdid);
   } else {
-    out.save(x, y);
+    out.save(x, yout);
     first_step = false;
   }
 }

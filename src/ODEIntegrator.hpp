@@ -51,7 +51,7 @@ ODEIntegrator<Stepper>::ODEIntegrator(std::vector<double>& ystartt,
                                       const double h1, const double hminn,
                                       Output& outt,
                                       typename Stepper::Dtype& derivss)
-    : y(ystartt.size()),
+    : y{ystartt},
       dydx(ystartt.size()),
       ystart(ystartt),
       derivs(derivss),
@@ -63,7 +63,6 @@ ODEIntegrator<Stepper>::ODEIntegrator(std::vector<double>& ystartt,
       nok(0),
       nbad(0) {
   h = x2 - x1 > 0.0 ? fabs(h1) : -fabs(h1);
-  y = ystart;
   stepper.out.init(stepper.neqn, x1, x2);
 }
 

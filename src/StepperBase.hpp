@@ -33,6 +33,6 @@ struct StepperBase {
         rtol(rtoll),
         n(y.size()),
         neqn(n),
-        yout(n),
+        yout{yy},
         yerr(n) {}
 };

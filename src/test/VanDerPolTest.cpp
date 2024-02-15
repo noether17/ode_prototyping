@@ -25,12 +25,15 @@ class VanDerPolTest : public testing::Test {
   };
 
   std::vector<double> ystart{2.0, 0.0};
+
+  using Dopr5Integrator =
+      ODEIntegrator<StepperDopr5<decltype(rhs_van), Output>>;
 };
 
 TEST_F(VanDerPolTest, DefaultOutputCtorSuppressesOutput) {
   auto out = Output{};  // Default constructor gives no output.
-  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_van)>>(
-      ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
+  auto ode =
+      Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
 
   ode.integrate();
 
@@ -50,8 +53,8 @@ TEST_F(VanDerPolTest, DefaultOutputCtorSuppressesOutput) {
  * in small differences in output, these values may be updated. */
 TEST_F(VanDerPolTest, ActualIntegrationStepsAreConsistent) {
   auto out = Output(-1);  // -1 for actual integration steps.
-  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_van)>>(
-      ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
+  auto ode =
+      Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
 
   ode.integrate();
 
@@ -75,8 +78,8 @@ TEST_F(VanDerPolTest, ActualIntegrationStepsAreConsistent) {
 
 TEST_F(VanDerPolTest, DenseOutputMatchesPython) {
   auto out = Output(20);
-  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_van)>>(
-      ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
+  auto ode =
+      Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
 
   ode.integrate();
 
@@ -164,8 +167,8 @@ TEST_F(VanDerPolTest, DenseOutputMatchesPython) {
 
 TEST_F(VanDerPolTest, DenseOutputIsConsistent) {
   auto out = Output(20);
-  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_van)>>(
-      ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
+  auto ode =
+      Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
 
   ode.integrate();
 

@@ -24,6 +24,9 @@ class SimpleOscillatorTest : public testing::Test {
   };
 
   std::vector<double> ystart{1.0, 0.0};
+
+  using Dopr5Integrator =
+      ODEIntegrator<StepperDopr5<decltype(rhs_osc), Output>>;
 };
 
 /* Consistency tests (testing for double equality) are to ensure no accidental
@@ -32,8 +35,8 @@ class SimpleOscillatorTest : public testing::Test {
  * in small differences in output, these values may be updated. */
 TEST_F(SimpleOscillatorTest, ActualIntegrationStepsAreConsistent) {
   auto out = Output(-1);  // -1 for actual integration steps.
-  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_osc)>>(
-      ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_osc);
+  auto ode =
+      Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_osc);
 
   ode.integrate();
 
@@ -57,8 +60,8 @@ TEST_F(SimpleOscillatorTest, ActualIntegrationStepsAreConsistent) {
 
 TEST_F(SimpleOscillatorTest, DenseOutputMatchesPython) {
   auto out = Output(20);
-  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_osc)>>(
-      ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_osc);
+  auto ode =
+      Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_osc);
 
   ode.integrate();
 
@@ -146,8 +149,8 @@ TEST_F(SimpleOscillatorTest, DenseOutputMatchesPython) {
 
 TEST_F(SimpleOscillatorTest, DenseOutputIsConsistent) {
   auto out = Output(20);
-  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_osc)>>(
-      ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_osc);
+  auto ode =
+      Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_osc);
 
   ode.integrate();
 
@@ -235,8 +238,8 @@ TEST_F(SimpleOscillatorTest, DenseOutputIsConsistent) {
 TEST_F(SimpleOscillatorTest, ConsistentWithNonzeroStartingPoint) {
   auto constexpr xstart = 1.0;
   auto out = Output(5);
-  auto ode = ODEIntegrator<StepperDopr5<decltype(rhs_osc)>>(
-      ystart, xstart, x2, atol, rtol, h1, hmin, out, rhs_osc);
+  auto ode =
+      Dopr5Integrator(ystart, xstart, x2, atol, rtol, h1, hmin, out, rhs_osc);
 
   ode.integrate();
 

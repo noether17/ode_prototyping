@@ -10,6 +10,7 @@
 template <typename D>
 struct StepperDopr5 : StepperBase {
   typedef D Dtype;  // Make the type of derivs available to ODEIntegrator.
+  D& derivs;
   std::vector<double> k2;
   std::vector<double> k3;
   std::vector<double> k4;
@@ -24,7 +25,8 @@ struct StepperDopr5 : StepperBase {
   bool first_step{true};
 
   StepperDopr5(std::vector<double>& yy, std::vector<double>& dydxx, double& xx,
-               const double atoll, const double rtoll, Output& outt);
+               const double atoll, const double rtoll, Output& outt,
+               D& derivss);
 
   void step(const double htry, D& derivs);
   void save(D& derivs);
@@ -51,8 +53,9 @@ template <typename D>
 StepperDopr5<D>::StepperDopr5(std::vector<double>& yy,
                               std::vector<double>& dydxx, double& xx,
                               const double atoll, const double rtoll,
-                              Output& outt)
+                              Output& outt, D& derivss)
     : StepperBase(yy, dydxx, xx, atoll, rtoll, outt),
+      derivs{derivss},
       k2(n),
       k3(n),
       k4(n),

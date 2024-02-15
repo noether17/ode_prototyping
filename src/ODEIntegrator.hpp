@@ -81,7 +81,6 @@ void ODEIntegrator<Stepper>::integrate() {
     } else {
       ++nbad;
     }
-    stepper.save();
     if ((x - x2) * (x2 - x1) >= 0.0) {  // Are we done?
       ystart = y;                       // Update ystart.
       return;                           // Normal exit.

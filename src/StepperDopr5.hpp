@@ -92,6 +92,7 @@ void StepperDopr5<D>::step(const double htry, D& derivs) {
   xold = x;  // Used for dense output.
   x += (hdid = h);
   hnext = con.hnext;
+  save();
 }
 
 template <typename D>

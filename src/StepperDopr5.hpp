@@ -22,16 +22,15 @@ struct StepperDopr5 : StepperBase {
   std::vector<double> rcont4;
   std::vector<double> rcont5;
   std::vector<double> dydxnew;
-  bool first_step{true};
 
   StepperDopr5(std::vector<double>& yy, std::vector<double>& dydxx, double& xx,
                const double atoll, const double rtoll, Output& outt,
                D& derivss);
 
   void step(const double htry, D& derivs);
-  void save(D& derivs);
+  void save();
   void dy(const double h, D& derivs);
-  void prepare_dense(const double h, D& derivs);
+  void prepare_dense(const double h);
   double dense_out(const int i, const double x, const double h) const;
   double error();
   struct Controller {
@@ -88,21 +87,15 @@ void StepperDopr5<D>::step(const double htry, D& derivs) {
   }
   xold = x;  // Used for dense output.
   x += (hdid = h);
-  save(derivs);
+  save();
   dydx = dydxnew;  // Reuse last derivative evaluation for next step.
   y = yout;
   hnext = con.hnext;
 }
 
 template <typename D>
-void StepperDopr5<D>::save(D& derivs) {
-  if (out.is_dense() && !first_step) {
-    prepare_dense(hdid, derivs);
-    out.out(*this);
-  } else {
-    out.save(*this);
-    first_step = false;
-  }
+void StepperDopr5<D>::save() {
+  out.save(*this);
 }
 
 /* Given values for n variables y[0...n-1] and their derivatives dydx[0...n-1]
@@ -183,7 +176,7 @@ void StepperDopr5<D>::dy(const double h, D& derivs) {
 /* Store coefficients of interpolating polynomial for dense output in
  * rcont1...rcont5. */
 template <typename D>
-void StepperDopr5<D>::prepare_dense(const double h, D&) {
+void StepperDopr5<D>::prepare_dense(const double h) {
   static auto constexpr d1 = -12715105075.0 / 11282082432.0;
   static auto constexpr d3 = 87487479700.0 / 32700410799.0;
   static auto constexpr d4 = -10690763975.0 / 1880347072.0;

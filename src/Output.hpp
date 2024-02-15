@@ -56,10 +56,16 @@ class Output {
 
   /* Saves values of current x and y. */
   template <typename Stepper>
-  void save(Stepper const& stepper) {
+  void save(Stepper& stepper) {
     if (suppress_output_) {
       return;
     }
+    if (dense_ && !first_call) {
+      stepper.prepare_dense(stepper.hdid);
+      out(stepper);
+      return;
+    }
+    first_call = false;
     for (auto&& [saved_i, y_i] : vws::zip(y_values_, stepper.yout)) {
       saved_i.push_back(y_i);
     }
@@ -106,4 +112,5 @@ class Output {
   int n_intervals_;    // Number of intervals to save at for dense output.
   bool dense_{false};  // true if dense output requested.
   bool suppress_output_{true};  // Default is no output.
+  bool first_call{true};        // true if first call to save.
 };

@@ -27,7 +27,7 @@ struct StepperDopr5 : StepperBase {
                const double atoll, const double rtoll, Output& outt);
 
   void step(const double htry, D& derivs);
-  void save();
+  void save(D& derivs);
   void dy(const double h, D& derivs);
   void prepare_dense(const double h, D& derivs);
   double dense_out(const int i, const double x, const double h) const;
@@ -85,19 +85,16 @@ void StepperDopr5<D>::step(const double htry, D& derivs) {
   }
   xold = x;  // Used for dense output.
   x += (hdid = h);
-  if (out.is_dense()) {  // Step succeeded. Compute coefficients for dense
-                         // output.
-    prepare_dense(h, derivs);
-  }
-  save();
+  save(derivs);
   dydx = dydxnew;  // Reuse last derivative evaluation for next step.
   y = yout;
   hnext = con.hnext;
 }
 
 template <typename D>
-void StepperDopr5<D>::save() {
+void StepperDopr5<D>::save(D& derivs) {
   if (out.is_dense() && !first_step) {
+    prepare_dense(hdid, derivs);
     out.out(x, *this, hdid);
   } else {
     out.save(x, yout);

@@ -97,7 +97,7 @@ void StepperDopr5<D>::save(D& derivs) {
     prepare_dense(hdid, derivs);
     out.out(*this);
   } else {
-    out.save(x, yout);
+    out.save(*this);
     first_step = false;
   }
 }

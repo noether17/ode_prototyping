@@ -55,14 +55,15 @@ class Output {
   }
 
   /* Saves values of current x and y. */
-  void save(double x, std::vector<double> const& y) {
+  template <typename Stepper>
+  void save(Stepper const& stepper) {
     if (suppress_output_) {
       return;
     }
-    for (auto&& [saved_i, y_i] : vws::zip(y_values_, y)) {
+    for (auto&& [saved_i, y_i] : vws::zip(y_values_, stepper.yout)) {
       saved_i.push_back(y_i);
     }
-    x_values_.push_back(x);
+    x_values_.push_back(stepper.x);
   }
 
   /* Typically called by ODEIntegrator to produce dense output. Input variables

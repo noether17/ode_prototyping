@@ -7,9 +7,10 @@
 
 /* Dormand-Prince fifth-order Runge-Kutta step with monitoring of local
  * truncation error to ensure accuracy and adjust stepsize. */
-template <typename D, typename OutputType>
-struct StepperDopr5 : StepperBase, OutputType {
+template <typename D, typename OP>
+struct StepperDopr5 : StepperBase, OP {
   typedef D Dtype;  // Make the type of derivs available to ODEIntegrator.
+  using OutputPolicy = OP;
   D& derivs;
   std::vector<double> k2;
   std::vector<double> k3;
@@ -24,7 +25,7 @@ struct StepperDopr5 : StepperBase, OutputType {
   std::vector<double> dydxnew;
 
   StepperDopr5(std::vector<double>& yy, std::vector<double>& dydxx, double& xx,
-               const double atoll, const double rtoll, OutputType outt,
+               const double atoll, const double rtoll, OutputPolicy outt,
                D& derivss);
 
   void step(const double htry, D& derivs);
@@ -48,14 +49,13 @@ struct StepperDopr5 : StepperBase, OutputType {
  * derivative dydx[0...n-1] at the starting value of the independent variable x.
  * Also input are the absolute and relative tolerances, atol and rtol, and the
  * boolean dense, which is true if dense output is required. */
-template <typename D, typename OutputType>
-StepperDopr5<D, OutputType>::StepperDopr5(std::vector<double>& yy,
-                                          std::vector<double>& dydxx,
-                                          double& xx, const double atoll,
-                                          const double rtoll, OutputType outt,
-                                          D& derivss)
+template <typename D, typename OP>
+StepperDopr5<D, OP>::StepperDopr5(std::vector<double>& yy,
+                                  std::vector<double>& dydxx, double& xx,
+                                  const double atoll, const double rtoll,
+                                  OP outt, D& derivss)
     : StepperBase(yy, dydxx, xx, atoll, rtoll),
-      OutputType(outt),
+      OP(outt),
       derivs{derivss},
       k2(n),
       k3(n),
@@ -74,8 +74,8 @@ StepperDopr5<D, OutputType>::StepperDopr5(std::vector<double>& yy,
 /* Attempts a step with stepsize htry. On output, y and x are replaced by their
  * new values, hdid is the stepsize that was actually accomplished, and hnext is
  * the estimated next stepsize. */
-template <typename D, typename OutputType>
-void StepperDopr5<D, OutputType>::step(const double htry, D& derivs) {
+template <typename D, typename OP>
+void StepperDopr5<D, OP>::step(const double htry, D& derivs) {
   double h = htry;  // Set stepsize to the initial trial value.
   for (;;) {
     dy(h, derivs);               // Take a step.
@@ -95,9 +95,9 @@ void StepperDopr5<D, OutputType>::step(const double htry, D& derivs) {
   hnext = con.hnext;
 }
 
-template <typename D, typename OutputType>
-void StepperDopr5<D, OutputType>::save() {
-  OutputType::save(*this);
+template <typename D, typename OP>
+void StepperDopr5<D, OP>::save() {
+  OP::save(*this);
 }
 
 /* Given values for n variables y[0...n-1] and their derivatives dydx[0...n-1]
@@ -105,8 +105,8 @@ void StepperDopr5<D, OutputType>::save() {
  * the solution over an interval h and store the incremented variables in
  * yout[0...n-1]. Also store an estimate of the local truncation error in yerr
  * using the embedded fourth-order method. */
-template <typename D, typename OutputType>
-void StepperDopr5<D, OutputType>::dy(const double h, D& derivs) {
+template <typename D, typename OP>
+void StepperDopr5<D, OP>::dy(const double h, D& derivs) {
   static auto constexpr c2 = 0.2;
   static auto constexpr c3 = 0.3;
   static auto constexpr c4 = 0.8;
@@ -177,8 +177,8 @@ void StepperDopr5<D, OutputType>::dy(const double h, D& derivs) {
 
 /* Store coefficients of interpolating polynomial for dense output in
  * rcont1...rcont5. */
-template <typename D, typename OutputType>
-void StepperDopr5<D, OutputType>::prepare_dense(const double h) {
+template <typename D, typename OP>
+void StepperDopr5<D, OP>::prepare_dense(const double h) {
   static auto constexpr d1 = -12715105075.0 / 11282082432.0;
   static auto constexpr d3 = 87487479700.0 / 32700410799.0;
   static auto constexpr d4 = -10690763975.0 / 1880347072.0;
@@ -199,9 +199,9 @@ void StepperDopr5<D, OutputType>::prepare_dense(const double h) {
 
 /* Evaluate interpolating polynomial for y[i] at location x, where xold <= x <=
  * xold + h. */
-template <typename D, typename OutputType>
-double StepperDopr5<D, OutputType>::dense_out(const int i, const double x,
-                                              const double h) const {
+template <typename D, typename OP>
+double StepperDopr5<D, OP>::dense_out(const int i, const double x,
+                                      const double h) const {
   double s = (x - xold) / h;
   double s1 = 1.0 - s;
   return rcont1[i] +
@@ -210,8 +210,8 @@ double StepperDopr5<D, OutputType>::dense_out(const int i, const double x,
 
 /* Use yerr to compute norm of scaled error estimate. A value less than one
  * means the step was successful. */
-template <typename D, typename OutputType>
-double StepperDopr5<D, OutputType>::error() {
+template <typename D, typename OP>
+double StepperDopr5<D, OP>::error() {
   double err = 0.0;
   for (int i = 0; i < n; ++i) {
     double sk = atol + rtol * std::max(fabs(y[i]), fabs(yout[i]));
@@ -221,16 +221,14 @@ double StepperDopr5<D, OutputType>::error() {
 }
 
 /* Step size controller for fifth-order Dormand-Prince method. */
-template <typename D, typename OutputType>
-StepperDopr5<D, OutputType>::Controller::Controller()
-    : errold(1.0e-4), reject(false) {}
+template <typename D, typename OP>
+StepperDopr5<D, OP>::Controller::Controller() : errold(1.0e-4), reject(false) {}
 
 /* Returns true if err <= 1, false otherwise. If step was successful, sets hnext
  * to the estimated optimal stepsize for the next step. If the step failed,
  * reduces h appropriately for another try. */
-template <typename D, typename OutputType>
-bool StepperDopr5<D, OutputType>::Controller::success(const double err,
-                                                      double& h) {
+template <typename D, typename OP>
+bool StepperDopr5<D, OP>::Controller::success(const double err, double& h) {
   static auto constexpr beta =
       0.0;  // Set beta to a nonzero value for PI control. beta = 0.04-0.08 is a
             // good default.

@@ -6,6 +6,15 @@
 
 namespace vws = std::views;
 
+class NoOutput {
+ public:
+  void init(int, double, double) {}
+
+  template <typename Stepper>
+  void save(Stepper const&) {}
+};  // TODO: Prevent instantiation of policy class outside of host by making
+    // dtor protected.
+
 /* Structure for output from ODE solver such as ODEIntegrator. */
 class Output {
  public:

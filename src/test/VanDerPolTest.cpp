@@ -28,21 +28,15 @@ class VanDerPolTest : public testing::Test {
 
   using Dopr5Integrator =
       ODEIntegrator<StepperDopr5<decltype(rhs_van), Output>>;
+  using Dopr5IntegratorNoOutput =
+      ODEIntegrator<StepperDopr5<decltype(rhs_van), NoOutput>>;
 };
 
 TEST_F(VanDerPolTest, DefaultOutputCtorSuppressesOutput) {
-  auto ode =
-      Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, Output{}, rhs_van);
-  auto const& out = ode.stepper;  // TODO: Need to clean up the interface for
-                                  // accessing output object.
+  auto ode = Dopr5IntegratorNoOutput(ystart, x1, x2, atol, rtol, h1, hmin,
+                                     NoOutput{}, rhs_van);
 
   ode.integrate();
-
-  EXPECT_TRUE(out.output_suppressed());
-  EXPECT_FALSE(out.is_dense());
-  EXPECT_EQ(0, out.n_steps());
-  EXPECT_TRUE(out.x_values().empty());
-  EXPECT_TRUE(out.y_values().empty());
 
   EXPECT_DOUBLE_EQ(1.7644320190605265, ystart[0]);
   EXPECT_DOUBLE_EQ(-0.83427005245677999, ystart[1]);
@@ -55,7 +49,8 @@ TEST_F(VanDerPolTest, DefaultOutputCtorSuppressesOutput) {
 TEST_F(VanDerPolTest, ActualIntegrationStepsAreConsistent) {
   auto ode = Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, Output{-1},
                              rhs_van);
-  auto const& out = ode.stepper;
+  auto const& out = ode.stepper;  // TODO: Need to clean up the interface for
+                                  // accessing output object.
 
   ode.integrate();
 

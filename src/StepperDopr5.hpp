@@ -8,10 +8,9 @@
 /* Dormand-Prince fifth-order Runge-Kutta step with monitoring of local
  * truncation error to ensure accuracy and adjust stepsize. */
 template <typename D, typename OutputType>
-struct StepperDopr5 : StepperBase {
+struct StepperDopr5 : StepperBase, OutputType {
   typedef D Dtype;  // Make the type of derivs available to ODEIntegrator.
   D& derivs;
-  OutputType& out;
   std::vector<double> k2;
   std::vector<double> k3;
   std::vector<double> k4;
@@ -25,7 +24,7 @@ struct StepperDopr5 : StepperBase {
   std::vector<double> dydxnew;
 
   StepperDopr5(std::vector<double>& yy, std::vector<double>& dydxx, double& xx,
-               const double atoll, const double rtoll, OutputType& outt,
+               const double atoll, const double rtoll, OutputType outt,
                D& derivss);
 
   void step(const double htry, D& derivs);
@@ -53,11 +52,11 @@ template <typename D, typename OutputType>
 StepperDopr5<D, OutputType>::StepperDopr5(std::vector<double>& yy,
                                           std::vector<double>& dydxx,
                                           double& xx, const double atoll,
-                                          const double rtoll, OutputType& outt,
+                                          const double rtoll, OutputType outt,
                                           D& derivss)
     : StepperBase(yy, dydxx, xx, atoll, rtoll),
+      OutputType(outt),
       derivs{derivss},
-      out{outt},
       k2(n),
       k3(n),
       k4(n),
@@ -98,7 +97,7 @@ void StepperDopr5<D, OutputType>::step(const double htry, D& derivs) {
 
 template <typename D, typename OutputType>
 void StepperDopr5<D, OutputType>::save() {
-  out.save(*this);
+  OutputType::save(*this);
 }
 
 /* Given values for n variables y[0...n-1] and their derivatives dydx[0...n-1]

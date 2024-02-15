@@ -31,9 +31,10 @@ class VanDerPolTest : public testing::Test {
 };
 
 TEST_F(VanDerPolTest, DefaultOutputCtorSuppressesOutput) {
-  auto out = Output{};  // Default constructor gives no output.
   auto ode =
-      Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
+      Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, Output{}, rhs_van);
+  auto const& out = ode.stepper;  // TODO: Need to clean up the interface for
+                                  // accessing output object.
 
   ode.integrate();
 
@@ -52,9 +53,9 @@ TEST_F(VanDerPolTest, DefaultOutputCtorSuppressesOutput) {
  * than the actual requirements. If an intentional change in algorithm results
  * in small differences in output, these values may be updated. */
 TEST_F(VanDerPolTest, ActualIntegrationStepsAreConsistent) {
-  auto out = Output(-1);  // -1 for actual integration steps.
-  auto ode =
-      Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
+  auto ode = Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, Output{-1},
+                             rhs_van);
+  auto const& out = ode.stepper;
 
   ode.integrate();
 
@@ -77,9 +78,9 @@ TEST_F(VanDerPolTest, ActualIntegrationStepsAreConsistent) {
 }
 
 TEST_F(VanDerPolTest, DenseOutputMatchesPython) {
-  auto out = Output(20);
-  auto ode =
-      Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
+  auto ode = Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, Output{20},
+                             rhs_van);
+  auto const& out = ode.stepper;
 
   ode.integrate();
 
@@ -166,9 +167,9 @@ TEST_F(VanDerPolTest, DenseOutputMatchesPython) {
 }
 
 TEST_F(VanDerPolTest, DenseOutputIsConsistent) {
-  auto out = Output(20);
-  auto ode =
-      Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, out, rhs_van);
+  auto ode = Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, Output{20},
+                             rhs_van);
+  auto const& out = ode.stepper;
 
   ode.integrate();
 

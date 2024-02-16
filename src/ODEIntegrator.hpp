@@ -38,7 +38,7 @@ struct ODEIntegrator {
    * calculating the right-hand side derivative. */
   ODEIntegrator(std::vector<double>& ystartt, const double xx1,
                 const double xx2, const double atol, const double rtol,
-                const double h1, const double hminn, Stepper::OutputPolicy outt,
+                const double h1, const double hminn,
                 typename Stepper::Dtype& derivss);
 
   void integrate();  // Does the actual integration.
@@ -49,13 +49,12 @@ ODEIntegrator<Stepper>::ODEIntegrator(std::vector<double>& ystartt,
                                       const double xx1, const double xx2,
                                       const double atol, const double rtol,
                                       const double h1, const double hminn,
-                                      Stepper::OutputPolicy outt,
                                       typename Stepper::Dtype& derivss)
     : y{ystartt},
       dydx(ystartt.size()),
       ystart(ystartt),
       derivs(derivss),
-      stepper(y, dydx, x, atol, rtol, outt, derivss),
+      stepper(y, dydx, x, atol, rtol, derivss),
       x1(xx1),
       x2(xx2),
       hmin(hminn),

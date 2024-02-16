@@ -36,8 +36,8 @@ class SimpleOscillatorTest : public testing::Test {
  * than the actual requirements. If an intentional change in algorithm results
  * in small differences in output, these values may be updated. */
 TEST_F(SimpleOscillatorTest, ActualIntegrationStepsAreConsistent) {
-  auto ode = Dopr5IntegratorRawOutput(ystart, x1, x2, atol, rtol, h1, hmin,
-                                      RawOutput{}, rhs_osc);
+  auto ode =
+      Dopr5IntegratorRawOutput(ystart, x1, x2, atol, rtol, h1, hmin, rhs_osc);
   auto const& out = ode.stepper;
 
   ode.integrate();
@@ -61,8 +61,8 @@ TEST_F(SimpleOscillatorTest, ActualIntegrationStepsAreConsistent) {
 }
 
 TEST_F(SimpleOscillatorTest, DenseOutputMatchesPython) {
-  auto ode = Dopr5IntegratorDenseOutput(ystart, x1, x2, atol, rtol, h1, hmin,
-                                        DenseOutput{}, rhs_osc);
+  auto ode =
+      Dopr5IntegratorDenseOutput(ystart, x1, x2, atol, rtol, h1, hmin, rhs_osc);
   auto const& out = ode.stepper;
 
   ode.integrate();
@@ -150,8 +150,8 @@ TEST_F(SimpleOscillatorTest, DenseOutputMatchesPython) {
 }
 
 TEST_F(SimpleOscillatorTest, DenseOutputIsConsistent) {
-  auto ode = Dopr5IntegratorDenseOutput(ystart, x1, x2, atol, rtol, h1, hmin,
-                                        DenseOutput{}, rhs_osc);
+  auto ode =
+      Dopr5IntegratorDenseOutput(ystart, x1, x2, atol, rtol, h1, hmin, rhs_osc);
   auto const& out = ode.stepper;
 
   ode.integrate();
@@ -240,7 +240,7 @@ TEST_F(SimpleOscillatorTest, DenseOutputIsConsistent) {
 TEST_F(SimpleOscillatorTest, ConsistentWithNonzeroStartingPoint) {
   auto constexpr xstart = 1.0;
   auto ode = Dopr5IntegratorDenseOutput(ystart, xstart, x2, atol, rtol, h1,
-                                        hmin, DenseOutput{}, rhs_osc);
+                                        hmin, rhs_osc);
   ode.stepper.set_n_intervals(5);
   auto const& out = ode.stepper;
 

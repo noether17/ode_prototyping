@@ -27,6 +27,8 @@ class SimpleOscillatorTest : public testing::Test {
 
   using Dopr5Integrator =
       ODEIntegrator<StepperDopr5<decltype(rhs_osc), Output>>;
+  using Dopr5IntegratorRawOutput =
+      ODEIntegrator<StepperDopr5<decltype(rhs_osc), RawOutput>>;
 };
 
 /* Consistency tests (testing for double equality) are to ensure no accidental
@@ -34,8 +36,8 @@ class SimpleOscillatorTest : public testing::Test {
  * than the actual requirements. If an intentional change in algorithm results
  * in small differences in output, these values may be updated. */
 TEST_F(SimpleOscillatorTest, ActualIntegrationStepsAreConsistent) {
-  auto ode = Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, Output{-1},
-                             rhs_osc);
+  auto ode = Dopr5IntegratorRawOutput(ystart, x1, x2, atol, rtol, h1, hmin,
+                                      RawOutput{}, rhs_osc);
   auto const& out = ode.stepper;
 
   ode.integrate();

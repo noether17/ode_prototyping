@@ -6,6 +6,7 @@
 
 namespace vws = std::views;
 
+/* Policy class for providing no output of intermediate values. */
 class NoOutput {
  public:
   void init(int, double, double) {}
@@ -15,10 +16,40 @@ class NoOutput {
 };  // TODO: Prevent instantiation of policy class outside of host by making
     // dtor protected.
 
+/* Policy class for providing output at the actual integration steps. */
+class RawOutput {
+ public:
+  static auto constexpr init_cap = 500;  // Initial capacity of storage arrays.
+
+  void init(int neqn, double, double) {
+    y_values_.resize(neqn);
+    for (auto& y : y_values_) {
+      y.reserve(init_cap);
+    }
+    x_values_.reserve(init_cap);
+  }
+
+  template <typename Stepper>
+  void save(Stepper& stepper) {
+    for (auto&& [saved_i, y_i] : vws::zip(y_values_, stepper.yout)) {
+      saved_i.push_back(y_i);
+    }
+    x_values_.push_back(stepper.x);
+  }
+
+  auto n_steps() const { return x_values_.size(); }
+  auto const& x_values() const { return x_values_; }
+  auto const& y_values() const { return y_values_; }
+
+ private:
+  std::vector<double> x_values_{};  // Results stored in the vector x_values_
+  std::vector<std::vector<double>> y_values_{};  // and the matrix y_values_.
+};
+
 /* Structure for output from ODE solver such as ODEIntegrator. */
 class Output {
  public:
-  static constexpr auto init_cap = 500;  // Initial capacity of storage arrays.
+  static auto constexpr init_cap = 500;  // Initial capacity of storage arrays.
 
   /* Constructor provides dense output at n_intervals_ equally spaced intervals.
    * If n_intervals_ <= 0, output is saved only at the actual integration steps.

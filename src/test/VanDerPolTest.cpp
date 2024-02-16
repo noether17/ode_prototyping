@@ -30,6 +30,8 @@ class VanDerPolTest : public testing::Test {
       ODEIntegrator<StepperDopr5<decltype(rhs_van), Output>>;
   using Dopr5IntegratorNoOutput =
       ODEIntegrator<StepperDopr5<decltype(rhs_van), NoOutput>>;
+  using Dopr5IntegratorRawOutput =
+      ODEIntegrator<StepperDopr5<decltype(rhs_van), RawOutput>>;
 };
 
 TEST_F(VanDerPolTest, DefaultOutputCtorSuppressesOutput) {
@@ -47,8 +49,8 @@ TEST_F(VanDerPolTest, DefaultOutputCtorSuppressesOutput) {
  * than the actual requirements. If an intentional change in algorithm results
  * in small differences in output, these values may be updated. */
 TEST_F(VanDerPolTest, ActualIntegrationStepsAreConsistent) {
-  auto ode = Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, Output{-1},
-                             rhs_van);
+  auto ode = Dopr5IntegratorRawOutput(ystart, x1, x2, atol, rtol, h1, hmin,
+                                      RawOutput{}, rhs_van);
   auto const& out = ode.stepper;  // TODO: Need to clean up the interface for
                                   // accessing output object.
 

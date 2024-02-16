@@ -76,7 +76,7 @@ TEST_F(VanDerPolTest, ActualIntegrationStepsAreConsistent) {
 
 TEST_F(VanDerPolTest, DenseOutputMatchesPython) {
   auto ode = Dopr5IntegratorDenseOutput(ystart, x1, x2, atol, rtol, h1, hmin,
-                                        DenseOutput{20}, rhs_van);
+                                        DenseOutput{}, rhs_van);
   auto const& out = ode.stepper;
 
   ode.integrate();
@@ -165,7 +165,7 @@ TEST_F(VanDerPolTest, DenseOutputMatchesPython) {
 
 TEST_F(VanDerPolTest, DenseOutputIsConsistent) {
   auto ode = Dopr5IntegratorDenseOutput(ystart, x1, x2, atol, rtol, h1, hmin,
-                                        DenseOutput{20}, rhs_van);
+                                        DenseOutput{}, rhs_van);
   auto const& out = ode.stepper;
 
   ode.integrate();

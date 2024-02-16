@@ -50,10 +50,8 @@ class RawOutput {
 class DenseOutput {
  public:
   static auto constexpr init_cap = 500;  // Initial capacity of storage arrays.
-
-  /* Constructor provides dense output at n_intervals_ equally spaced intervals.
-   */
-  explicit DenseOutput(int n_intervals) : n_intervals_{n_intervals} {}
+  static auto constexpr default_n_intervals =
+      20;  // Default number of intervals.
 
   /* Called by the ODEIntegrator constructor, which passes neqn, the number of
    * equations, xlo, the starting point of the integration, and xhi, the ending
@@ -100,6 +98,16 @@ class DenseOutput {
     }
   }
 
+  /* Sets the number of intervals to the chosen value. */
+  void set_n_intervals(int n_intervals) {
+    if (n_intervals < 1) {
+      throw std::invalid_argument{"n_intervals must be at least 1."};
+    }
+    n_intervals_ = n_intervals;
+    interval_width_ = (x2_ - x1_) / n_intervals_;
+    next_x_ = x1_ + interval_width_;
+  }
+
   /* Returns the number of steps taken. */
   auto n_steps() const { return x_values_.size(); }
 
@@ -116,6 +124,7 @@ class DenseOutput {
   double x2_;
   double next_x_;
   double interval_width_;
-  int n_intervals_;       // Number of intervals to save at for dense output.
-  bool first_call{true};  // true if first call to save.
+  int n_intervals_{
+      default_n_intervals};  // Number of intervals to save at for dense output.
+  bool first_call{true};     // true if first call to save.
 };

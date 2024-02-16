@@ -46,7 +46,7 @@ class RawOutput {
   std::vector<std::vector<double>> y_values_{};  // and the matrix y_values_.
 };
 
-/* Structure for output from ODE solver such as ODEIntegrator. */
+/* Policy class for providing dense output. */
 class DenseOutput {
  public:
   static auto constexpr init_cap = 500;  // Initial capacity of storage arrays.
@@ -71,7 +71,7 @@ class DenseOutput {
   }
 
   /* Invokes dense_out function of stepper routine to produce output at xout.
-   * Normally called by out rather than directly. Assumes that xout is between
+   * Normally called by save rather than directly. Assumes that xout is between
    * xold and xold + h, where the stepper must keep track of xold, the location
    * of the previous step, and x = xold + h, the current step. */
   template <typename Stepper>
@@ -85,24 +85,15 @@ class DenseOutput {
   /* Saves values of current x and y. */
   template <typename Stepper>
   void save(Stepper& stepper) {
-    if (!first_call) {
-      stepper.prepare_dense(stepper.hdid);
-      out(stepper);
+    if (first_call) {
+      first_call = false;
+      for (auto&& [saved_i, y_i] : vws::zip(y_values_, stepper.yout)) {
+        saved_i.push_back(y_i);
+      }
+      x_values_.push_back(stepper.x);
       return;
     }
-    first_call = false;
-    for (auto&& [saved_i, y_i] : vws::zip(y_values_, stepper.yout)) {
-      saved_i.push_back(y_i);
-    }
-    x_values_.push_back(stepper.x);
-  }
-
-  /* Typically called by ODEIntegrator to produce dense output. Input variables
-   * are the current value of x, the stepper, and the stepsize h. The routine
-   * checks whether x is greater than the desired output point next_x_. If so,
-   * it calls save_dense. */
-  template <typename Stepper>
-  void out(Stepper const& stepper) {
+    stepper.prepare_dense(stepper.hdid);
     while ((stepper.x - next_x_) * (x2_ - x1_) > 0.0) {
       save_dense(stepper, next_x_, stepper.hdid);
       next_x_ += interval_width_;

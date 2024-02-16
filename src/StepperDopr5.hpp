@@ -5,6 +5,16 @@
 
 #include "StepperBase.hpp"
 
+/* Specifies the additional data needed to produce dense output, to be held by
+ * the DenseObject policy class and modified by prepare_dense(). */
+struct Dopr5DenseData {
+  std::vector<double> rcont1{};
+  std::vector<double> rcont2{};
+  std::vector<double> rcont3{};
+  std::vector<double> rcont4{};
+  std::vector<double> rcont5{};
+};
+
 /* Dormand-Prince fifth-order Runge-Kutta step with monitoring of local
  * truncation error to ensure accuracy and adjust stepsize. */
 template <typename D, typename OP>
@@ -17,11 +27,6 @@ struct StepperDopr5 : StepperBase, OP {
   std::vector<double> k4;
   std::vector<double> k5;
   std::vector<double> k6;
-  std::vector<double> rcont1;
-  std::vector<double> rcont2;
-  std::vector<double> rcont3;
-  std::vector<double> rcont4;
-  std::vector<double> rcont5;
   std::vector<double> dydxnew;
 
   StepperDopr5(std::vector<double>& yy, std::vector<double>& dydxx, double& xx,
@@ -30,8 +35,9 @@ struct StepperDopr5 : StepperBase, OP {
   void step(const double htry, D& derivs);
   void save();
   void dy(const double h, D& derivs);
-  void prepare_dense(const double h);
-  double dense_out(const int i, const double x, const double h) const;
+  void prepare_dense(const double h, Dopr5DenseData& dense_data);
+  double dense_out(const int i, const double x, const double h,
+                   Dopr5DenseData const& dense_data) const;
   double error();
   struct Controller {
     double hnext;
@@ -61,11 +67,6 @@ StepperDopr5<D, OP>::StepperDopr5(std::vector<double>& yy,
       k4(n),
       k5(n),
       k6(n),
-      rcont1(n),
-      rcont2(n),
-      rcont3(n),
-      rcont4(n),
-      rcont5(n),
       dydxnew(n) {
   eps = std::numeric_limits<double>::epsilon();
 }
@@ -176,22 +177,30 @@ void StepperDopr5<D, OP>::dy(const double h, D& derivs) {
 /* Store coefficients of interpolating polynomial for dense output in
  * rcont1...rcont5. */
 template <typename D, typename OP>
-void StepperDopr5<D, OP>::prepare_dense(const double h) {
+void StepperDopr5<D, OP>::prepare_dense(const double h,
+                                        Dopr5DenseData& dense_data) {
   static auto constexpr d1 = -12715105075.0 / 11282082432.0;
   static auto constexpr d3 = 87487479700.0 / 32700410799.0;
   static auto constexpr d4 = -10690763975.0 / 1880347072.0;
   static auto constexpr d5 = 701980252875.0 / 199316789632.0;
   static auto constexpr d6 = -1453857185.0 / 822651844.0;
   static auto constexpr d7 = 69997945.0 / 29380423.0;
+  if (dense_data.rcont1.empty()) {
+    dense_data.rcont1.resize(n);
+    dense_data.rcont2.resize(n);
+    dense_data.rcont3.resize(n);
+    dense_data.rcont4.resize(n);
+    dense_data.rcont5.resize(n);
+  }
   for (int i = 0; i < n; ++i) {
-    rcont1[i] = y[i];
+    dense_data.rcont1[i] = y[i];
     double ydiff = yout[i] - y[i];
-    rcont2[i] = ydiff;
+    dense_data.rcont2[i] = ydiff;
     double bspl = h * dydx[i] - ydiff;
-    rcont3[i] = bspl;
-    rcont4[i] = ydiff - h * dydxnew[i] - bspl;
-    rcont5[i] = h * (d1 * dydx[i] + d3 * k3[i] + d4 * k4[i] + d5 * k5[i] +
-                     d6 * k6[i] + d7 * dydxnew[i]);
+    dense_data.rcont3[i] = bspl;
+    dense_data.rcont4[i] = ydiff - h * dydxnew[i] - bspl;
+    dense_data.rcont5[i] = h * (d1 * dydx[i] + d3 * k3[i] + d4 * k4[i] +
+                                d5 * k5[i] + d6 * k6[i] + d7 * dydxnew[i]);
   }
 }
 
@@ -199,11 +208,14 @@ void StepperDopr5<D, OP>::prepare_dense(const double h) {
  * xold + h. */
 template <typename D, typename OP>
 double StepperDopr5<D, OP>::dense_out(const int i, const double x,
-                                      const double h) const {
+                                      const double h,
+                                      Dopr5DenseData const& dense_data) const {
   double s = (x - (StepperBase::x - h)) / h;
   double s1 = 1.0 - s;
-  return rcont1[i] +
-         s * (rcont2[i] + s1 * (rcont3[i] + s * (rcont4[i] + s1 * rcont5[i])));
+  return dense_data.rcont1[i] +
+         s * (dense_data.rcont2[i] +
+              s1 * (dense_data.rcont3[i] +
+                    s * (dense_data.rcont4[i] + s1 * dense_data.rcont5[i])));
 }
 
 /* Use yerr to compute norm of scaled error estimate. A value less than one
@@ -262,3 +274,8 @@ bool StepperDopr5<D, OP>::Controller::success(const double err, double& h) {
     return false;
   }
 }
+
+/* Alias template for simplifying instantiation of StepperDopr5 with dense
+ * output. */
+template <typename D, template <typename> class OP>
+using StepperDopr5Dense = StepperDopr5<D, OP<Dopr5DenseData>>;

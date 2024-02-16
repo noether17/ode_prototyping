@@ -31,7 +31,7 @@ class VanDerPolTest : public testing::Test {
   using Dopr5IntegratorRawOutput =
       ODEIntegrator<StepperDopr5<decltype(rhs_van), RawOutput>>;
   using Dopr5IntegratorDenseOutput =
-      ODEIntegrator<StepperDopr5<decltype(rhs_van), DenseOutput>>;
+      ODEIntegrator<StepperDopr5Dense<decltype(rhs_van), DenseOutput>>;
 };
 
 TEST_F(VanDerPolTest, ConsistentResultsWithNoOutput) {

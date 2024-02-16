@@ -52,6 +52,7 @@ class RawOutput {
 };
 
 /* Policy class for providing dense output. */
+template <typename DenseData>
 class DenseOutput {
  public:
   static auto constexpr init_cap = 500;  // Initial capacity of storage arrays.
@@ -80,7 +81,7 @@ class DenseOutput {
   template <typename Stepper>
   void save_dense(Stepper const& stepper, double xout, double h) {
     for (auto&& [i, y_i] : y_values_ | vws::enumerate) {
-      y_i.push_back(stepper.dense_out(i, xout, h));
+      y_i.push_back(stepper.dense_out(i, xout, h, dense_data_));
     }
     x_values_.push_back(xout);
   }
@@ -96,7 +97,7 @@ class DenseOutput {
       x_values_.push_back(stepper.x);
       return;
     }
-    stepper.prepare_dense(stepper.hdid);
+    stepper.prepare_dense(stepper.hdid, dense_data_);
     while ((stepper.x - next_x_) * (x2_ - x1_) > 0.0) {
       save_dense(stepper, next_x_, stepper.hdid);
       next_x_ += interval_width_;
@@ -126,6 +127,7 @@ class DenseOutput {
   ~DenseOutput() = default;  // No instantiation of policy class outside host.
 
  private:
+  DenseData dense_data_{};  // Additional data needed to produce dense output.
   std::vector<double> x_values_{};  // Results stored in the vector x_values_
   std::vector<std::vector<double>> y_values_{};  // and the matrix y_values_.
   double x1_;

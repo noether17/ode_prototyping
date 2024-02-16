@@ -26,7 +26,7 @@ class SimpleOscillatorTest : public testing::Test {
   std::vector<double> ystart{1.0, 0.0};
 
   using Dopr5IntegratorDenseOutput =
-      ODEIntegrator<StepperDopr5<decltype(rhs_osc), DenseOutput>>;
+      ODEIntegrator<StepperDopr5Dense<decltype(rhs_osc), DenseOutput>>;
   using Dopr5IntegratorRawOutput =
       ODEIntegrator<StepperDopr5<decltype(rhs_osc), RawOutput>>;
 };

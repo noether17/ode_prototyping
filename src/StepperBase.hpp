@@ -20,7 +20,7 @@ struct StepperBase {
   /* Input to the constructor are the dependent variable vector y[0...n-1] and
    * its derivative dydx[0...n-1] at the starting value of the independent
    * variable x. Also input are the absolute and relative tolerances, atol and
-   * rtol, and the boolean dense, which is true if dense output is required. */
+   * rtol. */
   StepperBase(std::vector<double>& yy, std::vector<double>& dydxx, double& xx,
               const double atoll, const double rtoll)
       : x(xx),

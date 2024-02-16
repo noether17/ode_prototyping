@@ -6,7 +6,12 @@
 #include "StepperBase.hpp"
 
 /* Specifies the additional data needed to produce dense output, to be held by
- * the DenseObject policy class and modified by prepare_dense(). */
+ * the DenseObject policy class and modified by prepare_dense(). The precise
+ * method of generating dense output varies by integration method, so each
+ * integration method that is intended to be used with the DenseOutput policy
+ * must provide prepare_dense() and dense_out() functions as well as a data
+ * structure for these functions to operate on. If these are not provided, the
+ * method may still be used with the NoOutput or RawOutput policies. */
 struct Dopr5DenseData {
   std::vector<double> rcont1{};
   std::vector<double> rcont2{};
@@ -53,7 +58,7 @@ struct StepperDopr5 : StepperBase, OP {
 /* Input to the constructor are the dependent variable y[0...n-1] and its
  * derivative dydx[0...n-1] at the starting value of the independent variable x.
  * Also input are the absolute and relative tolerances, atol and rtol, and the
- * boolean dense, which is true if dense output is required. */
+ * routine for supplying the right-hand side derivative. */
 template <typename D, typename OP>
 StepperDopr5<D, OP>::StepperDopr5(std::vector<double>& yy,
                                   std::vector<double>& dydxx, double& xx,
@@ -204,8 +209,8 @@ void StepperDopr5<D, OP>::prepare_dense(const double h,
   }
 }
 
-/* Evaluate interpolating polynomial for y[i] at location x, where xold <= x <=
- * xold + h. */
+/* Evaluate interpolating polynomial for y[i] at location x, where
+ * StepperBase::x - h <= x <= StepperBase::x. */
 template <typename D, typename OP>
 double StepperDopr5<D, OP>::dense_out(const int i, const double x,
                                       const double h,

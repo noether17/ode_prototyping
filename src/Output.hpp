@@ -6,7 +6,9 @@
 
 namespace vws = std::views;
 
-/* Policy class for providing no output of intermediate values. */
+/* Policy class for providing no output of intermediate values. Provides the
+ * necessary interface functions init() and save(), both with empty definitions
+ * which should be optimized away. */
 class NoOutput {
  public:
   void init(int, double, double) {}
@@ -18,7 +20,9 @@ class NoOutput {
   ~NoOutput() = default;  // No instantiation of policy class outside host.
 };
 
-/* Policy class for providing output at the actual integration steps. */
+/* Policy class for providing output at the actual integration steps. Provides
+ * the necessary interface functions init() and save(), as well as enriched
+ * interface functions for retrieving the raw integration step values. */
 class RawOutput {
  public:
   static auto constexpr init_cap = 500;  // Initial capacity of storage arrays.
@@ -51,7 +55,10 @@ class RawOutput {
   std::vector<std::vector<double>> y_values_{};  // and the matrix y_values_.
 };
 
-/* Policy class for providing dense output. */
+/* Policy class for providing dense output. Provides the necessary interface
+ * functions init() and save(), as well as enriched interface functions for
+ * setting the number of dense-output intervals and retrieving the dense output
+ * values. */
 template <typename DenseData>
 class DenseOutput {
  public:

@@ -13,8 +13,10 @@ class NoOutput {
 
   template <typename Stepper>
   void save(Stepper const&) {}
-};  // TODO: Prevent instantiation of policy class outside of host by making
-    // dtor protected.
+
+ protected:
+  ~NoOutput() = default;  // No instantiation of policy class outside host.
+};
 
 /* Policy class for providing output at the actual integration steps. */
 class RawOutput {
@@ -40,6 +42,9 @@ class RawOutput {
   auto n_steps() const { return x_values_.size(); }
   auto const& x_values() const { return x_values_; }
   auto const& y_values() const { return y_values_; }
+
+ protected:
+  ~RawOutput() = default;  // No instantiation of policy class outside host.
 
  private:
   std::vector<double> x_values_{};  // Results stored in the vector x_values_
@@ -116,6 +121,9 @@ class DenseOutput {
 
   /* Returns the saved dependent variable values. */
   auto const& y_values() const { return y_values_; }
+
+ protected:
+  ~DenseOutput() = default;  // No instantiation of policy class outside host.
 
  private:
   std::vector<double> x_values_{};  // Results stored in the vector x_values_

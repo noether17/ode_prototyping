@@ -47,17 +47,13 @@ class RawOutput {
 };
 
 /* Structure for output from ODE solver such as ODEIntegrator. */
-class Output {
+class DenseOutput {
  public:
   static auto constexpr init_cap = 500;  // Initial capacity of storage arrays.
 
   /* Constructor provides dense output at n_intervals_ equally spaced intervals.
-   * If n_intervals_ <= 0, output is saved only at the actual integration steps.
    */
-  explicit Output(int n_intervals) : n_intervals_{n_intervals} {
-    dense_ = n_intervals_ > 0;
-    x_values_.reserve(init_cap);
-  }
+  explicit DenseOutput(int n_intervals) : n_intervals_{n_intervals} {}
 
   /* Called by the ODEIntegrator constructor, which passes neqn, the number of
    * equations, xlo, the starting point of the integration, and xhi, the ending
@@ -67,12 +63,11 @@ class Output {
     for (auto& y : y_values_) {
       y.reserve(init_cap);
     }
-    if (dense_) {
-      x1_ = xlo;
-      x2_ = xhi;
-      interval_width_ = (x2_ - x1_) / n_intervals_;
-      next_x_ = x1_ + interval_width_;
-    }
+    x_values_.reserve(init_cap);
+    x1_ = xlo;
+    x2_ = xhi;
+    interval_width_ = (x2_ - x1_) / n_intervals_;
+    next_x_ = x1_ + interval_width_;
   }
 
   /* Invokes dense_out function of stepper routine to produce output at xout.
@@ -90,7 +85,7 @@ class Output {
   /* Saves values of current x and y. */
   template <typename Stepper>
   void save(Stepper& stepper) {
-    if (dense_ && !first_call) {
+    if (!first_call) {
       stepper.prepare_dense(stepper.hdid);
       out(stepper);
       return;
@@ -108,17 +103,11 @@ class Output {
    * it calls save_dense. */
   template <typename Stepper>
   void out(Stepper const& stepper) {
-    if (!dense_) {
-      throw std::runtime_error("dense output not set in Output");
-    }
     while ((stepper.x - next_x_) * (x2_ - x1_) > 0.0) {
       save_dense(stepper, next_x_, stepper.hdid);
       next_x_ += interval_width_;
     }
   }
-
-  /* Returns whether dense output is generated. */
-  auto is_dense() const { return dense_; }
 
   /* Returns the number of steps taken. */
   auto n_steps() const { return x_values_.size(); }
@@ -137,6 +126,5 @@ class Output {
   double next_x_;
   double interval_width_;
   int n_intervals_;       // Number of intervals to save at for dense output.
-  bool dense_{false};     // true if dense output requested.
   bool first_call{true};  // true if first call to save.
 };

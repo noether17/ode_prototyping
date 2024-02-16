@@ -25,8 +25,8 @@ class SimpleOscillatorTest : public testing::Test {
 
   std::vector<double> ystart{1.0, 0.0};
 
-  using Dopr5Integrator =
-      ODEIntegrator<StepperDopr5<decltype(rhs_osc), Output>>;
+  using Dopr5IntegratorDenseOutput =
+      ODEIntegrator<StepperDopr5<decltype(rhs_osc), DenseOutput>>;
   using Dopr5IntegratorRawOutput =
       ODEIntegrator<StepperDopr5<decltype(rhs_osc), RawOutput>>;
 };
@@ -61,8 +61,8 @@ TEST_F(SimpleOscillatorTest, ActualIntegrationStepsAreConsistent) {
 }
 
 TEST_F(SimpleOscillatorTest, DenseOutputMatchesPython) {
-  auto ode = Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, Output{20},
-                             rhs_osc);
+  auto ode = Dopr5IntegratorDenseOutput(ystart, x1, x2, atol, rtol, h1, hmin,
+                                        DenseOutput{20}, rhs_osc);
   auto const& out = ode.stepper;
 
   ode.integrate();
@@ -150,8 +150,8 @@ TEST_F(SimpleOscillatorTest, DenseOutputMatchesPython) {
 }
 
 TEST_F(SimpleOscillatorTest, DenseOutputIsConsistent) {
-  auto ode = Dopr5Integrator(ystart, x1, x2, atol, rtol, h1, hmin, Output{20},
-                             rhs_osc);
+  auto ode = Dopr5IntegratorDenseOutput(ystart, x1, x2, atol, rtol, h1, hmin,
+                                        DenseOutput{20}, rhs_osc);
   auto const& out = ode.stepper;
 
   ode.integrate();
@@ -239,8 +239,8 @@ TEST_F(SimpleOscillatorTest, DenseOutputIsConsistent) {
  * by default-initialization. */
 TEST_F(SimpleOscillatorTest, ConsistentWithNonzeroStartingPoint) {
   auto constexpr xstart = 1.0;
-  auto ode = Dopr5Integrator(ystart, xstart, x2, atol, rtol, h1, hmin,
-                             Output{5}, rhs_osc);
+  auto ode = Dopr5IntegratorDenseOutput(ystart, xstart, x2, atol, rtol, h1,
+                                        hmin, DenseOutput{5}, rhs_osc);
   auto const& out = ode.stepper;
 
   ode.integrate();

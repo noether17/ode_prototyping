@@ -5,7 +5,6 @@
 /* Base class for all ODE algorithms. */
 struct StepperBase {
   double& x;
-  double xold;  // Used for dense output.
   std::vector<double>& y;
   std::vector<double>& dydx;
   double atol;

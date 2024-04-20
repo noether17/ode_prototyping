@@ -2,6 +2,7 @@
 
 #include <array>
 #include <ranges>
+#include <vector>
 
 #include "ODEIntegrator.hpp"
 #include "StepperDopr5.hpp"

@@ -6,7 +6,7 @@
 #include "StepperBase.hpp"
 
 /* Specifies the additional data needed to produce dense output, to be held by
- * the DenseObject policy class and modified by prepare_dense(). The precise
+ * the DenseOutput policy class and modified by prepare_dense(). The precise
  * method of generating dense output varies by integration method, so each
  * integration method that is intended to be used with the DenseOutput policy
  * must provide prepare_dense() and dense_out() functions as well as a data

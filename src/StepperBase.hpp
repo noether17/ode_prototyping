@@ -2,6 +2,8 @@
 
 #include <vector>
 
+#include "Output.hpp"
+
 /* Base class for all ODE algorithms. */
 struct StepperBase {
   double& x;

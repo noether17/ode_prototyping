@@ -25,3 +25,14 @@ target_link_libraries(SimpleOscillatorTest
     StepperDopr5
 )
 add_test(NAME SimpleOscillatorTest COMMAND SimpleOscillatorTest)
+
+add_executable(StepperDopr853_test StepperDopr853_test.cpp)
+target_link_libraries(StepperDopr853_test
+    GTest::GTest
+    GTest::Main
+    ODEIntegrator
+    Output
+    StepperBase
+    StepperDopr5
+)
+add_test(NAME StepperDopr853_test COMMAND StepperDopr853_test)

@@ -33,8 +33,14 @@ struct Dopr853_constants {
  * structure for these functions to operate on. If these are not provided, the
  * method may still be used with the NoOutput or RawOutput policies. */
 struct Dopr853DenseData {
-  std::vector<double> rcont1, rcont2, rcont3, rcont4, rcont5, rcont6, rcont7,
-      rcont8;
+  std::vector<double> rcont1{};
+  std::vector<double> rcont2{};
+  std::vector<double> rcont3{};
+  std::vector<double> rcont4{};
+  std::vector<double> rcont5{};
+  std::vector<double> rcont6{};
+  std::vector<double> rcont7{};
+  std::vector<double> rcont8{};
 };
 
 /* Here is the routine StepperDopr853. It uses a set of constants, which are
@@ -48,33 +54,41 @@ struct StepperDopr853 : StepperBase, OP, Dopr853_constants {
   typedef D Dtype;
   using OutputPolicy = OP;
   std::vector<double> yerr2;  // Use a second error estimator.
-  D &derivs;
-  std::vector<double> k2, k3, k4, k5, k6, k7, k8, k9, k10;
+  D& derivs;
+  std::vector<double> k2{};
+  std::vector<double> k3{};
+  std::vector<double> k4{};
+  std::vector<double> k5{};
+  std::vector<double> k6{};
+  std::vector<double> k7{};
+  std::vector<double> k8{};
+  std::vector<double> k9{};
+  std::vector<double> k10{};
   std::vector<double> dydxnew;
-  StepperDopr853(std::vector<double> &yy, std::vector<double> &dydxx,
-                 double &xx, const double atoll, const double rtoll,
-                 D &derivss);
-  void step(const double htry, D &derivs);
+  StepperDopr853(std::vector<double>& yy, std::vector<double>& dydxx,
+                 double& xx, const double atoll, const double rtoll,
+                 D& derivss);
+  void step(const double htry, D& derivs);
   void save();
-  void dy(const double h, D &derivs);
-  void prepare_dense(const double h, Dopr853DenseData &dense_data);
+  void dy(const double h, D& derivs);
+  void prepare_dense(const double h, Dopr853DenseData& dense_data);
   double dense_out(const int i, const double x, const double h,
-                   Dopr853DenseData const &dense_data) const;
+                   Dopr853DenseData const& dense_data) const;
   double error(const double h);
   struct Controller {
     double hnext, errold;
     bool reject;
     Controller();
-    bool success(const double err, double &h);
+    bool success(const double err, double& h);
   };
   Controller con;
 };
 
 template <class D, typename OP>
-StepperDopr853<D, OP>::StepperDopr853(std::vector<double> &yy,
-                                      std::vector<double> &dydxx, double &xx,
+StepperDopr853<D, OP>::StepperDopr853(std::vector<double>& yy,
+                                      std::vector<double>& dydxx, double& xx,
                                       const double atoll, const double rtoll,
-                                      D &derivss)
+                                      D& derivss)
     : StepperBase(yy, dydxx, xx, atoll, rtoll),
       OP{},
       yerr2(n),
@@ -96,7 +110,7 @@ StepperDopr853<D, OP>::StepperDopr853(std::vector<double> &yy,
  * derivs is called here rather than in dy because this method does not use
  * FSAL. */
 template <class D, typename OP>
-void StepperDopr853<D, OP>::step(const double htry, D &derivs) {
+void StepperDopr853<D, OP>::step(const double htry, D& derivs) {
   double h = htry;
   for (;;) {
     dy(h, derivs);
@@ -119,7 +133,7 @@ void StepperDopr853<D, OP>::save() {
 }
 
 template <class D, typename OP>
-void StepperDopr853<D, OP>::dy(const double h, D &derivs) {
+void StepperDopr853<D, OP>::dy(const double h, D& derivs) {
   std::vector<double> ytemp(n);
   int i;
   for (i = 0; i < n; i++)  // Twelve stages.
@@ -177,7 +191,7 @@ void StepperDopr853<D, OP>::dy(const double h, D &derivs) {
 
 template <class D, typename OP>
 void StepperDopr853<D, OP>::prepare_dense(const double h,
-                                          Dopr853DenseData &dense_data) {
+                                          Dopr853DenseData& dense_data) {
   if (dense_data.rcont1.empty()) {
     dense_data.rcont1.resize(n);
     dense_data.rcont2.resize(n);
@@ -241,7 +255,7 @@ void StepperDopr853<D, OP>::prepare_dense(const double h,
 template <class D, typename OP>
 double StepperDopr853<D, OP>::dense_out(
     const int i, const double x, const double h,
-    Dopr853DenseData const &dense_data) const {
+    Dopr853DenseData const& dense_data) const {
   double s = (x - (StepperBase::x - h)) / h;
   double s1 = 1.0 - s;
   return dense_data.rcont1[i] +
@@ -274,7 +288,7 @@ StepperDopr853<D, OP>::Controller::Controller()
     : errold(1.0e-4), reject(false) {}
 
 template <class D, typename OP>
-bool StepperDopr853<D, OP>::Controller::success(const double err, double &h) {
+bool StepperDopr853<D, OP>::Controller::success(const double err, double& h) {
   /* Same controller as StepperDopr5 except different values of the constants.
    */
   static double constexpr beta = 0.0, alpha = 1.0 / 8.0 - beta * 0.2,

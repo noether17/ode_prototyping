@@ -12,7 +12,6 @@ using Int = int;
 using Doub = double;
 using VecDoub = std::vector<Doub>;
 using VecDoub_IO = std::vector<Doub> &;
-using VecDoub_I = const std::vector<Doub> &;
 
 /* Here is the class Dopr853_constants: */
 struct Dopr853_constants {
@@ -56,7 +55,7 @@ struct StepperDopr853 : StepperBase, OP, Dopr853_constants {
   D &derivs;
   VecDoub k2, k3, k4, k5, k6, k7, k8, k9, k10;
   VecDoub dydxnew;
-  StepperDopr853(VecDoub_IO &yy, VecDoub_IO &dydxx, Doub &xx, const Doub atoll,
+  StepperDopr853(VecDoub_IO yy, VecDoub_IO dydxx, Doub &xx, const Doub atoll,
                  const Doub rtoll, D &derivss);
   void step(const Doub htry, D &derivs);
   void save();
@@ -75,9 +74,9 @@ struct StepperDopr853 : StepperBase, OP, Dopr853_constants {
 };
 
 template <class D, typename OP>
-StepperDopr853<D, OP>::StepperDopr853(VecDoub_IO &yy, VecDoub_IO &dydxx,
-                                      Doub &xx, const Doub atoll,
-                                      const Doub rtoll, D &derivss)
+StepperDopr853<D, OP>::StepperDopr853(VecDoub_IO yy, VecDoub_IO dydxx, Doub &xx,
+                                      const Doub atoll, const Doub rtoll,
+                                      D &derivss)
     : StepperBase(yy, dydxx, xx, atoll, rtoll),
       OP{},
       yerr2(n),

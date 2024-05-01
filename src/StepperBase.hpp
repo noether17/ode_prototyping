@@ -1,11 +1,12 @@
 #pragma once
 
+#include <limits>
 #include <vector>
-
-#include "Output.hpp"
 
 /* Base class for all ODE algorithms. */
 struct StepperBase {
+  auto static constexpr eps = std::numeric_limits<double>::epsilon();
+
   double& x;
   std::vector<double>& y;
   std::vector<double>& dydx;
@@ -13,7 +14,6 @@ struct StepperBase {
   double rtol;
   double hdid;   // Actual stepsize accomplished by the step routine.
   double hnext;  // Step size predicted by the controller for the next step.
-  double eps;
   int n;
   int neqn;                  // neqn = n except for StepperStoerm.
   std::vector<double> yout;  // New value of y and error estimate.

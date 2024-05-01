@@ -1,7 +1,6 @@
 #pragma once
 
 #include <cmath>
-#include <limits>
 #include <vector>
 
 #include "Dopr853_constants.hpp"
@@ -59,7 +58,8 @@ struct StepperDopr853 : StepperBase, OP {
                    Dopr853DenseData const& dense_data) const;
   double error(double h);
   struct Controller {
-    double hnext, errold;
+    double hnext;
+    double errold;
     bool reject;
     Controller();
     bool success(double err, double& h);
@@ -84,9 +84,7 @@ StepperDopr853<D, OP>::StepperDopr853(std::vector<double>& yy,
       k8(n),
       k9(n),
       k10(n),
-      dydxnew(n) {
-  eps = std::numeric_limits<double>::epsilon();
-}
+      dydxnew(n) {}
 
 /* This routine is essentially the same as the one in StepperDopr5 except that
  * derivs is called here rather than in dy because this method does not use

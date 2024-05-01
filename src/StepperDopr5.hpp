@@ -72,9 +72,7 @@ StepperDopr5<D, OP>::StepperDopr5(std::vector<double>& yy,
       k4(n),
       k5(n),
       k6(n),
-      dydxnew(n) {
-  eps = std::numeric_limits<double>::epsilon();
-}
+      dydxnew(n) {}
 
 /* Attempts a step with stepsize htry. On output, y and x are replaced by their
  * new values, hdid is the stepsize that was actually accomplished, and hnext is

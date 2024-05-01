@@ -12,8 +12,7 @@ struct StepperBase {
   std::vector<double>& dydx;
   double atol;
   double rtol;
-  double hdid;   // Actual stepsize accomplished by the step routine.
-  double hnext;  // Step size predicted by the controller for the next step.
+  double hdid;  // Actual stepsize accomplished by the step routine.
   int n;
   int neqn;                  // neqn = n except for StepperStoerm.
   std::vector<double> yout;  // New value of y and error estimate.

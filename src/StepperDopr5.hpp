@@ -38,7 +38,7 @@ struct StepperDopr5 : StepperBase, OP {
   StepperDopr5(std::vector<double>& yy, std::vector<double>& dydxx, double& xx,
                const double atoll, const double rtoll, D& derivss);
 
-  void step(double htry, D& derivs);
+  void step(double& htry, D& derivs);
   void save();
   void dy(double h, D& derivs);
   void prepare_dense(double h, Dopr5DenseData& dense_data);
@@ -77,7 +77,7 @@ StepperDopr5<D, OP>::StepperDopr5(std::vector<double>& yy,
  * new values, hdid is the stepsize that was actually accomplished, and hnext is
  * the estimated next stepsize. */
 template <typename D, typename OP>
-void StepperDopr5<D, OP>::step(double htry, D& derivs) {
+void StepperDopr5<D, OP>::step(double& htry, D& derivs) {
   double h = htry;  // Set stepsize to the initial trial value.
   for (;;) {
     dy(h, derivs);             // Take a step.
@@ -93,7 +93,7 @@ void StepperDopr5<D, OP>::step(double htry, D& derivs) {
   save();
   dydx = dydxnew;  // Reuse last derivative evaluation for next step.
   y = yout;
-  hnext = con.hnext;
+  htry = con.hnext;
 }
 
 template <typename D, typename OP>

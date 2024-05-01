@@ -50,7 +50,7 @@ struct StepperDopr853 : StepperBase, OP {
   StepperDopr853(std::vector<double>& yy, std::vector<double>& dydxx,
                  double& xx, double atoll, double rtoll, D& derivss);
 
-  void step(double htry, D& derivs);
+  void step(double& htry, D& derivs);
   void save();
   void dy(double h, D& derivs);
   void prepare_dense(double h, Dopr853DenseData& dense_data);
@@ -90,7 +90,7 @@ StepperDopr853<D, OP>::StepperDopr853(std::vector<double>& yy,
  * derivs is called here rather than in dy because this method does not use
  * FSAL. */
 template <class D, typename OP>
-void StepperDopr853<D, OP>::step(double htry, D& derivs) {
+void StepperDopr853<D, OP>::step(double& htry, D& derivs) {
   double h = htry;
   for (;;) {
     dy(h, derivs);
@@ -107,7 +107,7 @@ void StepperDopr853<D, OP>::step(double htry, D& derivs) {
   save();
   dydx = dydxnew;
   y = yout;
-  hnext = con.hnext;
+  htry = con.hnext;
 }
 
 template <typename D, typename OP>

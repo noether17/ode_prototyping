@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <stdexcept>
 #include <vector>
 
 #include "Dopr853_constants.hpp"
@@ -26,15 +27,12 @@ struct Dopr853DenseData {
   std::vector<double> rcont8{};
 };
 
-/* Here is the routine StepperDopr853. It uses a set of constants, which are
- * provided by deriving the class from the class Dopr853_constants, also listed
- * below. */
+/* Dormand-Prince eighth-order Runge-Kutta step with monitoring of local
+ * truncation error to ensure accuracy and adjust stepsize. Only important
+ * differences from StepperDopr5 are commented. */
 template <class D, typename OP>
 struct StepperDopr853 : StepperBase, OP {
-  /* Dormand-Prince eighth-order Runge-Kutta step with monitoring of local
-  truncation error to ensure accuracy and adjust stepsize. Only important
-  differences from StepperDopr5 are commented. */
-  typedef D Dtype;
+  using Dtype = D;
   using OutputPolicy = OP;
   std::vector<double> yerr2;  // Use a second error estimator.
   D& derivs;
@@ -48,8 +46,10 @@ struct StepperDopr853 : StepperBase, OP {
   std::vector<double> k9{};
   std::vector<double> k10{};
   std::vector<double> dydxnew;
+
   StepperDopr853(std::vector<double>& yy, std::vector<double>& dydxx,
                  double& xx, double atoll, double rtoll, D& derivss);
+
   void step(double htry, D& derivs);
   void save();
   void dy(double h, D& derivs);
@@ -58,10 +58,10 @@ struct StepperDopr853 : StepperBase, OP {
                    Dopr853DenseData const& dense_data) const;
   double error(double h);
   struct Controller {
-    double hnext;
-    double errold;
-    bool reject;
-    Controller();
+    double hnext{};
+    double errold{1.0e-4};
+    bool reject{false};
+
     bool success(double err, double& h);
   };
   Controller con;
@@ -94,12 +94,12 @@ void StepperDopr853<D, OP>::step(double htry, D& derivs) {
   double h = htry;
   for (;;) {
     dy(h, derivs);
-    double err = error(h);
+    auto const err = error(h);
     if (con.success(err, h)) {
       break;
     }
     if (std::abs(h) <= std::abs(x) * eps) {
-      throw("stepsize underflow in StepperDopr853");
+      throw std::runtime_error("step size underflow in StepperDopr853");
     }
   }
   derivs(x + h, yout, dydxnew);
@@ -119,53 +119,53 @@ template <class D, typename OP>
 void StepperDopr853<D, OP>::dy(double h, D& derivs) {
   std::vector<double> ytemp(n);
   int i;
-  for (i = 0; i < n; i++) {  // Twelve stages.
+  for (i = 0; i < n; ++i) {  // Twelve stages.
     ytemp[i] = y[i] + h * DP853::a21 * dydx[i];
   }
   derivs(x + DP853::c2 * h, ytemp, k2);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     ytemp[i] = y[i] + h * (DP853::a31 * dydx[i] + DP853::a32 * k2[i]);
   }
   derivs(x + DP853::c3 * h, ytemp, k3);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     ytemp[i] = y[i] + h * (DP853::a41 * dydx[i] + DP853::a43 * k3[i]);
   }
   derivs(x + DP853::c4 * h, ytemp, k4);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     ytemp[i] = y[i] + h * (DP853::a51 * dydx[i] + DP853::a53 * k3[i] +
                            DP853::a54 * k4[i]);
   }
   derivs(x + DP853::c5 * h, ytemp, k5);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     ytemp[i] = y[i] + h * (DP853::a61 * dydx[i] + DP853::a64 * k4[i] +
                            DP853::a65 * k5[i]);
   }
   derivs(x + DP853::c6 * h, ytemp, k6);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     ytemp[i] = y[i] + h * (DP853::a71 * dydx[i] + DP853::a74 * k4[i] +
                            DP853::a75 * k5[i] + DP853::a76 * k6[i]);
   }
   derivs(x + DP853::c7 * h, ytemp, k7);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     ytemp[i] = y[i] + h * (DP853::a81 * dydx[i] + DP853::a84 * k4[i] +
                            DP853::a85 * k5[i] + DP853::a86 * k6[i] +
                            DP853::a87 * k7[i]);
   }
   derivs(x + DP853::c8 * h, ytemp, k8);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     ytemp[i] = y[i] + h * (DP853::a91 * dydx[i] + DP853::a94 * k4[i] +
                            DP853::a95 * k5[i] + DP853::a96 * k6[i] +
                            DP853::a97 * k7[i] + DP853::a98 * k8[i]);
   }
   derivs(x + DP853::c9 * h, ytemp, k9);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     ytemp[i] = y[i] + h * (DP853::a101 * dydx[i] + DP853::a104 * k4[i] +
                            DP853::a105 * k5[i] + DP853::a106 * k6[i] +
                            DP853::a107 * k7[i] + DP853::a108 * k8[i] +
                            DP853::a109 * k9[i]);
   }
   derivs(x + DP853::c10 * h, ytemp, k10);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     ytemp[i] = y[i] + h * (DP853::a111 * dydx[i] + DP853::a114 * k4[i] +
                            DP853::a115 * k5[i] + DP853::a116 * k6[i] +
                            DP853::a117 * k7[i] + DP853::a118 * k8[i] +
@@ -173,7 +173,7 @@ void StepperDopr853<D, OP>::dy(double h, D& derivs) {
   }
   derivs(x + DP853::c11 * h, ytemp, k2);
   double xph = x + h;
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     ytemp[i] = y[i] + h * (DP853::a121 * dydx[i] + DP853::a124 * k4[i] +
                            DP853::a125 * k5[i] + DP853::a126 * k6[i] +
                            DP853::a127 * k7[i] + DP853::a128 * k8[i] +
@@ -181,13 +181,13 @@ void StepperDopr853<D, OP>::dy(double h, D& derivs) {
                            DP853::a1211 * k2[i]);
   }
   derivs(xph, ytemp, k3);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     k4[i] = DP853::b1 * dydx[i] + DP853::b6 * k6[i] + DP853::b7 * k7[i] +
             DP853::b8 * k8[i] + DP853::b9 * k9[i] + DP853::b10 * k10[i] +
             DP853::b11 * k2[i] + DP853::b12 * k3[i];
     yout[i] = y[i] + h * k4[i];
   }
-  for (i = 0; i < n; i++) {  // Two error estimators.
+  for (i = 0; i < n; ++i) {  // Two error estimators.
     yerr[i] = k4[i] - DP853::bhh1 * dydx[i] - DP853::bhh2 * k9[i] -
               DP853::bhh3 * k3[i];
     yerr2[i] = DP853::er1 * dydx[i] + DP853::er6 * k6[i] + DP853::er7 * k7[i] +
@@ -212,7 +212,7 @@ void StepperDopr853<D, OP>::prepare_dense(double h,
   int i;
   double ydiff, bspl;
   std::vector<double> ytemp(n);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     dense_data.rcont1[i] = y[i];
     ydiff = yout[i] - y[i];
     dense_data.rcont2[i] = ydiff;
@@ -236,28 +236,28 @@ void StepperDopr853<D, OP>::prepare_dense(double h,
                            DP853::d79 * k9[i] + DP853::d710 * k10[i] +
                            DP853::d711 * k2[i] + DP853::d712 * k3[i];
   }
-  for (i = 0; i < n; i++) {  // The three extra function evaluations.
+  for (i = 0; i < n; ++i) {  // The three extra function evaluations.
     ytemp[i] = y[i] + h * (DP853::a141 * dydx[i] + DP853::a147 * k7[i] +
                            DP853::a148 * k8[i] + DP853::a149 * k9[i] +
                            DP853::a1410 * k10[i] + DP853::a1411 * k2[i] +
                            DP853::a1412 * k3[i] + DP853::a1413 * dydxnew[i]);
   }
   derivs(x + DP853::c14 * h, ytemp, k10);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     ytemp[i] = y[i] + h * (DP853::a151 * dydx[i] + DP853::a156 * k6[i] +
                            DP853::a157 * k7[i] + DP853::a158 * k8[i] +
                            DP853::a1511 * k2[i] + DP853::a1512 * k3[i] +
                            DP853::a1513 * dydxnew[i] + DP853::a1514 * k10[i]);
   }
   derivs(x + DP853::c15 * h, ytemp, k2);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     ytemp[i] = y[i] + h * (DP853::a161 * dydx[i] + DP853::a166 * k6[i] +
                            DP853::a167 * k7[i] + DP853::a168 * k8[i] +
                            DP853::a169 * k9[i] + DP853::a1613 * dydxnew[i] +
                            DP853::a1614 * k10[i] + DP853::a1615 * k2[i]);
   }
   derivs(x + DP853::c16 * h, ytemp, k3);
-  for (i = 0; i < n; i++) {
+  for (i = 0; i < n; ++i) {
     dense_data.rcont5[i] =
         h * (dense_data.rcont5[i] + DP853::d413 * dydxnew[i] +
              DP853::d414 * k10[i] + DP853::d415 * k2[i] + DP853::d416 * k3[i]);
@@ -290,13 +290,14 @@ double StepperDopr853<D, OP>::dense_out(
 
 template <class D, typename OP>
 double StepperDopr853<D, OP>::error(double h) {
-  double err = 0.0, err2 = 0.0, sk, deno;
-  for (int i = 0; i < n; i++) {
-    sk = atol + rtol * std::max(std::abs(y[i]), std::abs(yout[i]));
+  auto err = 0.0;
+  auto err2 = 0.0;
+  for (int i = 0; i < n; ++i) {
+    auto sk = atol + rtol * std::max(std::abs(y[i]), std::abs(yout[i]));
     err2 += SQR(yerr[i] / sk);
     err += SQR(yerr2[i] / sk);
   }
-  deno = err + 0.01 * err2;
+  auto deno = err + 0.01 * err2;
   if (deno <= 0.0) {
     deno = 1.0;
   }
@@ -304,10 +305,6 @@ double StepperDopr853<D, OP>::error(double h) {
          sqrt(1.0 / (n * deno));  // The factor of h is here because it was
                                   // omitted when yerr and yerr2 were formed.
 }
-
-template <class D, typename OP>
-StepperDopr853<D, OP>::Controller::Controller()
-    : errold(1.0e-4), reject(false) {}
 
 template <class D, typename OP>
 bool StepperDopr853<D, OP>::Controller::success(double err, double& h) {

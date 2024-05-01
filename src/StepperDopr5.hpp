@@ -1,6 +1,7 @@
 #pragma once
 
 #include <cmath>
+#include <stdexcept>
 #include <vector>
 
 #include "StepperBase.hpp"
@@ -24,8 +25,8 @@ struct Dopr5DenseData {
  * truncation error to ensure accuracy and adjust stepsize. */
 template <typename D, typename OP>
 struct StepperDopr5 : StepperBase, OP {
-  typedef D Dtype;  // Make the type of derivs available to ODEIntegrator.
-  using OutputPolicy = OP;
+  using Dtype = D;  // Make the type of derivs available to ODEIntegrator.
+  using OutputPolicy = OP;  // Make the type of OP available to ODEIntegrator.
   D& derivs;
   std::vector<double> k2;
   std::vector<double> k3;
@@ -37,20 +38,19 @@ struct StepperDopr5 : StepperBase, OP {
   StepperDopr5(std::vector<double>& yy, std::vector<double>& dydxx, double& xx,
                const double atoll, const double rtoll, D& derivss);
 
-  void step(const double htry, D& derivs);
+  void step(double htry, D& derivs);
   void save();
-  void dy(const double h, D& derivs);
-  void prepare_dense(const double h, Dopr5DenseData& dense_data);
-  double dense_out(const int i, const double x, const double h,
+  void dy(double h, D& derivs);
+  void prepare_dense(double h, Dopr5DenseData& dense_data);
+  double dense_out(int i, double x, double h,
                    Dopr5DenseData const& dense_data) const;
   double error();
   struct Controller {
-    double hnext;
-    double errold;
-    bool reject;
+    double hnext{};
+    double errold{1.0e-4};
+    bool reject{false};
 
-    Controller();
-    bool success(const double err, double& h);
+    bool success(double err, double& h);
   };
   Controller con;
 };
@@ -62,8 +62,7 @@ struct StepperDopr5 : StepperBase, OP {
 template <typename D, typename OP>
 StepperDopr5<D, OP>::StepperDopr5(std::vector<double>& yy,
                                   std::vector<double>& dydxx, double& xx,
-                                  const double atoll, const double rtoll,
-                                  D& derivss)
+                                  double atoll, double rtoll, D& derivss)
     : StepperBase(yy, dydxx, xx, atoll, rtoll),
       OP{},
       derivs{derivss},
@@ -78,15 +77,15 @@ StepperDopr5<D, OP>::StepperDopr5(std::vector<double>& yy,
  * new values, hdid is the stepsize that was actually accomplished, and hnext is
  * the estimated next stepsize. */
 template <typename D, typename OP>
-void StepperDopr5<D, OP>::step(const double htry, D& derivs) {
+void StepperDopr5<D, OP>::step(double htry, D& derivs) {
   double h = htry;  // Set stepsize to the initial trial value.
   for (;;) {
-    dy(h, derivs);               // Take a step.
-    const double err = error();  // Evaluate accuracy.
+    dy(h, derivs);             // Take a step.
+    auto const err = error();  // Evaluate accuracy.
     if (con.success(err, h)) {
       break;
     }  // Step rejected. Try again with reduced h set by controller.
-    if (fabs(h) <= fabs(x) * eps) {
+    if (std::abs(h) <= std::abs(x) * eps) {
       throw std::runtime_error("step size underflow in StepperDopr5");
     }
   }
@@ -108,37 +107,37 @@ void StepperDopr5<D, OP>::save() {
  * yout[0...n-1]. Also store an estimate of the local truncation error in yerr
  * using the embedded fourth-order method. */
 template <typename D, typename OP>
-void StepperDopr5<D, OP>::dy(const double h, D& derivs) {
-  static auto constexpr c2 = 0.2;
-  static auto constexpr c3 = 0.3;
-  static auto constexpr c4 = 0.8;
-  static auto constexpr c5 = 8.0 / 9.0;
-  static auto constexpr a21 = 0.2;
-  static auto constexpr a31 = 3.0 / 40.0;
-  static auto constexpr a32 = 9.0 / 40.0;
-  static auto constexpr a41 = 44.0 / 45.0;
-  static auto constexpr a42 = -56.0 / 15.0;
-  static auto constexpr a43 = 32.0 / 9.0;
-  static auto constexpr a51 = 19372.0 / 6561.0;
-  static auto constexpr a52 = -25360.0 / 2187.0;
-  static auto constexpr a53 = 64448.0 / 6561.0;
-  static auto constexpr a54 = -212.0 / 729.0;
-  static auto constexpr a61 = 9017.0 / 3168.0;
-  static auto constexpr a62 = -355.0 / 33.0;
-  static auto constexpr a63 = 46732.0 / 5247.0;
-  static auto constexpr a64 = 49.0 / 176.0;
-  static auto constexpr a65 = -5103.0 / 18656.0;
-  static auto constexpr a71 = 35.0 / 384.0;
-  static auto constexpr a73 = 500.0 / 1113.0;
-  static auto constexpr a74 = 125.0 / 192.0;
-  static auto constexpr a75 = -2187.0 / 6784.0;
-  static auto constexpr a76 = 11.0 / 84.0;
-  static auto constexpr e1 = 71.0 / 57600.0;
-  static auto constexpr e3 = -71.0 / 16695.0;
-  static auto constexpr e4 = 71.0 / 1920.0;
-  static auto constexpr e5 = -17253.0 / 339200.0;
-  static auto constexpr e6 = 22.0 / 525.0;
-  static auto constexpr e7 = -1.0 / 40.0;
+void StepperDopr5<D, OP>::dy(double h, D& derivs) {
+  auto static constexpr c2 = 0.2;
+  auto static constexpr c3 = 0.3;
+  auto static constexpr c4 = 0.8;
+  auto static constexpr c5 = 8.0 / 9.0;
+  auto static constexpr a21 = 0.2;
+  auto static constexpr a31 = 3.0 / 40.0;
+  auto static constexpr a32 = 9.0 / 40.0;
+  auto static constexpr a41 = 44.0 / 45.0;
+  auto static constexpr a42 = -56.0 / 15.0;
+  auto static constexpr a43 = 32.0 / 9.0;
+  auto static constexpr a51 = 19372.0 / 6561.0;
+  auto static constexpr a52 = -25360.0 / 2187.0;
+  auto static constexpr a53 = 64448.0 / 6561.0;
+  auto static constexpr a54 = -212.0 / 729.0;
+  auto static constexpr a61 = 9017.0 / 3168.0;
+  auto static constexpr a62 = -355.0 / 33.0;
+  auto static constexpr a63 = 46732.0 / 5247.0;
+  auto static constexpr a64 = 49.0 / 176.0;
+  auto static constexpr a65 = -5103.0 / 18656.0;
+  auto static constexpr a71 = 35.0 / 384.0;
+  auto static constexpr a73 = 500.0 / 1113.0;
+  auto static constexpr a74 = 125.0 / 192.0;
+  auto static constexpr a75 = -2187.0 / 6784.0;
+  auto static constexpr a76 = 11.0 / 84.0;
+  auto static constexpr e1 = 71.0 / 57600.0;
+  auto static constexpr e3 = -71.0 / 16695.0;
+  auto static constexpr e4 = 71.0 / 1920.0;
+  auto static constexpr e5 = -17253.0 / 339200.0;
+  auto static constexpr e6 = 22.0 / 525.0;
+  auto static constexpr e7 = -1.0 / 40.0;
 
   std::vector<double> ytemp(n);
   int i;
@@ -180,14 +179,13 @@ void StepperDopr5<D, OP>::dy(const double h, D& derivs) {
 /* Store coefficients of interpolating polynomial for dense output in
  * rcont1...rcont5. */
 template <typename D, typename OP>
-void StepperDopr5<D, OP>::prepare_dense(const double h,
-                                        Dopr5DenseData& dense_data) {
-  static auto constexpr d1 = -12715105075.0 / 11282082432.0;
-  static auto constexpr d3 = 87487479700.0 / 32700410799.0;
-  static auto constexpr d4 = -10690763975.0 / 1880347072.0;
-  static auto constexpr d5 = 701980252875.0 / 199316789632.0;
-  static auto constexpr d6 = -1453857185.0 / 822651844.0;
-  static auto constexpr d7 = 69997945.0 / 29380423.0;
+void StepperDopr5<D, OP>::prepare_dense(double h, Dopr5DenseData& dense_data) {
+  auto static constexpr d1 = -12715105075.0 / 11282082432.0;
+  auto static constexpr d3 = 87487479700.0 / 32700410799.0;
+  auto static constexpr d4 = -10690763975.0 / 1880347072.0;
+  auto static constexpr d5 = 701980252875.0 / 199316789632.0;
+  auto static constexpr d6 = -1453857185.0 / 822651844.0;
+  auto static constexpr d7 = 69997945.0 / 29380423.0;
   if (dense_data.rcont1.empty()) {
     dense_data.rcont1.resize(n);
     dense_data.rcont2.resize(n);
@@ -210,8 +208,7 @@ void StepperDopr5<D, OP>::prepare_dense(const double h,
 /* Evaluate interpolating polynomial for y[i] at location x, where
  * StepperBase::x - h <= x <= StepperBase::x. */
 template <typename D, typename OP>
-double StepperDopr5<D, OP>::dense_out(const int i, const double x,
-                                      const double h,
+double StepperDopr5<D, OP>::dense_out(int i, double x, double h,
                                       Dopr5DenseData const& dense_data) const {
   double s = (x - (StepperBase::x - h)) / h;
   double s1 = 1.0 - s;
@@ -233,22 +230,18 @@ double StepperDopr5<D, OP>::error() {
   return sqrt(err / n);
 }
 
-/* Step size controller for fifth-order Dormand-Prince method. */
-template <typename D, typename OP>
-StepperDopr5<D, OP>::Controller::Controller() : errold(1.0e-4), reject(false) {}
-
 /* Returns true if err <= 1, false otherwise. If step was successful, sets hnext
  * to the estimated optimal stepsize for the next step. If the step failed,
  * reduces h appropriately for another try. */
 template <typename D, typename OP>
-bool StepperDopr5<D, OP>::Controller::success(const double err, double& h) {
-  static auto constexpr beta =
+bool StepperDopr5<D, OP>::Controller::success(double err, double& h) {
+  auto static constexpr beta =
       0.0;  // Set beta to a nonzero value for PI control. beta = 0.04-0.08 is a
             // good default.
-  static auto constexpr alpha = 0.2 - beta * 0.75;
-  static auto constexpr safe = 0.9;
-  static auto constexpr minscale = 0.2;
-  static auto constexpr maxscale = 10.0;
+  auto static constexpr alpha = 0.2 - beta * 0.75;
+  auto static constexpr safe = 0.9;
+  auto static constexpr minscale = 0.2;
+  auto static constexpr maxscale = 10.0;
   double scale;
   if (err <= 1.0) {  // Step succeeded. Compute hnext.
     if (err == 0.0) {

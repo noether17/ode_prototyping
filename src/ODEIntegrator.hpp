@@ -1,11 +1,8 @@
 #pragma once
 
 #include <cmath>
-#include <limits>
 #include <stdexcept>
 #include <vector>
-
-#include "Output.hpp"
 
 /* Driver for ODE solvers with adaptive stepsize control. The template parameter
  * should be one of the derived classes of StepperBase defining a particular

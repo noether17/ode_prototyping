@@ -5,20 +5,21 @@
 #include <vector>
 
 #include "ODEIntegrator.hpp"
+#include "Output.hpp"
 #include "StepperDopr5.hpp"
 
 namespace vws = std::views;
 
 class SimpleOscillatorTest : public testing::Test {
  protected:
-  static auto constexpr nvar = 2;
-  static auto constexpr atol = 1.0e-10;
-  static auto constexpr rtol = atol;
-  static auto constexpr h1 = 0.01;
-  static auto constexpr hmin = 0.0;
-  static auto constexpr x1 = 0.0;
-  static auto constexpr x2 = 2.0;
-  static auto constexpr rhs_osc = [](double, std::vector<double> const& y,
+  auto static constexpr nvar = 2;
+  auto static constexpr atol = 1.0e-10;
+  auto static constexpr rtol = atol;
+  auto static constexpr h1 = 0.01;
+  auto static constexpr hmin = 0.0;
+  auto static constexpr x1 = 0.0;
+  auto static constexpr x2 = 2.0;
+  auto static constexpr rhs_osc = [](double, std::vector<double> const& y,
                                      std::vector<double>& dydx) {
     dydx[0] = y[1];
     dydx[1] = -y[0];

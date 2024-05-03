@@ -1,11 +1,8 @@
 #pragma once
 
 #include <cmath>
-#include <limits>
 #include <stdexcept>
 #include <vector>
-
-#include "Output.hpp"
 
 /* Driver for ODE solvers with adaptive stepsize control. The template parameter
  * should be one of the derived classes of StepperBase defining a particular
@@ -83,10 +80,9 @@ void ODEIntegrator<Stepper>::integrate() {
       ystart = y;                       // Update ystart.
       return;                           // Normal exit.
     }
-    if (fabs(stepper.hnext) <= hmin) {
+    if (std::abs(h) <= hmin) {
       throw std::runtime_error("Step size too small in ODEIntegrator");
     }
-    h = stepper.hnext;
   }
   throw std::runtime_error("Too many steps in routine ODEIntegrator");
 }

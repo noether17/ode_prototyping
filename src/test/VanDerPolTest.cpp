@@ -4,6 +4,7 @@
 #include <ranges>
 
 #include "ODEIntegrator.hpp"
+#include "Output.hpp"
 #include "StepperDopr5.hpp"
 
 namespace vws = std::views;

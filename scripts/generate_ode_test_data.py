@@ -15,7 +15,9 @@ for i in np.arange(nsave):
 x_eval[-1] = x2
 
 def main():
-    sol = spi.solve_ivp(RHSVan, [x1, x2], [2.0, 0.0], method='RK45', atol=1.0e-3, rtol=1.0e-3, first_step=h1,
+    method = "DOP853"
+
+    sol = spi.solve_ivp(RHSVan, [x1, x2], [2.0, 0.0], method=method, atol=1.0e-3, rtol=1.0e-3, first_step=h1,
                         dense_output=dense, t_eval=x_eval)
     np.set_printoptions(floatmode='unique')
     print("Van der Pol")
@@ -23,7 +25,7 @@ def main():
     print_initializer_list(sol.y[0])
     print_initializer_list(sol.y[1])
 
-    sol = spi.solve_ivp(RHSOsc, [x1, x2], [1.0, 0.0], method='RK45', atol=1.0e-10, rtol=1.0e-10, first_step=h1,
+    sol = spi.solve_ivp(RHSOsc, [x1, x2], [1.0, 0.0], method=method, atol=1.0e-10, rtol=1.0e-10, first_step=h1,
                         dense_output=dense, t_eval=x_eval)
     np.set_printoptions(floatmode='unique')
     print("Oscillator")

@@ -25,7 +25,7 @@ class NoOutput {
  * interface functions for retrieving the raw integration step values. */
 class RawOutput {
  public:
-  static auto constexpr init_cap = 500;  // Initial capacity of storage arrays.
+  auto static constexpr init_cap = 500;  // Initial capacity of storage arrays.
 
   void init(int neqn, double, double) {
     y_values_.resize(neqn);
@@ -62,8 +62,8 @@ class RawOutput {
 template <typename DenseData>
 class DenseOutput {
  public:
-  static auto constexpr init_cap = 500;  // Initial capacity of storage arrays.
-  static auto constexpr default_n_intervals =
+  auto static constexpr init_cap = 500;  // Initial capacity of storage arrays.
+  auto static constexpr default_n_intervals =
       20;  // Default number of intervals.
 
   /* Called by the ODEIntegrator constructor, which passes neqn, the number of

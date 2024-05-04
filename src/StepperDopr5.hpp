@@ -26,7 +26,7 @@ struct Dopr5DenseData {
 template <typename D, typename OP>
 struct StepperDopr5 : StepperBase, OP {
   using Dtype = D;  // Make the type of derivs available to ODEIntegrator.
-  using OutputPolicy = OP;  // Make the type of OP available to ODEIntegrator.
+  using OutputPolicy = OP;  // Make the type OP available to ODEIntegrator.
   D& derivs;
   std::vector<double> k2;
   std::vector<double> k3;
@@ -36,7 +36,7 @@ struct StepperDopr5 : StepperBase, OP {
   std::vector<double> dydxnew;
 
   StepperDopr5(std::vector<double>& yy, std::vector<double>& dydxx, double& xx,
-               const double atoll, const double rtoll, D& derivss);
+               double atoll, double rtoll, D& derivss);
 
   void step(double& htry, D& derivs);
   void save();

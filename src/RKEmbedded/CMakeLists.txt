@@ -9,3 +9,5 @@ add_library(VectorState INTERFACE VectorState.hpp)
 
 add_executable(main main.cpp)
 target_link_libraries(main RKEmbedded RKF45 DOPRI5 RKF78 DVERK VectorState)
+
+add_subdirectory(test)

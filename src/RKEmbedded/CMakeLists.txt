@@ -1,5 +1,6 @@
 add_library(RKEmbedded INTERFACE RKEmbedded.hpp)
 
+add_library(HE21 INTERFACE HE21.hpp)
 add_library(RKF45 INTERFACE RKF45.hpp)
 add_library(DOPRI5 INTERFACE DOPRI5.hpp)
 add_library(RKF78 INTERFACE RKF78.hpp)

@@ -10,11 +10,12 @@ class RKEmbedded {
  public:
   auto integrate(StateType x0, double t0, double tf, StateType atol,
                  StateType rtol) -> void {
-    auto const& a = derived()->a;
-    auto const& b = derived()->b;
+    auto constexpr a = RKMethod::a;
+    auto constexpr b = RKMethod::b;
+    auto constexpr n_stages = RKMethod::n_stages;
+
     auto& ks = derived()->ks;
     auto& ode = derived()->ode;
-    auto const n_stages = derived()->n_stages;
 
     auto dt = estimate_initial_step(x0, atol, rtol);
     auto t = t0;
@@ -92,7 +93,7 @@ class RKEmbedded {
     derived()->ode(x1, f1);
     auto d2 = rk_norm(f1 - f0, error_target) / dt0;
 
-    auto const p = derived()->p;
+    auto constexpr p = RKMethod::p;
     auto dt1 = (std::max(d1, d2) <= 1.0e-15)
                    ? std::max(1.0e-6, dt0 * 1.0e-3)
                    : std::pow(0.01 / std::max(d1, d2), (1.0 / (1.0 + p)));

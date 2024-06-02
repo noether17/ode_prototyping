@@ -2,21 +2,15 @@
 
 #include <array>
 #include <cmath>
-#include <ranges>
 #include <vector>
 
 #include "RKEmbedded.hpp"
 
-namespace vws = std::views;
-
-/* This method performs poorly and gets wrong result for simple exponential ODE.
- * Look into this further. */
 template <typename ODE, typename StateType>
 class DVERK : public RKEmbedded<DVERK<ODE, StateType>, ODE, StateType> {
  public:
   auto static constexpr p = 6;
   auto static constexpr pt = 5;
-  auto static constexpr q = std::min(p, pt);
   auto static constexpr a = std::array{
       std::array{1.0 / 6.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0},
       std::array{4.0 / 75.0, 16.0 / 75.0, 0.0, 0.0, 0.0, 0.0, 0.0},
@@ -35,16 +29,8 @@ class DVERK : public RKEmbedded<DVERK<ODE, StateType>, ODE, StateType> {
   auto static constexpr bt = std::array{
       13.0 / 160.0, 0.0, 2375.0 / 5984.0, 5.0 / 16.0, 12.0 / 85.0, 3.0 / 44.0,
       0.0,          0.0};
-  auto static constexpr db = []() {
-    auto db = b;
-    for (auto&& [x, xt] : vws::zip(db, bt)) {
-      x -= xt;
-    }
-    return db;
-  }();
 
   auto static constexpr n_stages = static_cast<int>(b.size());
-  auto static inline const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
 
   std::array<StateType, n_stages> ks{};
   ODE& ode;

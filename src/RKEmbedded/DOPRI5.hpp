@@ -2,19 +2,15 @@
 
 #include <array>
 #include <cmath>
-#include <ranges>
 #include <vector>
 
 #include "RKEmbedded.hpp"
-
-namespace vws = std::views;
 
 template <typename ODE, typename StateType>
 class DOPRI5 : public RKEmbedded<DOPRI5<ODE, StateType>, ODE, StateType> {
  public:
   auto static constexpr p = 5;
   auto static constexpr pt = 4;
-  auto static constexpr q = std::min(p, pt);
   auto static constexpr a = std::array{
       std::array{1.0 / 5.0, 0.0, 0.0, 0.0, 0.0, 0.0},
       std::array{3.0 / 40.0, 9.0 / 40.0, 0.0, 0.0, 0.0, 0.0},
@@ -32,16 +28,8 @@ class DOPRI5 : public RKEmbedded<DOPRI5<ODE, StateType>, ODE, StateType> {
                                         7571.0 / 16695.0,    393.0 / 640.0,
                                         -92097.0 / 339200.0, 187.0 / 2100.0,
                                         1.0 / 40.0};
-  auto static constexpr db = []() {
-    auto db = b;
-    for (auto&& [x, xt] : vws::zip(db, bt)) {
-      x -= xt;
-    }
-    return db;
-  }();
 
   auto static constexpr n_stages = static_cast<int>(b.size());
-  auto static inline const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
 
   std::array<StateType, n_stages> ks{};
   ODE& ode;

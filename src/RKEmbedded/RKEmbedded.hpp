@@ -1,6 +1,9 @@
 #pragma once
 
 #include <cmath>
+#include <ranges>
+
+namespace vws = std::views;
 
 template <typename RKMethod, typename ODE, typename StateType>
 class RKEmbedded {
@@ -9,12 +12,9 @@ class RKEmbedded {
                  StateType rtol) -> void {
     auto const& a = derived()->a;
     auto const& b = derived()->b;
-    auto const& db = derived()->db;
     auto& ks = derived()->ks;
     auto& ode = derived()->ode;
     auto const n_stages = derived()->n_stages;
-    auto const safety_factor = derived()->safety_factor;
-    auto const q = derived()->q;
 
     auto dt = estimate_initial_step(x0, atol, rtol);
     auto t = t0;
@@ -39,7 +39,7 @@ class RKEmbedded {
       error_estimate *= 0.0;
       for (auto j = 0; j < n_stages; ++j) {
         temp_dxdt += ks[j] * b[j];
-        error_estimate += ks[j] * db[j];
+        error_estimate += ks[j] * db()[j];
       }
       x = x0 + temp_dxdt * dt;
       error_estimate *= dt;
@@ -56,7 +56,8 @@ class RKEmbedded {
       }
 
       // update step size
-      auto dtnew = dt * safety_factor / std::pow(scaled_error, 1.0 / (1.0 + q));
+      auto dtnew =
+          dt * safety_factor() / std::pow(scaled_error, 1.0 / (1.0 + q()));
       if (std::abs(dtnew) > max_step_scale * std::abs(dt)) {
         dt *= max_step_scale;
       } else if (std::abs(dtnew) < min_step_scale * std::abs(dt)) {
@@ -110,5 +111,27 @@ class RKEmbedded {
   auto static constexpr max_step_scale = 6.0;
   auto static constexpr min_step_scale = 0.33;
 
-  auto derived() { return static_cast<RKMethod*>(this); }
+  auto static constexpr db() {
+    auto static constexpr db = []() {
+      auto db = RKMethod::b;
+      for (auto&& [x, xt] : vws::zip(db, RKMethod::bt)) {
+        x -= xt;
+      }
+      return db;
+    }();
+    return db;
+  }
+
+  auto static constexpr q() {
+    auto static constexpr q = std::min(RKMethod::p, RKMethod::pt);
+    return q;
+  }
+
+  auto static safety_factor() {
+    auto static const safety_factor = std::pow(0.38, (1.0 / (1.0 + q())));
+    return safety_factor;
+  }
+
+  auto* derived() { return static_cast<RKMethod*>(this); }
+  auto* derived() const { return static_cast<RKMethod const*>(this); }
 };

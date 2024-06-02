@@ -2,19 +2,15 @@
 
 #include <array>
 #include <cmath>
-#include <ranges>
 #include <vector>
 
 #include "RKEmbedded.hpp"
-
-namespace vws = std::views;
 
 template <typename ODE, typename StateType>
 class RKF78 : public RKEmbedded<RKF78<ODE, StateType>, ODE, StateType> {
  public:
   auto static constexpr p = 7;
   auto static constexpr pt = 8;
-  auto static constexpr q = std::min(p, pt);
   auto static constexpr a = std::array{
       std::array{2.0 / 27.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                  0.0},
@@ -51,16 +47,8 @@ class RKF78 : public RKEmbedded<RKF78<ODE, StateType>, ODE, StateType> {
       0.0,          0.0,          0.0,         0.0,         0.0,
       34.0 / 105.0, 9.0 / 35.0,   9.0 / 35.0,  9.0 / 280.0, 9.0 / 280.0,
       0.0,          41.0 / 840.0, 41.0 / 840.0};
-  auto static constexpr db = []() {
-    auto db = b;
-    for (auto&& [x, xt] : vws::zip(db, bt)) {
-      x -= xt;
-    }
-    return db;
-  }();
 
   auto static constexpr n_stages = static_cast<int>(b.size());
-  auto static inline const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
 
   std::array<StateType, n_stages> ks{};
   ODE& ode;

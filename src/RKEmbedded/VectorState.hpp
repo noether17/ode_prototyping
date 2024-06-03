@@ -31,11 +31,6 @@ class VectorState {
     }
     return *this;
   }
-  auto operator+(VectorState const& vs) {
-    auto temp = *this;
-    temp += vs;
-    return temp;
-  }
 
   auto& operator-=(VectorState const& vs) {
     for (auto i = 0; i < N; ++i) {
@@ -108,9 +103,80 @@ class VectorState {
 
   auto static constexpr size() { return N; }
 
+  template <typename UnaryOp>
+  friend void elementwise_unary_op(VectorState& v, UnaryOp unary_op) {
+    for (auto i = 0; i < N; ++i) {
+      unary_op(v[i]);
+    }
+  }
+
+  template <typename UnaryOp>
+  friend void elementwise_unary_op(VectorState const& u, VectorState& v,
+                                   UnaryOp unary_op) {
+    for (auto i = 0; i < N; ++i) {
+      v[i] = unary_op(u[i]);
+    }
+  }
+
+  template <typename BinaryOp>
+  friend void elementwise_binary_op(VectorState const& u, VectorState& v,
+                                    BinaryOp binary_op) {
+    for (auto i = 0; i < N; ++i) {
+      binary_op(u[i], v[i]);
+    }
+  }
+
+  template <typename BinaryOp>
+  friend void elementwise_binary_op(VectorState const& u, VectorState const& v,
+                                    VectorState& w, BinaryOp binary_op) {
+    for (auto i = 0; i < N; ++i) {
+      w[i] = binary_op(u[i], v[i]);
+    }
+  }
+
+  friend auto inner_product(VectorState const& u, VectorState const& v) {
+    auto sum = 0.0;
+    for (auto i = 0; i < N; ++i) {
+      sum += u[i] * v[i];
+    }
+    return sum;
+  }
+
  private:
   std::unique_ptr<std::array<double, N>> state_{};
 };
+
+template <int N>
+void fill(VectorState<N>& v, double value) {
+  elementwise_unary_op(v, [value](auto& x) { x = value; });
+}
+
+template <int N>
+void scalar_mult(VectorState<N>& v, double s) {
+  elementwise_unary_op(v, [s](auto& x) { x *= s; });
+}
+
+template <int N>
+void vector_add(VectorState<N> const& u, VectorState<N>& v) {
+  elementwise_binary_op(u, v, [](auto a, auto& b) { b += a; });
+}
+
+template <int N>
+void elementwise_mult(VectorState<N> const& u, VectorState<N>& v) {
+  elementwise_binary_op(u, v, [](auto a, auto& b) { b *= a; });
+}
+
+template <int N>
+void elementwise_mult_add(double a, VectorState<N> const& u,
+                          VectorState<N>& v) {
+  elementwise_binary_op(u, v, [a](auto b, auto& c) { c += a * b; });
+}
+
+template <int N>
+void elementwise_mult_add(double a, VectorState<N> const& u,
+                          VectorState<N> const& v, VectorState<N>& w) {
+  elementwise_binary_op(u, v, w, [a](auto b, auto c) { return a * b + c; });
+}
 
 template <int N>
 auto mult_ew(VectorState<N> const& u, VectorState<N> const& v) {

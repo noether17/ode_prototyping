@@ -3,6 +3,8 @@
 #include <cmath>
 #include <ranges>
 
+#include "VectorState.hpp"
+
 namespace vws = std::views;
 
 template <typename RKMethod, typename ODE, typename StateType>
@@ -20,7 +22,7 @@ class RKEmbedded {
     auto dt = estimate_initial_step(x0, atol, rtol);
     auto t = t0;
     auto x = x0;
-    auto temp_dxdt = StateType{};
+    auto temp_state = StateType{};
     auto error_estimate = StateType{};
     auto error_target = StateType{};
     derived()->save_state(t, x);
@@ -28,25 +30,32 @@ class RKEmbedded {
       // evaluate stages
       ode(x0, ks[0]);
       for (auto stage = 1; stage < n_stages; ++stage) {
-        temp_dxdt *= 0.0;
+        fill(temp_state, 0.0);
         for (auto j = 0; j < stage; ++j) {
-          temp_dxdt += ks[j] * a[stage - 1][j];
+          temp_state += ks[j] * a[stage - 1][j];
         }
-        ode(x0 + temp_dxdt * dt, ks[stage]);
+        scalar_mult(temp_state, dt);
+        vector_add(x0, temp_state);
+        ode(temp_state, ks[stage]);
       }
 
       // advance the state and compute the error estimate
-      temp_dxdt *= 0.0;
-      error_estimate *= 0.0;
+      fill(x, 0.0);
+      fill(error_estimate, 0.0);
       for (auto j = 0; j < n_stages; ++j) {
-        temp_dxdt += ks[j] * b[j];
+        x += ks[j] * b[j];
         error_estimate += ks[j] * db()[j];
       }
-      x = x0 + temp_dxdt * dt;
-      error_estimate *= dt;
+      scalar_mult(x, dt);
+      vector_add(x0, x);
+      scalar_mult(error_estimate, dt);
 
       // estimate error
-      error_target = atol + mult_ew(max_ew(abs_ew(x0), abs_ew(x)), rtol);
+      elementwise_binary_op(x0, x, error_target, [](auto a, auto b) {
+        return std::max(std::abs(a), std::abs(b));
+      });
+      elementwise_mult(rtol, error_target);
+      vector_add(atol, error_target);
       auto scaled_error = rk_norm(error_estimate, error_target);
 
       // accept or reject the step
@@ -79,8 +88,11 @@ class RKEmbedded {
   auto estimate_initial_step(StateType x0, StateType atol,
                              StateType rtol) -> double {
     // algorithm presented in Hairer II.4
-    auto error_target = StateType{};
-    error_target = atol + abs_ew(x0) * rtol;
+    auto error_target = x0;
+    elementwise_unary_op(error_target, [](auto& x) { x = std::abs(x); });
+    elementwise_mult(rtol, error_target);
+    vector_add(atol, error_target);
+
     auto f0 = StateType{};
     derived()->ode(x0, f0);
     auto d0 = rk_norm(x0, error_target);
@@ -88,7 +100,7 @@ class RKEmbedded {
     auto dt0 = (d0 < 1.0e-5 or d1 < 1.0e-5) ? 1.0e-6 : 0.01 * (d0 / d1);
 
     auto x1 = StateType{};
-    x1 = x0 + f0 * dt0;
+    elementwise_mult_add(dt0, f0, x0, x1);
     auto f1 = StateType{};
     derived()->ode(x1, f1);
     auto d2 = rk_norm(f1 - f0, error_target) / dt0;

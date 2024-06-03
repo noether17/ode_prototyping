@@ -3,8 +3,6 @@
 #include <cmath>
 #include <ranges>
 
-#include "VectorState.hpp"
-
 namespace vws = std::views;
 
 template <typename RKMethod, typename ODE, typename StateType>

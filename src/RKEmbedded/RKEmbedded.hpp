@@ -124,19 +124,19 @@ class RKEmbedded {
   auto static constexpr max_step_scale = 6.0;
   auto static constexpr min_step_scale = 0.33;
 
-  auto static constexpr db() {
-    auto static constexpr db = []() {
+  auto static consteval db() {
+    auto constexpr db = []() {
       auto db = RKMethod::b;
-      for (auto&& [x, xt] : vws::zip(db, RKMethod::bt)) {
-        x -= xt;
+      for (auto i = 0; i < RKMethod::n_stages; ++i) {
+        db[i] -= RKMethod::bt[i];
       }
       return db;
     }();
     return db;
   }
 
-  auto static constexpr q() {
-    auto static constexpr q = std::min(RKMethod::p, RKMethod::pt);
+  auto static consteval q() {
+    auto constexpr q = std::min(RKMethod::p, RKMethod::pt);
     return q;
   }
 

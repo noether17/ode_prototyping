@@ -50,11 +50,6 @@ class VectorState {
     auto recip = 1.0 / s;
     return *this *= recip;
   }
-  auto operator/(double s) {
-    auto temp = *this;
-    temp /= s;
-    return temp;
-  }
 
   auto& operator*=(VectorState const& vs) {
     for (auto i = 0; i < N; ++i) {
@@ -62,22 +57,12 @@ class VectorState {
     }
     return *this;
   }
-  auto operator*(VectorState const& vs) {
-    auto temp = *this;
-    temp *= vs;
-    return temp;
-  }
 
   auto& operator/=(VectorState const& vs) {
     for (auto i = 0; i < N; ++i) {
       (*state_)[i] /= (*vs.state_)[i];
     }
     return *this;
-  }
-  auto operator/(VectorState const& vs) {
-    auto temp = *this;
-    temp /= vs;
-    return temp;
   }
 
   auto& operator[](int i) { return (*state_)[i]; }
@@ -166,31 +151,4 @@ template <int N>
 void elementwise_mult_add(double a, VectorState<N> const& u,
                           VectorState<N> const& v, VectorState<N>& w) {
   elementwise_binary_op(u, v, w, [a](auto b, auto c) { return a * b + c; });
-}
-
-template <int N>
-auto mult_ew(VectorState<N> const& u, VectorState<N> const& v) {
-  auto temp = u;
-  for (auto i = 0; i < N; ++i) {
-    temp[i] *= v[i];
-  }
-  return temp;
-}
-
-template <int N>
-auto max_ew(VectorState<N> const& u, VectorState<N> const& v) {
-  auto temp = u;
-  for (auto i = 0; i < N; ++i) {
-    temp[i] = std::max(temp[i], v[i]);
-  }
-  return temp;
-}
-
-template <int N>
-auto abs_ew(VectorState<N> const& u) {
-  auto temp = u;
-  for (auto i = 0; i < N; ++i) {
-    temp[i] = std::abs(temp[i]);
-  }
-  return temp;
 }

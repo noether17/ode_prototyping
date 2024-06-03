@@ -13,12 +13,12 @@ class DOPRI5VanDerPolTest : public testing::Test {
     dxdt[0] = x[1];
     dxdt[1] = eps * (1.0 - x[0] * x[0]) * x[1] - x[0];
   };
-  auto static constexpr x0 = std::array{2.0, 0.0};
+  auto static inline const x0 = VectorState<2>(std::array{2.0, 0.0});
   auto static constexpr t0 = 0.0;
   auto static constexpr tf = 2.0;
   auto static constexpr tol = 1.0e-10;
-  auto static constexpr atol = std::array{tol, tol};
-  auto static constexpr rtol = atol;
+  auto static inline const atol = VectorState<2>(std::array{tol, tol});
+  auto static inline const rtol = atol;
 
   DOPRI5<decltype(ode_van), VectorState<2>> integrator{ode_van};
 };

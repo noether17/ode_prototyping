@@ -3,6 +3,7 @@
 #include <array>
 #include <cmath>
 #include <memory>
+#include <span>
 
 #include "ODEState.hpp"
 
@@ -10,8 +11,10 @@ template <int N>
 class VectorState : public ODEState<VectorState<N>> {
  public:
   VectorState() : state_{std::make_unique<std::array<double, N>>()} {}
-  VectorState(std::array<double, N> const& state)
-      : state_{std::make_unique<std::array<double, N>>(state)} {}
+  VectorState(std::span<double const, N> state)
+      : state_{std::make_unique<std::array<double, N>>()} {
+    std::copy(state.begin(), state.end(), state_->begin());
+  }
   VectorState(VectorState const& vs)
       : state_{std::make_unique<std::array<double, N>>(*vs.state_)} {}
   VectorState(VectorState&& vs) = default;

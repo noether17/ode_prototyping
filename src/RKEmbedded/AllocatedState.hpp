@@ -8,27 +8,27 @@
 #include "ODEState.hpp"
 
 template <int N>
-class VectorState : public ODEState<VectorState<N>> {
+class AllocatedState : public ODEState<AllocatedState<N>> {
  public:
-  VectorState() : state_{std::make_unique<std::array<double, N>>()} {}
-  VectorState(std::span<double const, N> state)
+  AllocatedState() : state_{std::make_unique<std::array<double, N>>()} {}
+  AllocatedState(std::span<double const, N> state)
       : state_{std::make_unique<std::array<double, N>>()} {
     std::copy(state.begin(), state.end(), state_->begin());
   }
-  VectorState(VectorState const& vs)
+  AllocatedState(AllocatedState const& vs)
       : state_{std::make_unique<std::array<double, N>>(*vs.state_)} {}
-  VectorState(VectorState&& vs) = default;
-  auto& operator=(VectorState const& vs) {
+  AllocatedState(AllocatedState&& vs) = default;
+  auto& operator=(AllocatedState const& vs) {
     if (this != &vs) {
       state_ = std::make_unique<std::array<double, N>>(*vs.state_);
     }
     return *this;
   }
-  auto& operator=(VectorState&& vs) {
+  auto& operator=(AllocatedState&& vs) {
     state_ = std::move(vs.state_);
     return *this;
   }
-  ~VectorState() = default;
+  ~AllocatedState() = default;
 
   auto& operator[](int i) { return (*state_)[i]; }
   auto const& operator[](int i) const { return (*state_)[i]; }
@@ -36,14 +36,14 @@ class VectorState : public ODEState<VectorState<N>> {
   auto static constexpr size() { return N; }
 
   template <typename UnaryOp>
-  friend void elementwise_unary_op(VectorState& v, UnaryOp unary_op) {
+  friend void elementwise_unary_op(AllocatedState& v, UnaryOp unary_op) {
     for (auto i = 0; i < N; ++i) {
       unary_op(v[i]);
     }
   }
 
   template <typename UnaryOp>
-  friend void elementwise_unary_op(VectorState const& u, VectorState& v,
+  friend void elementwise_unary_op(AllocatedState const& u, AllocatedState& v,
                                    UnaryOp unary_op) {
     for (auto i = 0; i < N; ++i) {
       v[i] = unary_op(u[i]);
@@ -51,7 +51,7 @@ class VectorState : public ODEState<VectorState<N>> {
   }
 
   template <typename BinaryOp>
-  friend void elementwise_binary_op(VectorState const& u, VectorState& v,
+  friend void elementwise_binary_op(AllocatedState const& u, AllocatedState& v,
                                     BinaryOp binary_op) {
     for (auto i = 0; i < N; ++i) {
       binary_op(u[i], v[i]);
@@ -59,14 +59,14 @@ class VectorState : public ODEState<VectorState<N>> {
   }
 
   template <typename BinaryOp>
-  friend void elementwise_binary_op(VectorState const& u, VectorState const& v,
-                                    VectorState& w, BinaryOp binary_op) {
+  friend void elementwise_binary_op(AllocatedState const& u, AllocatedState const& v,
+                                    AllocatedState& w, BinaryOp binary_op) {
     for (auto i = 0; i < N; ++i) {
       w[i] = binary_op(u[i], v[i]);
     }
   }
 
-  friend auto inner_product(VectorState const& u, VectorState const& v) {
+  friend auto inner_product(AllocatedState const& u, AllocatedState const& v) {
     auto sum = 0.0;
     for (auto i = 0; i < N; ++i) {
       sum += u[i] * v[i];

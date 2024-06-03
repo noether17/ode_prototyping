@@ -3,24 +3,24 @@
 #include <array>
 
 #include "RKF45.hpp"
-#include "VectorState.hpp"
+#include "AllocatedState.hpp"
 
 class RKF45VanDerPolTest : public testing::Test {
  protected:
   auto static constexpr eps = 1.0;
-  auto static constexpr ode_van = [](VectorState<2> const& x,
-                                     VectorState<2>& dxdt) {
+  auto static constexpr ode_van = [](AllocatedState<2> const& x,
+                                     AllocatedState<2>& dxdt) {
     dxdt[0] = x[1];
     dxdt[1] = eps * (1.0 - x[0] * x[0]) * x[1] - x[0];
   };
-  auto static inline const x0 = VectorState<2>(std::array{2.0, 0.0});
+  auto static inline const x0 = AllocatedState<2>(std::array{2.0, 0.0});
   auto static constexpr t0 = 0.0;
   auto static constexpr tf = 2.0;
   auto static constexpr tol = 1.0e-10;
-  auto static inline const atol = VectorState<2>(std::array{tol, tol});
+  auto static inline const atol = AllocatedState<2>(std::array{tol, tol});
   auto static inline const rtol = atol;
 
-  RKF45<decltype(ode_van), VectorState<2>> integrator{ode_van};
+  RKF45<decltype(ode_van), AllocatedState<2>> integrator{ode_van};
 };
 
 /* Consistency tests (testing for double equality) are to ensure no accidental

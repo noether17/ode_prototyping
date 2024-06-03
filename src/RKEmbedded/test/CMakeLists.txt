@@ -6,7 +6,7 @@ target_link_libraries(HE21Test
   GTest::Main
   RKEmbedded
   HE21
-  VectorState
+  AllocatedState
 )
 add_test(NAME HE21Test COMMAND HE21Test)
 
@@ -16,7 +16,7 @@ target_link_libraries(RKF45Test
   GTest::Main
   RKEmbedded
   RKF45
-  VectorState
+  AllocatedState
 )
 add_test(NAME RKF45Test COMMAND RKF45Test)
 
@@ -26,7 +26,7 @@ target_link_libraries(DOPRI5Test
   GTest::Main
   RKEmbedded
   DOPRI5
-  VectorState
+  AllocatedState
 )
 add_test(NAME DOPRI5Test COMMAND DOPRI5Test)
 
@@ -36,7 +36,7 @@ target_link_libraries(RKF78Test
   GTest::Main
   RKEmbedded
   RKF78
-  VectorState
+  AllocatedState
 )
 add_test(NAME RKF78Test COMMAND RKF78Test)
 
@@ -46,6 +46,6 @@ target_link_libraries(DVERKTest
   GTest::Main
   RKEmbedded
   DVERK
-  VectorState
+  AllocatedState
 )
 add_test(NAME DVERKTest COMMAND DVERKTest)

@@ -32,7 +32,7 @@ class RKEmbedded {
       for (auto stage = 1; stage < n_stages; ++stage) {
         fill(temp_state, 0.0);
         for (auto j = 0; j < stage; ++j) {
-          temp_state += ks[j] * a[stage - 1][j];
+          elementwise_mult_add(a[stage - 1][j], ks[j], temp_state);
         }
         scalar_mult(temp_state, dt);
         vector_add(x0, temp_state);
@@ -43,8 +43,8 @@ class RKEmbedded {
       fill(x, 0.0);
       fill(error_estimate, 0.0);
       for (auto j = 0; j < n_stages; ++j) {
-        x += ks[j] * b[j];
-        error_estimate += ks[j] * db()[j];
+        elementwise_mult_add(b[j], ks[j], x);
+        elementwise_mult_add(db()[j], ks[j], error_estimate);
       }
       scalar_mult(x, dt);
       vector_add(x0, x);

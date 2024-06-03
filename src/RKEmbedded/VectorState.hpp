@@ -45,11 +45,6 @@ class VectorState {
     }
     return *this;
   }
-  auto operator*(double s) {
-    auto temp = *this;
-    temp *= s;
-    return temp;
-  }
 
   auto& operator/=(double s) {
     auto recip = 1.0 / s;

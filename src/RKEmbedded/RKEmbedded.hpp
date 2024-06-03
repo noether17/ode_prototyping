@@ -116,7 +116,7 @@ class RKEmbedded {
 
   auto rk_norm(StateType v, StateType scale) -> double {
     elementwise_binary_op(scale, v, [](auto a, auto& b) { b /= a; });
-    return std::sqrt(v.mag2() / v.size());
+    return std::sqrt(inner_product(v, v) / v.size());
   }
 
  protected:

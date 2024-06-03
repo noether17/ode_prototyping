@@ -28,14 +28,6 @@ class VectorState {
   auto& operator[](int i) { return (*state_)[i]; }
   auto const& operator[](int i) const { return (*state_)[i]; }
 
-  auto mag2() const {
-    auto sum = 0.0;
-    for (auto i = 0; i < N; ++i) {
-      sum += (*state_)[i] * (*state_)[i];
-    }
-    return sum;
-  }
-
   auto static constexpr size() { return N; }
 
   template <typename UnaryOp>

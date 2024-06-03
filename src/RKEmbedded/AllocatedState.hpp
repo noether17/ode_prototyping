@@ -15,17 +15,17 @@ class AllocatedState : public ODEState<AllocatedState<N>> {
       : state_{std::make_unique<std::array<double, N>>()} {
     std::copy(state.begin(), state.end(), state_->begin());
   }
-  AllocatedState(AllocatedState const& vs)
-      : state_{std::make_unique<std::array<double, N>>(*vs.state_)} {}
-  AllocatedState(AllocatedState&& vs) = default;
-  auto& operator=(AllocatedState const& vs) {
-    if (this != &vs) {
-      state_ = std::make_unique<std::array<double, N>>(*vs.state_);
+  AllocatedState(AllocatedState const& v)
+      : state_{std::make_unique<std::array<double, N>>(*v.state_)} {}
+  AllocatedState(AllocatedState&& v) = default;
+  auto& operator=(AllocatedState const& v) {
+    if (this != &v) {
+      state_ = std::make_unique<std::array<double, N>>(*v.state_);
     }
     return *this;
   }
-  auto& operator=(AllocatedState&& vs) {
-    state_ = std::move(vs.state_);
+  auto& operator=(AllocatedState&& v) {
+    state_ = std::move(v.state_);
     return *this;
   }
   ~AllocatedState() = default;
@@ -59,8 +59,9 @@ class AllocatedState : public ODEState<AllocatedState<N>> {
   }
 
   template <typename BinaryOp>
-  friend void elementwise_binary_op(AllocatedState const& u, AllocatedState const& v,
-                                    AllocatedState& w, BinaryOp binary_op) {
+  friend void elementwise_binary_op(AllocatedState const& u,
+                                    AllocatedState const& v, AllocatedState& w,
+                                    BinaryOp binary_op) {
     for (auto i = 0; i < N; ++i) {
       w[i] = binary_op(u[i], v[i]);
     }

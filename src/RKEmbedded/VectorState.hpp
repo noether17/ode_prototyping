@@ -25,46 +25,6 @@ class VectorState {
   }
   ~VectorState() = default;
 
-  auto& operator+=(VectorState const& vs) {
-    for (auto i = 0; i < N; ++i) {
-      (*state_)[i] += (*vs.state_)[i];
-    }
-    return *this;
-  }
-
-  auto& operator-=(VectorState const& vs) {
-    for (auto i = 0; i < N; ++i) {
-      (*state_)[i] -= (*vs.state_)[i];
-    }
-    return *this;
-  }
-
-  auto& operator*=(double s) {
-    for (auto i = 0; i < N; ++i) {
-      (*state_)[i] *= s;
-    }
-    return *this;
-  }
-
-  auto& operator/=(double s) {
-    auto recip = 1.0 / s;
-    return *this *= recip;
-  }
-
-  auto& operator*=(VectorState const& vs) {
-    for (auto i = 0; i < N; ++i) {
-      (*state_)[i] *= (*vs.state_)[i];
-    }
-    return *this;
-  }
-
-  auto& operator/=(VectorState const& vs) {
-    for (auto i = 0; i < N; ++i) {
-      (*state_)[i] /= (*vs.state_)[i];
-    }
-    return *this;
-  }
-
   auto& operator[](int i) { return (*state_)[i]; }
   auto const& operator[](int i) const { return (*state_)[i]; }
 

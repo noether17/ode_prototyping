@@ -103,7 +103,9 @@ class RKEmbedded {
     elementwise_mult_add(dt0, f0, x0, x1);
     auto f1 = StateType{};
     derived()->ode(x1, f1);
-    auto d2 = rk_norm(f1 - f0, error_target) / dt0;
+    auto df = f1;
+    elementwise_binary_op(f1, f0, df, [](auto a, auto b) { return a - b; });
+    auto d2 = rk_norm(df, error_target) / dt0;
 
     auto constexpr p = RKMethod::p;
     auto dt1 = (std::max(d1, d2) <= 1.0e-15)

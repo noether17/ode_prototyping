@@ -38,11 +38,6 @@ class VectorState {
     }
     return *this;
   }
-  auto operator-(VectorState const& vs) {
-    auto temp = *this;
-    temp -= vs;
-    return temp;
-  }
 
   auto& operator*=(double s) {
     for (auto i = 0; i < N; ++i) {

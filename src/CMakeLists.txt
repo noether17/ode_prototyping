@@ -13,4 +13,5 @@
 #target_link_libraries(StepperDopr853 INTERFACE StepperBase)
 
 add_subdirectory(RKEmbedded)
+add_subdirectory(RKEmbeddedCuda)
 #add_subdirectory(test)

@@ -13,7 +13,6 @@ TEST(CudaUtilsTest, ElementWiseAdd) {
   auto c = std::vector<double>(n);
   std::iota(a.begin(), a.end(), 0.0);
   std::iota(b.begin(), b.end(), 1.0);
-  std::transform(a.begin(), a.end(), b.begin(), c.begin(), std::plus<double>());
 
   auto a_dev = static_cast<double*>(nullptr);
   auto b_dev = static_cast<double*>(nullptr);
@@ -31,5 +30,29 @@ TEST(CudaUtilsTest, ElementWiseAdd) {
   cudaFree(b_dev);
   cudaFree(c_dev);
 
+  std::transform(a.begin(), a.end(), b.begin(), c.begin(), std::plus<double>());
   ASSERT_EQ(c, c_dev_host);
+}
+
+void cuda_square(double* v, int n) {
+  elementwise_unary_op_kernel<<<1, 1>>>(
+      v, n, [] __device__(auto x) { return x * x; });
+}
+
+TEST(CudaUtilsTest, ElementWiseUnaryOp) {
+  auto constexpr n = 10;
+  auto v = std::vector<double>(n);
+  std::iota(v.begin(), v.end(), 0.0);
+
+  auto v_dev = static_cast<double*>(nullptr);
+  cudaMalloc(&v_dev, n * sizeof(double));
+  cudaMemcpy(v_dev, v.data(), n * sizeof(double), cudaMemcpyHostToDevice);
+  cuda_square(v_dev, n);
+  auto v_dev_host = std::vector<double>(n);
+  cudaMemcpy(v_dev_host.data(), v_dev, n * sizeof(double),
+             cudaMemcpyDeviceToHost);
+  cudaFree(v_dev);
+
+  std::transform(v.begin(), v.end(), v.begin(), [](auto x) { return x * x; });
+  ASSERT_EQ(v, v_dev_host);
 }

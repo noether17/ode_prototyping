@@ -7,3 +7,11 @@ target_link_libraries(CudaUtilsTest
   CudaUtils
 )
 add_test(NAME CudaUtilsTest COMMAND CudaUtilsTest)
+
+add_executable(CudaStateTest CudaStateTest.cu)
+target_link_libraries(CudaStateTest
+  GTest::GTest
+  GTest::Main
+  CudaState
+)
+add_test(NAME CudaStateTest COMMAND CudaStateTest)

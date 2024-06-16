@@ -15,3 +15,12 @@ target_link_libraries(CudaStateTest
   CudaState
 )
 add_test(NAME CudaStateTest COMMAND CudaStateTest)
+
+add_executable(RKEmbeddedCudaTest RKEmbeddedCudaTest.cu)
+target_link_libraries(RKEmbeddedCudaTest
+  GTest::GTest
+  GTest::Main
+  CudaState
+  RKEmbeddedCuda
+)
+add_test(NAME RKEmbeddedCudaTest COMMAND RKEmbeddedCudaTest)

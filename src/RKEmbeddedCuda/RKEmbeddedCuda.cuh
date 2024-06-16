@@ -21,22 +21,9 @@ struct HE21 {
   auto static constexpr n_stages = static_cast<int>(b.size());
 };
 
-// template <int n_var>
-// auto rk_norm(CudaState<n_var> const& v,
-//              CudaState<n_var> const& scale) -> decltype(auto) {
-//   auto scaled_v = CudaState<n_var>{};
-//   elementwise_binary_op(
-//       v, scale, scaled_v,
-//       [] __device__(auto const& v, auto const& scale) { return v / scale; });
-//   auto dev_result = inner_product(scaled_v, scaled_v);
-//   elementwise_unary_op_kernel<<<1, 1>>>(
-//       dev_result.get(), 1,
-//       [] __device__(auto& x) { x = std::sqrt(x / n_var); });
-//   return dev_result;
-// }
-
 template <int n_var>
-void rk_norm(double* v, double* scale, double* temp, double* result) {
+void rk_norm(double const* v, double const* scale, double* temp,
+             double* result) {
   elementwise_binary_op_kernel<<<num_blocks<n_var>(), block_size>>>(
       v, scale, temp, n_var,
       [] __device__(auto const& v, auto const& scale) { return v / scale; });
@@ -44,6 +31,21 @@ void rk_norm(double* v, double* scale, double* temp, double* result) {
                                                             n_var);
   elementwise_unary_op_kernel<<<1, 1>>>(
       result, 1, [] __device__(auto& x) { x = std::sqrt(x / n_var); });
+}
+
+template <int n_var>
+void compute_error_target(double const* x, double const* rtol,
+                          double const* atol, double* error_target) {
+  elementwise_binary_op_kernel<<<num_blocks<n_var>(), block_size>>>(
+      x, rtol, error_target, n_var,
+      [] __device__(auto const& x, auto const& rtol) {
+        return rtol * std::abs(x);
+      });
+  elementwise_binary_op_kernel<<<num_blocks<n_var>(), block_size>>>(
+      atol, error_target, n_var,
+      [] __device__(auto const& atol, auto& error_target) {
+        error_target += atol;
+      });
 }
 
 //__global__ void compute_error_target(double* error_target, double* atol,

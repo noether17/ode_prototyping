@@ -60,3 +60,65 @@ TEST(RKEmbeddedCudaTest, RKNormTestLarge) {
              cudaMemcpyDeviceToHost);
   EXPECT_NEAR(host_result, host_cuda_result, tolerance);
 }
+
+template <int n_var>
+void host_compute_error_target(std::array<double, n_var> const& x,
+                               std::array<double, n_var> const& rtol,
+                               std::array<double, n_var> const& atol,
+                               std::array<double, n_var>& error_target) {
+  for (auto i = 0; i < n_var; ++i) {
+    error_target[i] = atol[i] + rtol[i] * std::abs(x[i]);
+  }
+}
+
+TEST(RKEmbeddedCudaTest, ComputeErrorTargetTestSmall) {
+  auto constexpr n_var = 10;
+  auto host_x = std::array<double, n_var>{};
+  std::iota(host_x.begin(), host_x.end(), 0.0);
+  auto host_rtol = std::array<double, n_var>{};
+  std::iota(host_rtol.begin(), host_rtol.end(), 1.0);
+  auto host_atol = std::array<double, n_var>{};
+  std::iota(host_atol.begin(), host_atol.end(), 2.0);
+  auto dev_x = CudaState<n_var>{host_x};
+  auto dev_rtol = CudaState<n_var>{host_rtol};
+  auto dev_atol = CudaState<n_var>{host_atol};
+
+  auto dev_result = CudaState<n_var>{};
+  compute_error_target<n_var>(dev_x, dev_rtol, dev_atol, dev_result);
+
+  auto host_result = std::array<double, n_var>();
+  host_compute_error_target<n_var>(host_x, host_rtol, host_atol, host_result);
+  auto host_cuda_result = std::array<double, n_var>{};
+  dev_result.to_host(host_cuda_result);
+  for (auto i = 0; i < n_var; ++i) {
+    EXPECT_DOUBLE_EQ(host_result[i], host_cuda_result[i]);
+  }
+}
+
+TEST(RKEmbeddedCudaTest, ComputeErrorTargetTestLarge) {
+  auto constexpr n_var = 1 << 20;
+  // auto const tolerance =
+  //     std::numeric_limits<double>::epsilon() * std::log2(n_var);
+  auto host_x = std::make_unique<std::array<double, n_var>>();
+  std::iota(host_x->begin(), host_x->end(), 0.0);
+  auto host_rtol = std::make_unique<std::array<double, n_var>>();
+  std::iota(host_rtol->begin(), host_rtol->end(), 1.0);
+  auto host_atol = std::make_unique<std::array<double, n_var>>();
+  std::iota(host_atol->begin(), host_atol->end(), 2.0);
+  auto dev_x = CudaState<n_var>{*host_x};
+  auto dev_rtol = CudaState<n_var>{*host_rtol};
+  auto dev_atol = CudaState<n_var>{*host_atol};
+
+  auto dev_result = CudaState<n_var>{};
+  compute_error_target<n_var>(dev_x, dev_rtol, dev_atol, dev_result);
+
+  auto host_result = std::make_unique<std::array<double, n_var>>();
+  host_compute_error_target<n_var>(*host_x, *host_rtol, *host_atol,
+                                   *host_result);
+  auto host_cuda_result = std::make_unique<std::array<double, n_var>>();
+  dev_result.to_host(*host_cuda_result);
+  for (auto i = 0; i < n_var; ++i) {
+    // EXPECT_NEAR(host_result[i], host_cuda_result[i], tolerance);
+    EXPECT_DOUBLE_EQ((*host_result)[i], (*host_cuda_result)[i]);
+  }
+}

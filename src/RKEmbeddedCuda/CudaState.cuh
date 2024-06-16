@@ -104,6 +104,9 @@ class CudaState {
 
   auto static constexpr size() { return N; }
 
+  operator double*() { return dev_state_; }
+  operator double const*() const { return dev_state_; }
+
   template <typename UnaryOp>
   friend void elementwise_unary_op(CudaState& v, UnaryOp unary_op) {
     elementwise_unary_op_kernel<<<num_blocks, block_size>>>(v.dev_state_, N,

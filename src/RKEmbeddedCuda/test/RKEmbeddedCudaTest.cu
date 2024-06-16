@@ -5,6 +5,7 @@
 #include <memory>
 #include <numeric>
 
+#include "CudaState.cuh"
 #include "RKEmbeddedCuda.cuh"
 
 TEST(RKEmbeddedCudaTest, RKNormTestSmall) {
@@ -13,21 +14,12 @@ TEST(RKEmbeddedCudaTest, RKNormTestSmall) {
   std::iota(host_v.begin(), host_v.end(), 0.0);
   auto host_scale = std::array<double, n_var>{};
   std::iota(host_scale.begin(), host_scale.end(), 1.0);
-  auto dev_v = static_cast<double*>(nullptr);
-  cudaMalloc(&dev_v, n_var * sizeof(double));
-  cudaMemcpy(dev_v, host_v.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  auto dev_scale = static_cast<double*>(nullptr);
-  cudaMalloc(&dev_scale, n_var * sizeof(double));
-  cudaMemcpy(dev_scale, host_scale.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
+  auto dev_v = CudaState<n_var>{host_v};
+  auto dev_scale = CudaState<n_var>{host_scale};
 
-  auto dev_result = static_cast<double*>(nullptr);
-  cudaMalloc(&dev_result, sizeof(double));
-  auto dev_temp = static_cast<double*>(nullptr);
-  cudaMalloc(&dev_temp, n_var * sizeof(double));
+  auto dev_result = CudaState<1>{};
+  auto dev_temp = CudaState<n_var>{};
   rk_norm<n_var>(dev_v, dev_scale, dev_temp, dev_result);
-  cudaFree(dev_temp);
 
   auto host_result =
       std::sqrt(std::inner_product(host_v.begin(), host_v.end(),
@@ -41,9 +33,6 @@ TEST(RKEmbeddedCudaTest, RKNormTestSmall) {
   cudaMemcpy(&host_cuda_result, dev_result, sizeof(double),
              cudaMemcpyDeviceToHost);
   EXPECT_DOUBLE_EQ(host_result, host_cuda_result);
-  cudaFree(dev_result);
-  cudaFree(dev_scale);
-  cudaFree(dev_v);
 }
 
 TEST(RKEmbeddedCudaTest, RKNormTestLarge) {
@@ -54,21 +43,12 @@ TEST(RKEmbeddedCudaTest, RKNormTestLarge) {
   std::iota(host_v->begin(), host_v->end(), 0.0);
   auto host_scale = std::make_unique<std::array<double, n_var>>();
   std::iota(host_scale->begin(), host_scale->end(), 1.0);
-  auto dev_v = static_cast<double*>(nullptr);
-  cudaMalloc(&dev_v, n_var * sizeof(double));
-  cudaMemcpy(dev_v, host_v->data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  auto dev_scale = static_cast<double*>(nullptr);
-  cudaMalloc(&dev_scale, n_var * sizeof(double));
-  cudaMemcpy(dev_scale, host_scale->data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
+  auto dev_v = CudaState<n_var>{*host_v};
+  auto dev_scale = CudaState<n_var>{*host_scale};
 
-  auto dev_result = static_cast<double*>(nullptr);
-  cudaMalloc(&dev_result, sizeof(double));
-  auto dev_temp = static_cast<double*>(nullptr);
-  cudaMalloc(&dev_temp, n_var * sizeof(double));
+  auto dev_result = CudaState<1>{};
+  auto dev_temp = CudaState<n_var>{};
   rk_norm<n_var>(dev_v, dev_scale, dev_temp, dev_result);
-  cudaFree(dev_temp);
 
   auto host_result =
       std::sqrt(std::inner_product(host_v->begin(), host_v->end(),
@@ -82,7 +62,4 @@ TEST(RKEmbeddedCudaTest, RKNormTestLarge) {
   cudaMemcpy(&host_cuda_result, dev_result, sizeof(double),
              cudaMemcpyDeviceToHost);
   EXPECT_NEAR(host_result, host_cuda_result, tolerance);
-  cudaFree(dev_result);
-  cudaFree(dev_scale);
-  cudaFree(dev_v);
 }

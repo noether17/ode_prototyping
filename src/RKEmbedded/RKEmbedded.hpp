@@ -1,9 +1,6 @@
 #pragma once
 
 #include <cmath>
-#include <ranges>
-
-namespace vws = std::views;
 
 template <typename RKMethod, typename ODE, typename StateType>
 class RKEmbedded {

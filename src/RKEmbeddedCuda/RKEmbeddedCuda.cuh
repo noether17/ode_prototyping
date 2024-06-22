@@ -9,14 +9,14 @@ auto consteval num_blocks() {
   return (N + block_size - 1) / block_size;
 }
 
-// struct HE21 {
-//   auto static constexpr a = std::array<std::array<double, 1>, 1>{{1.0}};
-//   auto static constexpr b = std::array{1.0 / 2.0, 1.0 / 2.0};
-//   auto static constexpr bt = std::array{1.0, 0.0};
-//   auto static constexpr p = 2;
-//   auto static constexpr pt = 1;
-//   auto static constexpr n_stages = static_cast<int>(b.size());
-// };
+struct HE21 {
+  auto static constexpr a = std::array<std::array<double, 1>, 1>{{1.0}};
+  auto static constexpr b = std::array{1.0 / 2.0, 1.0 / 2.0};
+  auto static constexpr bt = std::array{1.0, 0.0};
+  auto static constexpr p = 2;
+  auto static constexpr pt = 1;
+  auto static constexpr n_stages = static_cast<int>(b.size());
+};
 
 __global__ void cuda_compute_error_target(double const* x, double const* rtol,
                                           double const* atol,
@@ -95,9 +95,10 @@ void cuda_rk_norm(double const* dev_v, double const* dev_scale,
   cudaFree(dev_temp);
 }
 
-__global__ void cuda_compute_dt0(double d0, double d1, double* dt0) {
+__global__ void cuda_compute_dt0(double const* d0, double const* d1,
+                                 double* dt0) {
   if (threadIdx.x == 0) {
-    *dt0 = (d0 < 1.0e-5 or d1 < 1.0e-5) ? 1.0e-6 : 0.01 * (d0 / d1);
+    *dt0 = (*d0 < 1.0e-5 or *d1 < 1.0e-5) ? 1.0e-6 : 0.01 * (*d0 / *d1);
   }
 }
 
@@ -157,7 +158,7 @@ void cuda_estimate_initial_step(double* dev_x0, double* dev_atol,
   cuda_rk_norm<n_var>(dev_f0, dev_error_target, dev_d1);
   double* dev_dt0 = nullptr;
   cudaMalloc(&dev_dt0, sizeof(double));
-  cuda_compute_dt0<<<1, 1>>>(*dev_d0, *dev_d1, dev_dt0);
+  cuda_compute_dt0<<<1, 1>>>(dev_d0, dev_d1, dev_dt0);
 
   double* dev_x1 = nullptr;
   cudaMalloc(&dev_x1, n_var * sizeof(double));

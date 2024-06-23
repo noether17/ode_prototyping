@@ -190,17 +190,75 @@ void cuda_estimate_initial_step(double* dev_x0, double* dev_atol,
   cudaFree(dev_error_target);
 }
 
+template <typename aRow>
+__global__ void cuda_rk_stage(double const* x0, double* ks, double* temp_state,
+                              double const* dt, int stage, int n_var,
+                              aRow a_row) {
+  auto i = blockIdx.x * blockDim.x + threadIdx.x;
+  while (i < n_var) {
+    temp_state[i] = x0[i];
+    for (auto j = 0; j < stage; ++j) {
+      temp_state[i] += a_row[j] * ks[j * n_var + i] * *dt;
+    }
+    i += blockDim.x * gridDim.x;
+  }
+}
+
 template <int n_var, typename RKMethod, typename ODE>
+void cuda_evaluate_stages(double const* dev_x0, double* dev_temp_state,
+                          double* dev_ks, double const* dev_dt) {
+  ODE::compute_rhs(dev_x0, dev_ks);
+  for (auto stage = 1; stage < RKMethod::n_stages; ++stage) {
+    cudaMemset(dev_temp_state, 0, n_var * sizeof(double));
+    cuda_rk_stage<<<num_blocks<n_var>(), block_size>>>(
+        dev_x0, dev_ks, dev_temp_state, dev_dt, stage, n_var,
+        RKMethod::a[stage - 1]);
+    ODE::compute_rhs(dev_temp_state, dev_ks + stage * n_var);
+  }
+}
+
+template <int n_var, typename RKMethod, typename ODE, typename Output>
 void cuda_integrate(double* dev_x0, double* dev_t0, double* dev_tf,
-                    double* dev_atol, double* dev_rtol) {
+                    double* dev_atol, double* dev_rtol, Output& output) {
   double* dev_ks = nullptr;
   cudaMalloc(&dev_ks, n_var * RKMethod::n_stages * sizeof(double));
   double* dev_dt = nullptr;
   cudaMalloc(&dev_dt, sizeof(double));
   cuda_estimate_initial_step<n_var, ODE>(dev_x0, dev_atol, dev_rtol, dev_dt);
 
-  // TODO
+  double* dev_t = nullptr;
+  cudaMalloc(&dev_t, sizeof(double));
+  cudaMemcpy(dev_t, dev_t0, sizeof(double), cudaMemcpyDeviceToDevice);
+  double* dev_x = nullptr;
+  cudaMalloc(&dev_x, n_var * sizeof(double));
+  cudaMemcpy(dev_x, dev_x0, n_var * sizeof(double), cudaMemcpyDeviceToDevice);
+  double* dev_temp_state = nullptr;
+  cudaMalloc(&dev_temp_state, n_var * sizeof(double));
+  double* dev_error_estimate = nullptr;
+  cudaMalloc(&dev_error_estimate, n_var * sizeof(double));
+  double* dev_error_target = nullptr;
+  cudaMalloc(&dev_error_target, n_var * sizeof(double));
 
+  auto t = 0.0;
+  cudaMemcpy(&t, dev_t, sizeof(double), cudaMemcpyDeviceToHost);
+  auto tf = 0.0;
+  cudaMemcpy(&tf, dev_tf, sizeof(double), cudaMemcpyDeviceToHost);
+  output.save_state(dev_t, dev_x);
+  while (t < tf) {
+    cuda_evaluate_stages<n_var, RKMethod, ODE>(dev_x0, dev_temp_state, dev_ks,
+                                               dev_dt);
+
+    // TODO
+
+    cudaMemcpy(&t, dev_t, sizeof(double), cudaMemcpyDeviceToHost);
+    cudaMemcpy(&tf, dev_tf, sizeof(double), cudaMemcpyDeviceToHost);
+  }
+
+  cudaFree(dev_error_target);
+  cudaFree(dev_error_estimate);
+  cudaFree(dev_temp_state);
+  cudaFree(dev_x);
+  cudaFree(dev_t);
   cudaFree(dev_dt);
   cudaFree(dev_ks);
 }

@@ -217,9 +217,35 @@ void cuda_evaluate_stages(double const* dev_x0, double* dev_temp_state,
   }
 }
 
+template <int n_var, typename RKMethod, typename bArray>
+__global__ void cuda_update_state_and_error(double const* x0, double const* ks,
+                                            double const* dt, double* x,
+                                            double* error_estimate, bArray b,
+                                            bArray db, int stages) {
+  auto i = blockIdx.x * blockDim.x + threadIdx.x;
+  while (i < n_var) {
+    x[i] = 0.0;
+    error_estimate[i] = 0.0;
+    for (auto j = 0; j < stages; ++j) {
+      x[i] += b[j] * ks[j * n_var + i];
+      error_estimate[i] += db[j] * ks[j * n_var + i];
+    }
+    x[i] *= *dt;
+    x[i] += x0[i];
+    i += blockDim.x * gridDim.x;
+  }
+}
+
 template <int n_var, typename RKMethod, typename ODE, typename Output>
 void cuda_integrate(double* dev_x0, double* dev_t0, double* dev_tf,
                     double* dev_atol, double* dev_rtol, Output& output) {
+  auto constexpr db = []() {
+    auto db = RKMethod::b;
+    for (auto i = 0; i < RKMethod::b.size(); ++i) {
+      db[i] -= RKMethod::bt[i];
+    }
+    return db;
+  }();
   double* dev_ks = nullptr;
   cudaMalloc(&dev_ks, n_var * RKMethod::n_stages * sizeof(double));
   double* dev_dt = nullptr;
@@ -247,6 +273,11 @@ void cuda_integrate(double* dev_x0, double* dev_t0, double* dev_tf,
   while (t < tf) {
     cuda_evaluate_stages<n_var, RKMethod, ODE>(dev_x0, dev_temp_state, dev_ks,
                                                dev_dt);
+
+    cuda_update_state_and_error<n_var, RKMethod>
+        <<<num_blocks<n_var>(), block_size>>>(dev_x0, dev_ks, dev_dt, dev_x,
+                                              dev_error_estimate, RKMethod::b,
+                                              db, RKMethod::n_stages);
 
     // TODO
 

@@ -1,9 +1,10 @@
 #include <gtest/gtest.h>
 
 #include <array>
+#include <numeric>
 
-#include "RKF78.hpp"
 #include "AllocatedState.hpp"
+#include "RKF78.hpp"
 
 class RKF78VanDerPolTest : public testing::Test {
  protected:
@@ -45,4 +46,39 @@ TEST_F(RKF78VanDerPolTest, IntegrationStepsAreConsistent) {
                    integrator.states[integrator.states.size() / 2][1]);
   EXPECT_DOUBLE_EQ(0.3233166666554449, integrator.states.back()[0]);
   EXPECT_DOUBLE_EQ(-1.8329745686289092, integrator.states.back()[1]);
+}
+
+TEST(RKF78ExpTest, IntegrationStepsAreConsistent) {
+  auto constexpr n_var = 10;
+  auto constexpr ode_exp = [](AllocatedState<n_var> const& x,
+                              AllocatedState<n_var>& dxdt) { dxdt = x; };
+  auto x0_data = std::array<double, n_var>{};
+  std::iota(x0_data.begin(), x0_data.end(), 0.0);
+  auto x0 = AllocatedState<n_var>(x0_data);
+  auto t0 = 0.0;
+  auto tf = 10.0;
+  auto tol = AllocatedState<n_var>{};
+  fill(tol, 1.0e-6);
+  auto integrator = RKF78<decltype(ode_exp), AllocatedState<n_var>>{ode_exp};
+
+  integrator.integrate(x0, t0, tf, tol, tol);
+
+  EXPECT_EQ(13, integrator.times.size());
+  EXPECT_DOUBLE_EQ(0.0, integrator.times.front());
+  EXPECT_DOUBLE_EQ(4.4481779636028618,
+                   integrator.times[integrator.times.size() / 2]);
+  EXPECT_DOUBLE_EQ(10.0, integrator.times.back());
+
+  EXPECT_EQ(13, integrator.states.size());
+  EXPECT_DOUBLE_EQ(0.0, integrator.states.front()[0]);
+  EXPECT_DOUBLE_EQ(5.0, integrator.states.front()[n_var / 2]);
+  EXPECT_DOUBLE_EQ(9.0, integrator.states.front()[n_var - 1]);
+  EXPECT_DOUBLE_EQ(0.0, integrator.states[integrator.states.size() / 2][0]);
+  EXPECT_DOUBLE_EQ(427.3544878966228,
+                   integrator.states[integrator.states.size() / 2][n_var / 2]);
+  EXPECT_DOUBLE_EQ(769.23807821392074,
+                   integrator.states[integrator.states.size() / 2][n_var - 1]);
+  EXPECT_DOUBLE_EQ(0.0, integrator.states.back()[0]);
+  EXPECT_DOUBLE_EQ(110131.78807367262, integrator.states.back()[n_var / 2]);
+  EXPECT_DOUBLE_EQ(198237.21853261057, integrator.states.back()[n_var - 1]);
 }

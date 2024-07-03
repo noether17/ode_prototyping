@@ -362,8 +362,6 @@ void cuda_integrate(double* dev_x0, double t0, double tf, double* dev_atol,
   cudaMalloc(&dev_error_estimate, n_var * sizeof(double));
   double* dev_error_target = nullptr;
   cudaMalloc(&dev_error_target, n_var * sizeof(double));
-  double* dev_scaled_error = nullptr;
-  cudaMalloc(&dev_scaled_error, sizeof(double));
 
   auto t = t0;
   output.save_state(t, dev_x);
@@ -403,7 +401,6 @@ void cuda_integrate(double* dev_x0, double t0, double tf, double* dev_atol,
     }
   }
 
-  cudaFree(dev_scaled_error);
   cudaFree(dev_error_target);
   cudaFree(dev_error_estimate);
   cudaFree(dev_temp_state);

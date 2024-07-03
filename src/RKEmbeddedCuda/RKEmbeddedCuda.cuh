@@ -189,8 +189,9 @@ __global__ void cuda_rk_norm_reduction_final(double const* temp, double* result,
 }
 
 template <int n_var>
-void cuda_rk_norm(double const* dev_v, double const* dev_scale,
-                  double* dev_result) {
+auto cuda_rk_norm(double const* dev_v, double const* dev_scale) {
+  double* dev_result = nullptr;
+  cudaMalloc(&dev_result, sizeof(double));
   double* dev_temp = nullptr;
   cudaMalloc(&dev_temp, num_blocks<n_var>() * sizeof(double));
 
@@ -198,9 +199,13 @@ void cuda_rk_norm(double const* dev_v, double const* dev_scale,
       dev_v, dev_scale, dev_temp, n_var);
   cuda_rk_norm_reduction_final<<<1, block_size>>>(dev_temp, dev_result, n_var,
                                                   num_blocks<n_var>());
-  cudaDeviceSynchronize();
+  auto result = 0.0;
+  cudaMemcpy(&result, dev_result, sizeof(double), cudaMemcpyDeviceToHost);
 
   cudaFree(dev_temp);
+  cudaFree(dev_result);
+
+  return result;
 }
 
 __global__ void cuda_compute_dt0(double const* d0, double const* d1,
@@ -210,11 +215,11 @@ __global__ void cuda_compute_dt0(double const* d0, double const* d1,
   }
 }
 
-__global__ void cuda_euler_step(double const* x0, double const* f0,
-                                double const* dt, double* x1, int n_var) {
+__global__ void cuda_euler_step(double const* x0, double const* f0, double dt,
+                                double* x1, int n_var) {
   auto i = blockIdx.x * blockDim.x + threadIdx.x;
   while (i < n_var) {
-    x1[i] = x0[i] + *dt * f0[i];
+    x1[i] = x0[i] + dt * f0[i];
     i += blockDim.x * gridDim.x;
   }
 }
@@ -258,19 +263,13 @@ auto cuda_estimate_initial_step(double* dev_x0, double* dev_atol,
   double* dev_f0 = nullptr;
   cudaMalloc(&dev_f0, n_var * sizeof(double));
   ODE::compute_rhs(dev_x0, dev_f0);
-  double* dev_d0 = nullptr;
-  cudaMalloc(&dev_d0, sizeof(double));
-  cuda_rk_norm<n_var>(dev_x0, dev_error_target, dev_d0);
-  double* dev_d1 = nullptr;
-  cudaMalloc(&dev_d1, sizeof(double));
-  cuda_rk_norm<n_var>(dev_f0, dev_error_target, dev_d1);
-  double* dev_dt0 = nullptr;
-  cudaMalloc(&dev_dt0, sizeof(double));
-  cuda_compute_dt0<<<1, 1>>>(dev_d0, dev_d1, dev_dt0);
+  auto d0 = cuda_rk_norm<n_var>(dev_x0, dev_error_target);
+  auto d1 = cuda_rk_norm<n_var>(dev_f0, dev_error_target);
+  auto dt0 = (d0 < 1.0e-5 or d1 < 1.0e-5) ? 1.0e-6 : 0.01 * (d0 / d1);
 
   double* dev_x1 = nullptr;
   cudaMalloc(&dev_x1, n_var * sizeof(double));
-  cuda_euler_step<<<num_blocks<n_var>(), block_size>>>(dev_x0, dev_f0, dev_dt0,
+  cuda_euler_step<<<num_blocks<n_var>(), block_size>>>(dev_x0, dev_f0, dt0,
                                                        dev_x1, n_var);
   double* dev_f1 = nullptr;
   cudaMalloc(&dev_f1, n_var * sizeof(double));
@@ -279,29 +278,15 @@ auto cuda_estimate_initial_step(double* dev_x0, double* dev_atol,
   cudaMalloc(&dev_df, n_var * sizeof(double));
   cuda_vector_diff<<<num_blocks<n_var>(), block_size>>>(dev_f0, dev_f1, dev_df,
                                                         n_var);
-  double* dev_d2 = nullptr;
-  cudaMalloc(&dev_d2, sizeof(double));
-  cuda_rk_norm<n_var>(dev_df, dev_error_target, dev_d2);
-  cuda_divide<<<1, 1>>>(dev_d2, dev_dt0, dev_d2, 1);
-
-  auto d1 = 0.0;
-  cudaMemcpy(&d1, dev_d1, sizeof(double), cudaMemcpyDeviceToHost);
-  auto d2 = 0.0;
-  cudaMemcpy(&d2, dev_d2, sizeof(double), cudaMemcpyDeviceToHost);
-  auto dt0 = 0.0;
-  cudaMemcpy(&dt0, dev_dt0, sizeof(double), cudaMemcpyDeviceToHost);
+  auto d2 = cuda_rk_norm<n_var>(dev_df, dev_error_target) / dt0;
   auto dt1 =
       (std::max(d1, d2) <= 1.0e-15)
           ? std::max(1.0e-6, dt0 * 1.0e-3)
           : std::pow(0.01 / std::max(d1, d2), (1.0 / (1.0 + RKMethod::p)));
 
-  cudaFree(dev_d2);
   cudaFree(dev_df);
   cudaFree(dev_f1);
   cudaFree(dev_x1);
-  cudaFree(dev_dt0);
-  cudaFree(dev_d1);
-  cudaFree(dev_d0);
   cudaFree(dev_f0);
   cudaFree(dev_error_target);
 
@@ -419,20 +404,17 @@ void cuda_integrate(double* dev_x0, double t0, double tf, double* dev_atol,
 
     cuda_compute_error_target<<<num_blocks<n_var>(), block_size>>>(
         dev_x0, dev_x, dev_rtol, dev_atol, dev_error_target, n_var);
-    cuda_rk_norm<n_var>(dev_error_estimate, dev_error_target, dev_scaled_error);
+    auto scaled_error =
+        cuda_rk_norm<n_var>(dev_error_estimate, dev_error_target);
 
-    auto host_scaled_error = 0.0;
-    cudaMemcpy(&host_scaled_error, dev_scaled_error, sizeof(double),
-               cudaMemcpyDeviceToHost);
-    if (host_scaled_error < 1.0) {
+    if (scaled_error < 1.0) {
       t += dt;
       cudaMemcpy(dev_x0, dev_x, n_var * sizeof(double),
                  cudaMemcpyDeviceToDevice);
       output.save_state(t, dev_x);
     }
 
-    auto dtnew =
-        dt * safety_factor / std::pow(host_scaled_error, 1.0 / (1.0 + q));
+    auto dtnew = dt * safety_factor / std::pow(scaled_error, 1.0 / (1.0 + q));
     if (std::abs(dtnew) > max_step_scale * std::abs(dt)) {
       dt *= max_step_scale;
     } else if (std::abs(dtnew) < min_step_scale * std::abs(dt)) {

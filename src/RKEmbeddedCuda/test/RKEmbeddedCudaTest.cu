@@ -101,14 +101,9 @@ TEST(RKEmbeddedCudaTest, RKNormTestSmall) {
   cudaMalloc(&dev_scale, n_var * sizeof(double));
   cudaMemcpy(dev_scale, host_scale.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
-  double* dev_result = nullptr;
-  cudaMalloc(&dev_result, sizeof(double));
 
-  cuda_rk_norm<n_var>(dev_v, dev_scale, dev_result);
+  auto host_cuda_result = cuda_rk_norm<n_var>(dev_v, dev_scale);
 
-  auto host_cuda_result = 0.0;
-  cudaMemcpy(&host_cuda_result, dev_result, sizeof(double),
-             cudaMemcpyDeviceToHost);
   auto host_result = std::sqrt(
       std::inner_product(host_v.begin(), host_v.end(), host_scale.begin(), 0.0,
                          std::plus<>{},
@@ -116,7 +111,6 @@ TEST(RKEmbeddedCudaTest, RKNormTestSmall) {
       n_var);
   EXPECT_DOUBLE_EQ(host_result, host_cuda_result);
 
-  cudaFree(dev_result);
   cudaFree(dev_scale);
   cudaFree(dev_v);
 }
@@ -135,14 +129,9 @@ TEST(RKEmbeddedCudaTest, RKNormTestLarge) {
   cudaMalloc(&dev_scale, n_var * sizeof(double));
   cudaMemcpy(dev_scale, host_scale.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
-  double* dev_result = nullptr;
-  cudaMalloc(&dev_result, sizeof(double));
 
-  cuda_rk_norm<n_var>(dev_v, dev_scale, dev_result);
+  auto host_cuda_result = cuda_rk_norm<n_var>(dev_v, dev_scale);
 
-  auto host_cuda_result = 0.0;
-  cudaMemcpy(&host_cuda_result, dev_result, sizeof(double),
-             cudaMemcpyDeviceToHost);
   auto host_result = std::sqrt(
       std::inner_product(host_v.begin(), host_v.end(), host_scale.begin(), 0.0,
                          std::plus<>{},
@@ -150,7 +139,6 @@ TEST(RKEmbeddedCudaTest, RKNormTestLarge) {
       n_var);
   EXPECT_DOUBLE_EQ(host_result, host_cuda_result);
 
-  cudaFree(dev_result);
   cudaFree(dev_scale);
   cudaFree(dev_v);
 }
@@ -161,7 +149,7 @@ TEST(RKEmbeddedCudaTest, EulerStepSmall) {
   std::iota(host_x.begin(), host_x.end(), 0.0);
   auto host_f = std::vector<double>(n_var);
   std::iota(host_f.begin(), host_f.end(), 1.0);
-  auto host_dt = 0.1;
+  auto dt = 0.1;
   double* dev_x0 = nullptr;
   cudaMalloc(&dev_x0, n_var * sizeof(double));
   cudaMemcpy(dev_x0, host_x.data(), n_var * sizeof(double),
@@ -170,25 +158,21 @@ TEST(RKEmbeddedCudaTest, EulerStepSmall) {
   cudaMalloc(&dev_f0, n_var * sizeof(double));
   cudaMemcpy(dev_f0, host_f.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
-  double* dev_dt = nullptr;
-  cudaMalloc(&dev_dt, sizeof(double));
-  cudaMemcpy(dev_dt, &host_dt, sizeof(double), cudaMemcpyHostToDevice);
   double* dev_x1 = nullptr;
   cudaMalloc(&dev_x1, n_var * sizeof(double));
 
-  cuda_euler_step<<<num_blocks<n_var>(), block_size>>>(dev_x0, dev_f0, dev_dt,
+  cuda_euler_step<<<num_blocks<n_var>(), block_size>>>(dev_x0, dev_f0, dt,
                                                        dev_x1, n_var);
 
   auto host_cuda_result = std::vector<double>(n_var);
   cudaMemcpy(host_cuda_result.data(), dev_x1, n_var * sizeof(double),
              cudaMemcpyDeviceToHost);
   for (auto i = 0; i < n_var; ++i) {
-    auto host_result = host_x[i] + host_dt * host_f[i];
+    auto host_result = host_x[i] + dt * host_f[i];
     EXPECT_DOUBLE_EQ(host_result, host_cuda_result[i]);
   }
 
   cudaFree(dev_x1);
-  cudaFree(dev_dt);
   cudaFree(dev_f0);
   cudaFree(dev_x0);
 }
@@ -199,7 +183,7 @@ TEST(RKEmbeddedCudaTest, EulerStepLarge) {
   std::iota(host_x.begin(), host_x.end(), 0.0);
   auto host_f = std::vector<double>(n_var);
   std::iota(host_f.begin(), host_f.end(), 1.0);
-  auto host_dt = 0.1;
+  auto dt = 0.1;
   double* dev_x0 = nullptr;
   cudaMalloc(&dev_x0, n_var * sizeof(double));
   cudaMemcpy(dev_x0, host_x.data(), n_var * sizeof(double),
@@ -208,25 +192,21 @@ TEST(RKEmbeddedCudaTest, EulerStepLarge) {
   cudaMalloc(&dev_f0, n_var * sizeof(double));
   cudaMemcpy(dev_f0, host_f.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
-  double* dev_dt = nullptr;
-  cudaMalloc(&dev_dt, sizeof(double));
-  cudaMemcpy(dev_dt, &host_dt, sizeof(double), cudaMemcpyHostToDevice);
   double* dev_x1 = nullptr;
   cudaMalloc(&dev_x1, n_var * sizeof(double));
 
-  cuda_euler_step<<<num_blocks<n_var>(), block_size>>>(dev_x0, dev_f0, dev_dt,
+  cuda_euler_step<<<num_blocks<n_var>(), block_size>>>(dev_x0, dev_f0, dt,
                                                        dev_x1, n_var);
 
   auto host_cuda_result = std::vector<double>(n_var);
   cudaMemcpy(host_cuda_result.data(), dev_x1, n_var * sizeof(double),
              cudaMemcpyDeviceToHost);
   for (auto i = 0; i < n_var; ++i) {
-    auto host_result = host_x[i] + host_dt * host_f[i];
+    auto host_result = host_x[i] + dt * host_f[i];
     EXPECT_DOUBLE_EQ(host_result, host_cuda_result[i]);
   }
 
   cudaFree(dev_x1);
-  cudaFree(dev_dt);
   cudaFree(dev_f0);
   cudaFree(dev_x0);
 }

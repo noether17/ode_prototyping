@@ -208,13 +208,6 @@ auto cuda_rk_norm(double const* dev_v, double const* dev_scale) {
   return result;
 }
 
-__global__ void cuda_compute_dt0(double const* d0, double const* d1,
-                                 double* dt0) {
-  if (threadIdx.x == 0) {
-    *dt0 = (*d0 < 1.0e-5 or *d1 < 1.0e-5) ? 1.0e-6 : 0.01 * (*d0 / *d1);
-  }
-}
-
 __global__ void cuda_euler_step(double const* x0, double const* f0, double dt,
                                 double* x1, int n_var) {
   auto i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -230,25 +223,6 @@ __global__ void cuda_vector_diff(double const* x0, double const* x1, double* dx,
   while (i < n_var) {
     dx[i] = x1[i] - x0[i];
     i += blockDim.x * gridDim.x;
-  }
-}
-
-__global__ void cuda_divide(double const* a, double const* b, double* c,
-                            int n_var) {
-  auto i = blockIdx.x * blockDim.x + threadIdx.x;
-  while (i < n_var) {
-    c[i] = a[i] / b[i];
-    i += blockDim.x * gridDim.x;
-  }
-}
-
-__global__ void cuda_compute_dt(double const* d1, double const* d2,
-                                double const* dt0, int p, double* dt) {
-  if (threadIdx.x == 0) {
-    auto dt1 = (std::max(*d1, *d2) <= 1.0e-15)
-                   ? std::max(1.0e-6, *dt0 * 1.0e-3)
-                   : std::pow(0.01 / std::max(*d1, *d2), (1.0 / (1.0 + p)));
-    *dt = std::min(100.0 * *dt0, dt1);
   }
 }
 

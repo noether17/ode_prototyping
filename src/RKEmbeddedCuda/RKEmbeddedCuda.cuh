@@ -299,13 +299,12 @@ void cuda_estimate_initial_step(double* dev_x0, double* dev_atol,
 
 template <typename aRow>
 __global__ void cuda_rk_stage(double const* x0, double* ks, double* temp_state,
-                              double const* dt, int stage, int n_var,
-                              aRow a_row) {
+                              double dt, int stage, int n_var, aRow a_row) {
   auto i = blockIdx.x * blockDim.x + threadIdx.x;
   while (i < n_var) {
     temp_state[i] = x0[i];
     for (auto j = 0; j < stage; ++j) {
-      temp_state[i] += a_row[j] * ks[j * n_var + i] * *dt;
+      temp_state[i] += a_row[j] * ks[j * n_var + i] * dt;
     }
     i += blockDim.x * gridDim.x;
   }
@@ -313,12 +312,12 @@ __global__ void cuda_rk_stage(double const* x0, double* ks, double* temp_state,
 
 template <int n_var, typename RKMethod, typename ODE>
 void cuda_evaluate_stages(double const* dev_x0, double* dev_temp_state,
-                          double* dev_ks, double const* dev_dt) {
+                          double* dev_ks, double dt) {
   ODE::compute_rhs(dev_x0, dev_ks);
   for (auto stage = 1; stage < RKMethod::n_stages; ++stage) {
     cudaMemset(dev_temp_state, 0, n_var * sizeof(double));
     cuda_rk_stage<<<num_blocks<n_var>(), block_size>>>(
-        dev_x0, dev_ks, dev_temp_state, dev_dt, stage, n_var,
+        dev_x0, dev_ks, dev_temp_state, dt, stage, n_var,
         RKMethod::a[stage - 1]);
     ODE::compute_rhs(dev_temp_state, dev_ks + stage * n_var);
   }
@@ -326,7 +325,7 @@ void cuda_evaluate_stages(double const* dev_x0, double* dev_temp_state,
 
 template <int n_var, typename RKMethod, typename bArray>
 __global__ void cuda_update_state_and_error(double const* x0, double const* ks,
-                                            double const* dt, double* x,
+                                            double dt, double* x,
                                             double* error_estimate, bArray b,
                                             bArray db, int stages) {
   auto i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -337,9 +336,9 @@ __global__ void cuda_update_state_and_error(double const* x0, double const* ks,
       x[i] += b[j] * ks[j * n_var + i];
       error_estimate[i] += db[j] * ks[j * n_var + i];
     }
-    x[i] *= *dt;
+    x[i] *= dt;
     x[i] += x0[i];
-    error_estimate[i] *= *dt;
+    error_estimate[i] *= dt;
     i += blockDim.x * gridDim.x;
   }
 }
@@ -366,8 +365,8 @@ __global__ void cuda_add(double const* a, double const* b, double* c,
 }
 
 template <int n_var, typename RKMethod, typename ODE, typename Output>
-void cuda_integrate(double* dev_x0, double* dev_t0, double* dev_tf,
-                    double* dev_atol, double* dev_rtol, Output& output) {
+void cuda_integrate(double* dev_x0, double t0, double tf, double* dev_atol,
+                    double* dev_rtol, Output& output) {
   auto constexpr max_step_scale = 6.0;
   auto constexpr min_step_scale = 0.33;
   auto constexpr db = []() {
@@ -385,10 +384,9 @@ void cuda_integrate(double* dev_x0, double* dev_t0, double* dev_tf,
   cudaMalloc(&dev_dt, sizeof(double));
   cuda_estimate_initial_step<n_var, RKMethod, ODE>(dev_x0, dev_atol, dev_rtol,
                                                    dev_dt);
+  auto dt = 0.0;
+  cudaMemcpy(&dt, dev_dt, sizeof(double), cudaMemcpyDeviceToHost);
 
-  double* dev_t = nullptr;
-  cudaMalloc(&dev_t, sizeof(double));
-  cudaMemcpy(dev_t, dev_t0, sizeof(double), cudaMemcpyDeviceToDevice);
   double* dev_x = nullptr;
   cudaMalloc(&dev_x, n_var * sizeof(double));
   cudaMemcpy(dev_x, dev_x0, n_var * sizeof(double), cudaMemcpyDeviceToDevice);
@@ -401,19 +399,14 @@ void cuda_integrate(double* dev_x0, double* dev_t0, double* dev_tf,
   double* dev_scaled_error = nullptr;
   cudaMalloc(&dev_scaled_error, sizeof(double));
 
-  auto t0 = 0.0;
-  cudaMemcpy(&t0, dev_t, sizeof(double), cudaMemcpyDeviceToHost);
-  auto t = 0.0;
-  cudaMemcpy(&t, dev_t, sizeof(double), cudaMemcpyDeviceToHost);
-  auto tf = 0.0;
-  cudaMemcpy(&tf, dev_tf, sizeof(double), cudaMemcpyDeviceToHost);
-  output.save_state(dev_t, dev_x);
+  auto t = t0;
+  output.save_state(t, dev_x);
   while (t < tf) {
     cuda_evaluate_stages<n_var, RKMethod, ODE>(dev_x0, dev_temp_state, dev_ks,
-                                               dev_dt);
+                                               dt);
 
     cuda_update_state_and_error<n_var, RKMethod>
-        <<<num_blocks<n_var>(), block_size>>>(dev_x0, dev_ks, dev_dt, dev_x,
+        <<<num_blocks<n_var>(), block_size>>>(dev_x0, dev_ks, dt, dev_x,
                                               dev_error_estimate, RKMethod::b,
                                               db, RKMethod::n_stages);
 
@@ -425,31 +418,26 @@ void cuda_integrate(double* dev_x0, double* dev_t0, double* dev_tf,
     cudaMemcpy(&host_scaled_error, dev_scaled_error, sizeof(double),
                cudaMemcpyDeviceToHost);
     if (host_scaled_error < 1.0) {
-      cuda_add<<<1, 1>>>(dev_t, dev_dt, dev_t, 1);
+      t += dt;
       cudaMemcpy(dev_x0, dev_x, n_var * sizeof(double),
                  cudaMemcpyDeviceToDevice);
-      output.save_state(dev_t, dev_x);
+      output.save_state(t, dev_x);
     }
 
-    cudaMemcpy(&t, dev_t, sizeof(double), cudaMemcpyDeviceToHost);
-
-    auto host_dt = 0.0;
-    cudaMemcpy(&host_dt, dev_dt, sizeof(double), cudaMemcpyDeviceToHost);
     auto dtnew =
-        host_dt * safety_factor / std::pow(host_scaled_error, 1.0 / (1.0 + q));
-    if (std::abs(dtnew) > max_step_scale * std::abs(host_dt)) {
-      host_dt *= max_step_scale;
-    } else if (std::abs(dtnew) < min_step_scale * std::abs(host_dt)) {
-      host_dt *= min_step_scale;
+        dt * safety_factor / std::pow(host_scaled_error, 1.0 / (1.0 + q));
+    if (std::abs(dtnew) > max_step_scale * std::abs(dt)) {
+      dt *= max_step_scale;
+    } else if (std::abs(dtnew) < min_step_scale * std::abs(dt)) {
+      dt *= min_step_scale;
     } else if (dtnew / (tf - t0) < 1.0e-12) {
-      host_dt = (tf - t0) * 1.0e-12;
+      dt = (tf - t0) * 1.0e-12;
     } else {
-      host_dt = dtnew;
+      dt = dtnew;
     }
-    if (t + host_dt > tf) {
-      host_dt = tf - t;
+    if (t + dt > tf) {
+      dt = tf - t;
     }
-    cudaMemcpy(dev_dt, &host_dt, sizeof(double), cudaMemcpyHostToDevice);
   }
 
   cudaFree(dev_scaled_error);
@@ -457,7 +445,6 @@ void cuda_integrate(double* dev_x0, double* dev_t0, double* dev_tf,
   cudaFree(dev_error_estimate);
   cudaFree(dev_temp_state);
   cudaFree(dev_x);
-  cudaFree(dev_t);
   cudaFree(dev_dt);
   cudaFree(dev_ks);
 }

@@ -303,20 +303,15 @@ TEST(RKEmbeddedCudaTest, EstimateInitialStepSmall) {
   cudaMalloc(&dev_rtol, n_var * sizeof(double));
   cudaMemcpy(dev_rtol, host_rtol.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
-  double* dev_dt0 = nullptr;
-  cudaMalloc(&dev_dt0, sizeof(double));
 
-  cuda_estimate_initial_step<n_var, HE21, CUDAExpODE<n_var>>(dev_x0, dev_atol,
-                                                             dev_rtol, dev_dt0);
+  auto host_cuda_result =
+      cuda_estimate_initial_step<n_var, HE21, CUDAExpODE<n_var>>(
+          dev_x0, dev_atol, dev_rtol);
 
-  auto host_cuda_result = 0.0;
-  cudaMemcpy(&host_cuda_result, dev_dt0, sizeof(double),
-             cudaMemcpyDeviceToHost);
   auto host_result =
       host_estimate_initial_step<HE21>(host_x0, host_atol, host_rtol);
   EXPECT_DOUBLE_EQ(host_result, host_cuda_result);
 
-  cudaFree(dev_dt0);
   cudaFree(dev_rtol);
   cudaFree(dev_atol);
   cudaFree(dev_x0);
@@ -342,20 +337,15 @@ TEST(RKEmbeddedCudaTest, EstimateInitialStepLarge) {
   cudaMalloc(&dev_rtol, n_var * sizeof(double));
   cudaMemcpy(dev_rtol, host_rtol.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
-  double* dev_dt0 = nullptr;
-  cudaMalloc(&dev_dt0, sizeof(double));
 
-  cuda_estimate_initial_step<n_var, HE21, CUDAExpODE<n_var>>(dev_x0, dev_atol,
-                                                             dev_rtol, dev_dt0);
+  auto host_cuda_result =
+      cuda_estimate_initial_step<n_var, HE21, CUDAExpODE<n_var>>(
+          dev_x0, dev_atol, dev_rtol);
 
-  auto host_cuda_result = 0.0;
-  cudaMemcpy(&host_cuda_result, dev_dt0, sizeof(double),
-             cudaMemcpyDeviceToHost);
   auto host_result =
       host_estimate_initial_step<HE21>(host_x0, host_atol, host_rtol);
   EXPECT_DOUBLE_EQ(host_result, host_cuda_result);
 
-  cudaFree(dev_dt0);
   cudaFree(dev_rtol);
   cudaFree(dev_atol);
   cudaFree(dev_x0);

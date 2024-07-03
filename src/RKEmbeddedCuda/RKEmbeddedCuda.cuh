@@ -248,8 +248,8 @@ __global__ void cuda_compute_dt(double const* d1, double const* d2,
 }
 
 template <int n_var, typename RKMethod, typename ODE>
-void cuda_estimate_initial_step(double* dev_x0, double* dev_atol,
-                                double* dev_rtol, double* dev_dt) {
+auto cuda_estimate_initial_step(double* dev_x0, double* dev_atol,
+                                double* dev_rtol) {
   double* dev_error_target = nullptr;
   cudaMalloc(&dev_error_target, n_var * sizeof(double));
   cuda_compute_error_target<<<num_blocks<n_var>(), block_size>>>(
@@ -284,7 +284,16 @@ void cuda_estimate_initial_step(double* dev_x0, double* dev_atol,
   cuda_rk_norm<n_var>(dev_df, dev_error_target, dev_d2);
   cuda_divide<<<1, 1>>>(dev_d2, dev_dt0, dev_d2, 1);
 
-  cuda_compute_dt<<<1, 1>>>(dev_d1, dev_d2, dev_dt0, RKMethod::p, dev_dt);
+  auto d1 = 0.0;
+  cudaMemcpy(&d1, dev_d1, sizeof(double), cudaMemcpyDeviceToHost);
+  auto d2 = 0.0;
+  cudaMemcpy(&d2, dev_d2, sizeof(double), cudaMemcpyDeviceToHost);
+  auto dt0 = 0.0;
+  cudaMemcpy(&dt0, dev_dt0, sizeof(double), cudaMemcpyDeviceToHost);
+  auto dt1 =
+      (std::max(d1, d2) <= 1.0e-15)
+          ? std::max(1.0e-6, dt0 * 1.0e-3)
+          : std::pow(0.01 / std::max(d1, d2), (1.0 / (1.0 + RKMethod::p)));
 
   cudaFree(dev_d2);
   cudaFree(dev_df);
@@ -295,6 +304,8 @@ void cuda_estimate_initial_step(double* dev_x0, double* dev_atol,
   cudaFree(dev_d0);
   cudaFree(dev_f0);
   cudaFree(dev_error_target);
+
+  return std::min(100.0 * dt0, dt1);
 }
 
 template <typename aRow>
@@ -380,12 +391,8 @@ void cuda_integrate(double* dev_x0, double t0, double tf, double* dev_atol,
   auto const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
   double* dev_ks = nullptr;
   cudaMalloc(&dev_ks, n_var * RKMethod::n_stages * sizeof(double));
-  double* dev_dt = nullptr;
-  cudaMalloc(&dev_dt, sizeof(double));
-  cuda_estimate_initial_step<n_var, RKMethod, ODE>(dev_x0, dev_atol, dev_rtol,
-                                                   dev_dt);
-  auto dt = 0.0;
-  cudaMemcpy(&dt, dev_dt, sizeof(double), cudaMemcpyDeviceToHost);
+  auto dt = cuda_estimate_initial_step<n_var, RKMethod, ODE>(dev_x0, dev_atol,
+                                                             dev_rtol);
 
   double* dev_x = nullptr;
   cudaMalloc(&dev_x, n_var * sizeof(double));
@@ -445,6 +452,5 @@ void cuda_integrate(double* dev_x0, double t0, double tf, double* dev_atol,
   cudaFree(dev_error_estimate);
   cudaFree(dev_temp_state);
   cudaFree(dev_x);
-  cudaFree(dev_dt);
   cudaFree(dev_ks);
 }

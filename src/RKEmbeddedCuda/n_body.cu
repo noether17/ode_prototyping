@@ -66,13 +66,18 @@ struct RawCudaOutput {
 };
 
 int main() {
+  // auto host_x0 =
+  //     std::array{1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, -0.5,
+  //     0.0};
   auto host_x0 =
-      std::array{1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, -0.5, 0.0};
+      std::array{0.9700436,   -0.24308753, 0.0, -0.9700436,  0.24308753,  0.0,
+                 0.0,         0.0,         0.0, 0.466203685, 0.43236573,  0.0,
+                 0.466203685, 0.43236573,  0.0, -0.93240737, -0.86473146, 0.0};
   auto constexpr n_var = host_x0.size();
   auto t0 = 0.0;
   auto tf = 10.0;
   auto host_tol = std::array<double, n_var>{};
-  std::fill(host_tol.begin(), host_tol.end(), 1.0e-6);
+  std::fill(host_tol.begin(), host_tol.end(), 1.0e-8);
   double* dev_x0 = nullptr;
   cudaMalloc(&dev_x0, n_var * sizeof(double));
   cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),

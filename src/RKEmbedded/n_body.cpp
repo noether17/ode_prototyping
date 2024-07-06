@@ -5,8 +5,13 @@
 #include "RKF78.hpp"
 
 int main() {
+  // auto x0_data =
+  //     std::array{1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, -0.5,
+  //     0.0};
   auto x0_data =
-      std::array{1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, -0.5, 0.0};
+      std::array{0.9700436,   -0.24308753, 0.0, -0.9700436,  0.24308753,  0.0,
+                 0.0,         0.0,         0.0, 0.466203685, 0.43236573,  0.0,
+                 0.466203685, 0.43236573,  0.0, -0.93240737, -0.86473146, 0.0};
   auto constexpr n_var = x0_data.size();
 
   auto ode_n_body = [](AllocatedState<n_var> const& x,
@@ -14,6 +19,7 @@ int main() {
     auto constexpr vel_offset = n_var / 2;
     for (std::size_t i = 0; i < vel_offset; ++i) {
       dxdt[i] = x[i + vel_offset];
+      dxdt[i + vel_offset] = 0.0;
     }
     auto constexpr n_particles = n_var / 6;
     for (std::size_t i = 0; i < n_particles; ++i) {
@@ -26,12 +32,12 @@ int main() {
         auto ax = dx / dist_3;
         auto ay = dy / dist_3;
         auto az = dz / dist_3;
-        dxdt[vel_offset + 3 * i] = ax;
-        dxdt[vel_offset + 3 * i + 1] = ay;
-        dxdt[vel_offset + 3 * i + 2] = az;
-        dxdt[vel_offset + 3 * j] = -ax;
-        dxdt[vel_offset + 3 * j + 1] = -ay;
-        dxdt[vel_offset + 3 * j + 2] = -az;
+        dxdt[vel_offset + 3 * i] += ax;
+        dxdt[vel_offset + 3 * i + 1] += ay;
+        dxdt[vel_offset + 3 * i + 2] += az;
+        dxdt[vel_offset + 3 * j] += -ax;
+        dxdt[vel_offset + 3 * j + 1] += -ay;
+        dxdt[vel_offset + 3 * j + 2] += -az;
       }
     }
   };
@@ -42,7 +48,7 @@ int main() {
   auto t0 = 0.0;
   auto tf = 10.0;
   auto tol = AllocatedState<n_var>{};
-  fill(tol, 1.0e-6);
+  fill(tol, 1.0e-8);
 
   integrator.integrate(x0, t0, tf, tol, tol);
 

@@ -14,4 +14,7 @@ target_link_libraries(AllocatedState INTERFACE ODEState)
 add_executable(main main.cpp)
 target_link_libraries(main RKEmbedded RKF45 DOPRI5 RKF78 DVERK AllocatedState)
 
+add_executable(n_body_cpu n_body.cpp)
+target_link_libraries(n_body_cpu RKEmbedded RKF78 AllocatedState)
+
 add_subdirectory(test)

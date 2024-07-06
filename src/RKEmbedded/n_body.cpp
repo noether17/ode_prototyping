@@ -5,41 +5,44 @@
 #include "RKF78.hpp"
 
 int main() {
-  auto constexpr n_var = 12;
+  auto x0_data =
+      std::array{1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, -0.5, 0.0};
+  auto constexpr n_var = x0_data.size();
+
   auto ode_n_body = [](AllocatedState<n_var> const& x,
                        AllocatedState<n_var>& dxdt) {
-    auto dx = x[3] - x[0];
-    auto dy = x[4] - x[1];
-    auto dz = x[5] - x[2];
-    auto dist = std::sqrt(dx * dx + dy * dy + dz * dz);
-    auto dist_3 = dist * dist * dist;
-    auto ax = dx / dist_3;
-    auto ay = dy / dist_3;
-    auto az = dz / dist_3;
-    dxdt[0] = x[6];
-    dxdt[1] = x[7];
-    dxdt[2] = x[8];
-    dxdt[3] = x[9];
-    dxdt[4] = x[10];
-    dxdt[5] = x[11];
-    dxdt[6] = ax;
-    dxdt[7] = ay;
-    dxdt[8] = az;
-    dxdt[9] = -ax;
-    dxdt[10] = -ay;
-    dxdt[11] = -az;
+    auto constexpr vel_offset = n_var / 2;
+    for (std::size_t i = 0; i < vel_offset; ++i) {
+      dxdt[i] = x[i + vel_offset];
+    }
+    auto constexpr n_particles = n_var / 6;
+    for (std::size_t i = 0; i < n_particles; ++i) {
+      for (auto j = i + 1; j < n_particles; ++j) {
+        auto dx = x[3 * j] - x[3 * i];
+        auto dy = x[3 * j + 1] - x[3 * i + 1];
+        auto dz = x[3 * j + 2] - x[3 * i + 2];
+        auto dist = std::sqrt(dx * dx + dy * dy + dz * dz);
+        auto dist_3 = dist * dist * dist;
+        auto ax = dx / dist_3;
+        auto ay = dy / dist_3;
+        auto az = dz / dist_3;
+        dxdt[vel_offset + 3 * i] = ax;
+        dxdt[vel_offset + 3 * i + 1] = ay;
+        dxdt[vel_offset + 3 * i + 2] = az;
+        dxdt[vel_offset + 3 * j] = -ax;
+        dxdt[vel_offset + 3 * j + 1] = -ay;
+        dxdt[vel_offset + 3 * j + 2] = -az;
+      }
+    }
   };
-
   auto integrator =
       RKF78<decltype(ode_n_body), AllocatedState<n_var>>{ode_n_body};
 
-  auto x0_data =
-      std::array{1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, -0.5, 0.0};
   auto x0 = AllocatedState<n_var>{x0_data};
   auto t0 = 0.0;
   auto tf = 10.0;
   auto tol = AllocatedState<n_var>{};
-  fill(tol, 1.0e-3);
+  fill(tol, 1.0e-6);
 
   integrator.integrate(x0, t0, tf, tol, tol);
 

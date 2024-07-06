@@ -72,7 +72,7 @@ int main() {
   auto t0 = 0.0;
   auto tf = 10.0;
   auto host_tol = std::array<double, n_var>{};
-  std::fill(host_tol.begin(), host_tol.end(), 1.0e-3);
+  std::fill(host_tol.begin(), host_tol.end(), 1.0e-6);
   double* dev_x0 = nullptr;
   cudaMalloc(&dev_x0, n_var * sizeof(double));
   cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),

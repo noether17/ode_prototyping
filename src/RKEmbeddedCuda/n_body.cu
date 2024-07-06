@@ -44,7 +44,7 @@ struct CUDANBodyODE {
   auto static constexpr n_particles = n_var / 6;
   auto static constexpr n_pairs = n_particles * (n_particles - 1) / 2;
   auto static constexpr dim = 3;
-  auto static constexpr masses = std::array{3.0, 4.0, 5.0};
+  auto static constexpr masses = std::array{1.0, 1.0, 1.0, 1.0, 1.0};
   static void compute_rhs(double const* x, double* f) {
     cudaMemcpy(f, x + n_var / 2, (n_var / 2) * sizeof(double),
                cudaMemcpyDeviceToDevice);
@@ -81,13 +81,20 @@ int main() {
   //               0.466203685, 0.43236573,  0.0, -0.93240737, -0.86473146,
   //               0.0};
   // Pythagorean Three-Body
-  auto host_x0 = std::array{1.0, 3.0, 0.0, -2.0, -1.0, 0.0, 1.0, -1.0, 0.0,
-                            0.0, 0.0, 0.0, 0.0,  0.0,  0.0, 0.0, 0.0,  0.0};
+  // auto host_x0 = std::array{1.0, 3.0, 0.0, -2.0, -1.0, 0.0, 1.0, -1.0, 0.0,
+  //                           0.0, 0.0, 0.0, 0.0,  0.0,  0.0, 0.0, 0.0,  0.0};
+  // Five-Body Double Figure-8
+  auto host_x0 =
+      std::array{1.657666,  0.0,       0.0, 0.439775,  -0.169717, 0.0,
+                 -1.268608, -0.267651, 0.0, -1.268608, 0.267651,  0.0,
+                 0.439775,  0.169717,  0.0, 0.0,       -0.593786, 0.0,
+                 1.822785,  0.128248,  0.0, 1.271564,  0.168645,  0.0,
+                 -1.271564, 0.168645,  0.0, -1.822785, 0.128248,  0.0};
   auto constexpr n_var = host_x0.size();
   auto t0 = 0.0;
-  auto tf = 70.0;
+  auto tf = 6.3;
   auto host_tol = std::array<double, n_var>{};
-  std::fill(host_tol.begin(), host_tol.end(), 1.0e-13);
+  std::fill(host_tol.begin(), host_tol.end(), 1.0e-10);
   double* dev_x0 = nullptr;
   cudaMalloc(&dev_x0, n_var * sizeof(double));
   cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),

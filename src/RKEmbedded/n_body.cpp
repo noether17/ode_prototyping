@@ -8,14 +8,18 @@ int main() {
   // auto x0_data =
   //     std::array{1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, -0.5,
   //     0.0};
-  auto x0_data =
-      std::array{0.9700436,   -0.24308753, 0.0, -0.9700436,  0.24308753,  0.0,
-                 0.0,         0.0,         0.0, 0.466203685, 0.43236573,  0.0,
-                 0.466203685, 0.43236573,  0.0, -0.93240737, -0.86473146, 0.0};
+  // auto x0_data =
+  //    std::array{0.9700436,   -0.24308753, 0.0, -0.9700436,  0.24308753,  0.0,
+  //               0.0,         0.0,         0.0, 0.466203685, 0.43236573,  0.0,
+  //               0.466203685, 0.43236573,  0.0, -0.93240737, -0.86473146,
+  //               0.0};
+  auto x0_data = std::array{1.0, 3.0, 0.0, -2.0, -1.0, 0.0, 1.0, -1.0, 0.0,
+                            0.0, 0.0, 0.0, 0.0,  0.0,  0.0, 0.0, 0.0,  0.0};
+  auto masses = std::array{3.0, 4.0, 5.0};
   auto constexpr n_var = x0_data.size();
 
-  auto ode_n_body = [](AllocatedState<n_var> const& x,
-                       AllocatedState<n_var>& dxdt) {
+  auto ode_n_body = [masses](AllocatedState<n_var> const& x,
+                             AllocatedState<n_var>& dxdt) {
     auto constexpr vel_offset = n_var / 2;
     for (std::size_t i = 0; i < vel_offset; ++i) {
       dxdt[i] = x[i + vel_offset];
@@ -32,12 +36,12 @@ int main() {
         auto ax = dx / dist_3;
         auto ay = dy / dist_3;
         auto az = dz / dist_3;
-        dxdt[vel_offset + 3 * i] += ax;
-        dxdt[vel_offset + 3 * i + 1] += ay;
-        dxdt[vel_offset + 3 * i + 2] += az;
-        dxdt[vel_offset + 3 * j] += -ax;
-        dxdt[vel_offset + 3 * j + 1] += -ay;
-        dxdt[vel_offset + 3 * j + 2] += -az;
+        dxdt[vel_offset + 3 * i] += ax * masses[j];
+        dxdt[vel_offset + 3 * i + 1] += ay * masses[j];
+        dxdt[vel_offset + 3 * i + 2] += az * masses[j];
+        dxdt[vel_offset + 3 * j] += -ax * masses[i];
+        dxdt[vel_offset + 3 * j + 1] += -ay * masses[i];
+        dxdt[vel_offset + 3 * j + 2] += -az * masses[i];
       }
     }
   };
@@ -46,9 +50,9 @@ int main() {
 
   auto x0 = AllocatedState<n_var>{x0_data};
   auto t0 = 0.0;
-  auto tf = 10.0;
+  auto tf = 70.0;
   auto tol = AllocatedState<n_var>{};
-  fill(tol, 1.0e-8);
+  fill(tol, 1.0e-13);
 
   integrator.integrate(x0, t0, tf, tol, tol);
 

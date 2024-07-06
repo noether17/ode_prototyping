@@ -14,6 +14,7 @@ def main():
     plt.xlabel("x")
     plt.ylabel("y")
     plt.legend()
+    plt.gca().set_aspect('equal')
     plt.show()
 
     cuda_data = np.loadtxt("n_body_output.txt", delimiter=',')
@@ -28,6 +29,7 @@ def main():
     plt.xlabel("x")
     plt.ylabel("y")
     plt.legend()
+    plt.gca().set_aspect('equal')
     plt.show()
 
 if __name__ == "__main__":

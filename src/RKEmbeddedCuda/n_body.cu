@@ -44,8 +44,8 @@ struct CUDANBodyODE {
   auto static constexpr n_particles = n_var / 6;
   auto static constexpr n_pairs = n_particles * (n_particles - 1) / 2;
   auto static constexpr dim = 3;
-  auto static constexpr masses = std::array{1.0, 1.0, 1.0, 1.0, 1.0};
-  static void compute_rhs(double const* x, double* f) {
+  std::array<double, n_particles> masses;
+  void compute_rhs(double const* x, double* f) {
     cudaMemcpy(f, x + n_var / 2, (n_var / 2) * sizeof(double),
                cudaMemcpyDeviceToDevice);
     cudaMemset(f + n_var / 2, 0, (n_var / 2) * sizeof(double));
@@ -53,6 +53,9 @@ struct CUDANBodyODE {
         <<<num_blocks<n_pairs>(), block_size>>>(x, f + n_var / 2, masses,
                                                 n_pairs, n_particles);
   }
+
+  CUDANBodyODE(std::array<double, n_particles> const& masses)
+      : masses{masses} {}
 };
 
 template <int n_var>
@@ -103,7 +106,8 @@ int main() {
   cudaMalloc(&dev_tol, n_var * sizeof(double));
   cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
-  auto ode = CUDANBodyODE<n_var>{};
+  auto masses = std::array{1.0, 1.0, 1.0, 1.0, 1.0};
+  auto ode = CUDANBodyODE<n_var>{masses};
   auto output = RawCudaOutput<n_var>{};
 
   cuda_integrate<n_var, RKF78, CUDANBodyODE<n_var>, RawCudaOutput<n_var>>(

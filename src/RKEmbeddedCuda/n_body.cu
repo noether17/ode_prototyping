@@ -103,10 +103,11 @@ int main() {
   cudaMalloc(&dev_tol, n_var * sizeof(double));
   cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
+  auto ode = CUDANBodyODE<n_var>{};
   auto output = RawCudaOutput<n_var>{};
 
   cuda_integrate<n_var, RKF78, CUDANBodyODE<n_var>, RawCudaOutput<n_var>>(
-      dev_x0, t0, tf, dev_tol, dev_tol, output);
+      dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   auto output_file = std::ofstream{"n_body_output.txt"};
   for (auto i = 0; i < output.times.size(); ++i) {

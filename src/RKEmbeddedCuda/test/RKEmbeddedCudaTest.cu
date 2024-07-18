@@ -284,9 +284,10 @@ TEST(RKEmbeddedCudaTest, EstimateInitialStepSmall) {
   cudaMemcpy(dev_rtol, host_rtol.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
 
+  auto ode = CUDAExpODE<n_var>{};
   auto host_cuda_result =
       cuda_estimate_initial_step<n_var, HE21, CUDAExpODE<n_var>>(
-          dev_x0, dev_atol, dev_rtol);
+          dev_x0, dev_atol, dev_rtol, ode);
 
   auto host_result =
       host_estimate_initial_step<HE21>(host_x0, host_atol, host_rtol);
@@ -318,9 +319,10 @@ TEST(RKEmbeddedCudaTest, EstimateInitialStepLarge) {
   cudaMemcpy(dev_rtol, host_rtol.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
 
+  auto ode = CUDAExpODE<n_var>{};
   auto host_cuda_result =
       cuda_estimate_initial_step<n_var, HE21, CUDAExpODE<n_var>>(
-          dev_x0, dev_atol, dev_rtol);
+          dev_x0, dev_atol, dev_rtol, ode);
 
   auto host_result =
       host_estimate_initial_step<HE21>(host_x0, host_atol, host_rtol);
@@ -368,8 +370,9 @@ TEST(RKEmbeddedCudaTest, RKStagesSmall) {
   double* dev_temp_state = nullptr;
   cudaMalloc(&dev_temp_state, n_var * sizeof(double));
 
+  auto ode = CUDAExpODE<n_var>{};
   cuda_evaluate_stages<n_var, HE21, CUDAExpODE<n_var>>(dev_x0, dev_temp_state,
-                                                       dev_ks, dt);
+                                                       dev_ks, dt, ode);
 
   auto host_cuda_result = std::vector<double>(n_var * HE21::n_stages);
   cudaMemcpy(host_cuda_result.data(), dev_ks,
@@ -401,8 +404,9 @@ TEST(RKEmbeddedCudaTest, RKStagesLarge) {
   double* dev_temp_state = nullptr;
   cudaMalloc(&dev_temp_state, n_var * sizeof(double));
 
+  auto ode = CUDAExpODE<n_var>{};
   cuda_evaluate_stages<n_var, HE21, CUDAExpODE<n_var>>(dev_x0, dev_temp_state,
-                                                       dev_ks, dt);
+                                                       dev_ks, dt, ode);
 
   auto host_cuda_result = std::vector<double>(n_var * HE21::n_stages);
   cudaMemcpy(host_cuda_result.data(), dev_ks,
@@ -586,8 +590,9 @@ TEST(RKEmbeddedCudaTest, CompareCUDAToCPUHE21) {
              cudaMemcpyHostToDevice);
   auto output = RawCudaOutput<n_var>{};
 
+  auto ode = CUDAExpODE<n_var>{};
   cuda_integrate<n_var, HE21, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
-      dev_x0, t0, tf, dev_tol, dev_tol, output);
+      dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   EXPECT_EQ(11026, output.times.size());
   EXPECT_DOUBLE_EQ(0.0, output.times.front());
@@ -635,8 +640,9 @@ TEST(RKEmbeddedCudaTest, CUDAIntegrateConsistencyTestHE21) {
              cudaMemcpyHostToDevice);
   auto output = RawCudaOutput<n_var>{};
 
+  auto ode = CUDAExpODE<n_var>{};
   cuda_integrate<n_var, HE21, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
-      dev_x0, t0, tf, dev_tol, dev_tol, output);
+      dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   EXPECT_EQ(11026, output.times.size());
   EXPECT_DOUBLE_EQ(0.0, output.times.front());
@@ -680,8 +686,9 @@ TEST(RKEmbeddedCudaTest, CompareCUDAToCPURKF45) {
              cudaMemcpyHostToDevice);
   auto output = RawCudaOutput<n_var>{};
 
+  auto ode = CUDAExpODE<n_var>{};
   cuda_integrate<n_var, RKF45, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
-      dev_x0, t0, tf, dev_tol, dev_tol, output);
+      dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   // TODO: Investigate differences between CPU and CUDA algorithms
   EXPECT_EQ(50, output.times.size());
@@ -732,8 +739,9 @@ TEST(RKEmbeddedCudaTest, CUDAIntegrateConsistencyTestRKF45) {
              cudaMemcpyHostToDevice);
   auto output = RawCudaOutput<n_var>{};
 
+  auto ode = CUDAExpODE<n_var>{};
   cuda_integrate<n_var, RKF45, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
-      dev_x0, t0, tf, dev_tol, dev_tol, output);
+      dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   EXPECT_EQ(50, output.times.size());
   EXPECT_DOUBLE_EQ(0.0, output.times.front());
@@ -777,8 +785,9 @@ TEST(RKEmbeddedCudaTest, CompareCUDAToCPUDOPRI5) {
              cudaMemcpyHostToDevice);
   auto output = RawCudaOutput<n_var>{};
 
+  auto ode = CUDAExpODE<n_var>{};
   cuda_integrate<n_var, DOPRI5, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
-      dev_x0, t0, tf, dev_tol, dev_tol, output);
+      dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   // TODO: Investigate differences between CPU and CUDA algorithms
   EXPECT_EQ(45, output.times.size());
@@ -828,8 +837,9 @@ TEST(RKEmbeddedCudaTest, CUDAIntegrateConsistencyTestDOPRI5) {
              cudaMemcpyHostToDevice);
   auto output = RawCudaOutput<n_var>{};
 
+  auto ode = CUDAExpODE<n_var>{};
   cuda_integrate<n_var, DOPRI5, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
-      dev_x0, t0, tf, dev_tol, dev_tol, output);
+      dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   EXPECT_EQ(45, output.times.size());
   EXPECT_DOUBLE_EQ(0.0, output.times.front());
@@ -873,8 +883,9 @@ TEST(RKEmbeddedCudaTest, CompareCUDAToCPUDVERK) {
              cudaMemcpyHostToDevice);
   auto output = RawCudaOutput<n_var>{};
 
+  auto ode = CUDAExpODE<n_var>{};
   cuda_integrate<n_var, DVERK, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
-      dev_x0, t0, tf, dev_tol, dev_tol, output);
+      dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   // TODO: Investigate differences between CPU and CUDA algorithms
   EXPECT_EQ(32, output.times.size());
@@ -924,8 +935,9 @@ TEST(RKEmbeddedCudaTest, CUDAIntegrateConsistencyTestDVERK) {
              cudaMemcpyHostToDevice);
   auto output = RawCudaOutput<n_var>{};
 
+  auto ode = CUDAExpODE<n_var>{};
   cuda_integrate<n_var, DVERK, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
-      dev_x0, t0, tf, dev_tol, dev_tol, output);
+      dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   EXPECT_EQ(32, output.times.size());
   EXPECT_DOUBLE_EQ(0.0, output.times.front());
@@ -969,8 +981,9 @@ TEST(RKEmbeddedCudaTest, CompareCUDAToCPURKF78) {
              cudaMemcpyHostToDevice);
   auto output = RawCudaOutput<n_var>{};
 
+  auto ode = CUDAExpODE<n_var>{};
   cuda_integrate<n_var, RKF78, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
-      dev_x0, t0, tf, dev_tol, dev_tol, output);
+      dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   // TODO: Investigate differences between CPU and CUDA algorithms
   EXPECT_EQ(13, output.times.size());
@@ -1021,8 +1034,9 @@ TEST(RKEmbeddedCudaTest, CUDAIntegrateConsistencyTestRKF78) {
              cudaMemcpyHostToDevice);
   auto output = RawCudaOutput<n_var>{};
 
+  auto ode = CUDAExpODE<n_var>{};
   cuda_integrate<n_var, RKF78, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
-      dev_x0, t0, tf, dev_tol, dev_tol, output);
+      dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   EXPECT_EQ(13, output.times.size());
   EXPECT_DOUBLE_EQ(0.0, output.times.front());

@@ -228,7 +228,7 @@ __global__ void cuda_vector_diff(double const* x0, double const* x1, double* dx,
 
 template <int n_var, typename RKMethod, typename ODE>
 auto cuda_estimate_initial_step(double* dev_x0, double* dev_atol,
-                                double* dev_rtol) {
+                                double* dev_rtol, ODE& ode) {
   double* dev_error_target = nullptr;
   cudaMalloc(&dev_error_target, n_var * sizeof(double));
   cuda_compute_error_target<<<num_blocks<n_var>(), block_size>>>(
@@ -236,7 +236,7 @@ auto cuda_estimate_initial_step(double* dev_x0, double* dev_atol,
 
   double* dev_f0 = nullptr;
   cudaMalloc(&dev_f0, n_var * sizeof(double));
-  ODE::compute_rhs(dev_x0, dev_f0);
+  ode.compute_rhs(dev_x0, dev_f0);
   auto d0 = cuda_rk_norm<n_var>(dev_x0, dev_error_target);
   auto d1 = cuda_rk_norm<n_var>(dev_f0, dev_error_target);
   auto dt0 = (d0 < 1.0e-5 or d1 < 1.0e-5) ? 1.0e-6 : 0.01 * (d0 / d1);
@@ -247,7 +247,7 @@ auto cuda_estimate_initial_step(double* dev_x0, double* dev_atol,
                                                        dev_x1, n_var);
   double* dev_f1 = nullptr;
   cudaMalloc(&dev_f1, n_var * sizeof(double));
-  ODE::compute_rhs(dev_x1, dev_f1);
+  ode.compute_rhs(dev_x1, dev_f1);
   double* dev_df = nullptr;
   cudaMalloc(&dev_df, n_var * sizeof(double));
   cuda_vector_diff<<<num_blocks<n_var>(), block_size>>>(dev_f0, dev_f1, dev_df,
@@ -282,14 +282,14 @@ __global__ void cuda_rk_stage(double const* x0, double* ks, double* temp_state,
 
 template <int n_var, typename RKMethod, typename ODE>
 void cuda_evaluate_stages(double const* dev_x0, double* dev_temp_state,
-                          double* dev_ks, double dt) {
-  ODE::compute_rhs(dev_x0, dev_ks);
+                          double* dev_ks, double dt, ODE& ode) {
+  ode.compute_rhs(dev_x0, dev_ks);
   for (auto stage = 1; stage < RKMethod::n_stages; ++stage) {
     cudaMemset(dev_temp_state, 0, n_var * sizeof(double));
     cuda_rk_stage<<<num_blocks<n_var>(), block_size>>>(
         dev_x0, dev_ks, dev_temp_state, dt, stage, n_var,
         RKMethod::a[stage - 1]);
-    ODE::compute_rhs(dev_temp_state, dev_ks + stage * n_var);
+    ode.compute_rhs(dev_temp_state, dev_ks + stage * n_var);
   }
 }
 
@@ -336,7 +336,7 @@ __global__ void cuda_add(double const* a, double const* b, double* c,
 
 template <int n_var, typename RKMethod, typename ODE, typename Output>
 void cuda_integrate(double* dev_x0, double t0, double tf, double* dev_atol,
-                    double* dev_rtol, Output& output) {
+                    double* dev_rtol, ODE& ode, Output& output) {
   auto constexpr max_step_scale = 6.0;
   auto constexpr min_step_scale = 0.33;
   auto constexpr db = []() {
@@ -351,7 +351,7 @@ void cuda_integrate(double* dev_x0, double t0, double tf, double* dev_atol,
   double* dev_ks = nullptr;
   cudaMalloc(&dev_ks, n_var * RKMethod::n_stages * sizeof(double));
   auto dt = cuda_estimate_initial_step<n_var, RKMethod, ODE>(dev_x0, dev_atol,
-                                                             dev_rtol);
+                                                             dev_rtol, ode);
 
   double* dev_x = nullptr;
   cudaMalloc(&dev_x, n_var * sizeof(double));
@@ -367,7 +367,7 @@ void cuda_integrate(double* dev_x0, double t0, double tf, double* dev_atol,
   output.save_state(t, dev_x);
   while (t < tf) {
     cuda_evaluate_stages<n_var, RKMethod, ODE>(dev_x0, dev_temp_state, dev_ks,
-                                               dt);
+                                               dt, ode);
 
     cuda_update_state_and_error<n_var, RKMethod>
         <<<num_blocks<n_var>(), block_size>>>(dev_x0, dev_ks, dt, dev_x,

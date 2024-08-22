@@ -1115,6 +1115,62 @@ struct CUDANBodyODE {
       : masses{masses} {}
 };
 
+TEST(RKEmbeddedCudaTest, SimpleTwoBodyOrbit) {
+  auto host_x0 =
+      std::array{1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, -0.5, 0.0};
+  auto constexpr n_var = host_x0.size();
+  auto t0 = 0.0;
+  auto tf = 200.0;
+  auto host_tol = std::array<double, n_var>{};
+  std::fill(host_tol.begin(), host_tol.end(), 1.0e-10);
+  double* dev_x0 = nullptr;
+  cudaMalloc(&dev_x0, n_var * sizeof(double));
+  cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
+             cudaMemcpyHostToDevice);
+  double* dev_tol = nullptr;
+  cudaMalloc(&dev_tol, n_var * sizeof(double));
+  cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
+             cudaMemcpyHostToDevice);
+  auto masses = std::array{1.0, 1.0};
+  auto ode = CUDANBodyODE<n_var>{masses};
+  auto output = RawCudaOutput<n_var>{};
+
+  cuda_integrate<n_var, RKF78, CUDANBodyODE<n_var>, RawCudaOutput<n_var>>(
+      dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
+
+  EXPECT_EQ(463, output.times.size());
+  EXPECT_DOUBLE_EQ(0.0, output.times.front());
+  EXPECT_DOUBLE_EQ(99.715523343935061, output.times[output.times.size() / 2]);
+  EXPECT_DOUBLE_EQ(200.0, output.times.back());
+
+  EXPECT_EQ(463, output.states.size());
+  EXPECT_DOUBLE_EQ(1.0, output.states.front()[0]);
+  EXPECT_DOUBLE_EQ(0.0, output.states.front()[1]);
+  EXPECT_DOUBLE_EQ(0.0, output.states.front()[2]);
+  EXPECT_DOUBLE_EQ(-1.0, output.states.front()[3]);
+  EXPECT_DOUBLE_EQ(0.0, output.states.front()[4]);
+  EXPECT_DOUBLE_EQ(0.0, output.states.front()[5]);
+  EXPECT_DOUBLE_EQ(0.91802735646432221,
+                   output.states[output.states.size() / 2][0]);
+  EXPECT_DOUBLE_EQ(-0.39651697893821747,
+                   output.states[output.states.size() / 2][1]);
+  EXPECT_DOUBLE_EQ(0.0, output.states[output.states.size() / 2][2]);
+  EXPECT_DOUBLE_EQ(-0.91802735646432221,
+                   output.states[output.states.size() / 2][3]);
+  EXPECT_DOUBLE_EQ(0.39651697893821747,
+                   output.states[output.states.size() / 2][4]);
+  EXPECT_DOUBLE_EQ(0.0, output.states[output.states.size() / 2][5]);
+  EXPECT_DOUBLE_EQ(0.86232100807629852, output.states.back()[0]);
+  EXPECT_DOUBLE_EQ(-0.50636188936069804, output.states.back()[1]);
+  EXPECT_DOUBLE_EQ(0.0, output.states.back()[2]);
+  EXPECT_DOUBLE_EQ(-0.86232100807629852, output.states.back()[3]);
+  EXPECT_DOUBLE_EQ(0.50636188936069804, output.states.back()[4]);
+  EXPECT_DOUBLE_EQ(0.0, output.states.back()[5]);
+
+  cudaFree(dev_tol);
+  cudaFree(dev_x0);
+}
+
 TEST(RKEmbeddedCudaTest, FiveBodyDoubleFigureEight) {
   auto host_x0 =
       std::array{1.657666,  0.0,       0.0, 0.439775,  -0.169717, 0.0,

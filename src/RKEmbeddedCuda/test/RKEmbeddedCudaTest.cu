@@ -1144,12 +1144,6 @@ TEST(RKEmbeddedCudaTest, SimpleTwoBodyOrbit) {
   EXPECT_DOUBLE_EQ(200.0, output.times.back());
 
   EXPECT_EQ(463, output.states.size());
-  EXPECT_DOUBLE_EQ(1.0, output.states.front()[0]);
-  EXPECT_DOUBLE_EQ(0.0, output.states.front()[1]);
-  EXPECT_DOUBLE_EQ(0.0, output.states.front()[2]);
-  EXPECT_DOUBLE_EQ(-1.0, output.states.front()[3]);
-  EXPECT_DOUBLE_EQ(0.0, output.states.front()[4]);
-  EXPECT_DOUBLE_EQ(0.0, output.states.front()[5]);
   EXPECT_DOUBLE_EQ(0.91802735646432221,
                    output.states[output.states.size() / 2][0]);
   EXPECT_DOUBLE_EQ(-0.39651697893821747,
@@ -1204,17 +1198,46 @@ TEST(RKEmbeddedCudaTest, FiveBodyDoubleFigureEight) {
   EXPECT_DOUBLE_EQ(6.2999999999999998, output.times.back());
 
   EXPECT_EQ(172, output.states.size());
-  EXPECT_DOUBLE_EQ(1.6576660000000001, output.states.front().front());
-  EXPECT_DOUBLE_EQ(0.0, output.states.front()[n_var / 2]);
-  EXPECT_DOUBLE_EQ(0.0, output.states.front().back());
   EXPECT_DOUBLE_EQ(-1.657049151854644,
-                   output.states[output.states.size() / 2].front());
-  EXPECT_DOUBLE_EQ(0.043762586250894513,
-                   output.states[output.states.size() / 2][n_var / 2]);
-  EXPECT_DOUBLE_EQ(0.0, output.states[output.states.size() / 2].back());
-  EXPECT_DOUBLE_EQ(1.657321312127696, output.states.back().front());
-  EXPECT_DOUBLE_EQ(-0.027879845434707427, output.states.back()[n_var / 2]);
-  EXPECT_DOUBLE_EQ(0.0, output.states.back().back());
+                   output.states[output.states.size() / 2][0]);
+  EXPECT_DOUBLE_EQ(-0.016818850570985221,
+                   output.states[output.states.size() / 2][1]);
+  EXPECT_DOUBLE_EQ(0.0, output.states[output.states.size() / 2][2]);
+  EXPECT_DOUBLE_EQ(-0.4911121472955573,
+                   output.states[output.states.size() / 2][3]);
+  EXPECT_DOUBLE_EQ(-0.16256448825335423,
+                   output.states[output.states.size() / 2][4]);
+  EXPECT_DOUBLE_EQ(0.0, output.states[output.states.size() / 2][5]);
+  EXPECT_DOUBLE_EQ(1.232320992323289,
+                   output.states[output.states.size() / 2][6]);
+  EXPECT_DOUBLE_EQ(-0.26143646571614138,
+                   output.states[output.states.size() / 2][7]);
+  EXPECT_DOUBLE_EQ(0.0, output.states[output.states.size() / 2][8]);
+  EXPECT_DOUBLE_EQ(1.3042855406517948,
+                   output.states[output.states.size() / 2][9]);
+  EXPECT_DOUBLE_EQ(0.2709593682488175,
+                   output.states[output.states.size() / 2][10]);
+  EXPECT_DOUBLE_EQ(0.0, output.states[output.states.size() / 2][11]);
+  EXPECT_DOUBLE_EQ(-0.38844523382488511,
+                   output.states[output.states.size() / 2][12]);
+  EXPECT_DOUBLE_EQ(0.16986043629166359,
+                   output.states[output.states.size() / 2][13]);
+  EXPECT_DOUBLE_EQ(0.0, output.states[output.states.size() / 2][14]);
+  EXPECT_DOUBLE_EQ(1.657321312127696, output.states.back()[0]);
+  EXPECT_DOUBLE_EQ(-0.013882068867849373, output.states.back()[1]);
+  EXPECT_DOUBLE_EQ(0.0, output.states.back()[2]);
+  EXPECT_DOUBLE_EQ(0.46802604978556767, output.states.back()[3]);
+  EXPECT_DOUBLE_EQ(-0.17063101334421135, output.states.back()[4]);
+  EXPECT_DOUBLE_EQ(0.0, output.states.back()[5]);
+  EXPECT_DOUBLE_EQ(-1.2481480178200384, output.states.back()[6]);
+  EXPECT_DOUBLE_EQ(-0.26313782979034916, output.states.back()[7]);
+  EXPECT_DOUBLE_EQ(0.0, output.states.back()[8]);
+  EXPECT_DOUBLE_EQ(-1.2883624086146654, output.states.back()[9]);
+  EXPECT_DOUBLE_EQ(0.27516687291849024, output.states.back()[10]);
+  EXPECT_DOUBLE_EQ(0.0, output.states.back()[11]);
+  EXPECT_DOUBLE_EQ(0.41116306452143053, output.states.back()[12]);
+  EXPECT_DOUBLE_EQ(0.17248403908392046, output.states.back()[13]);
+  EXPECT_DOUBLE_EQ(0.0, output.states.back()[14]);
 
   cudaFree(dev_tol);
   cudaFree(dev_x0);

@@ -1,6 +1,7 @@
 #include <array>
 #include <fstream>
 #include <iostream>
+#include <random>
 #include <string>
 #include <vector>
 
@@ -25,7 +26,7 @@ __global__ void cuda_n_body_acc_kernel(double const* x, double* a,
     auto dy = jy - iy;
     auto dz = jz - iz;
     auto dist = std::sqrt(dx * dx + dy * dy + dz * dz);
-    auto dist_3 = dist * dist * dist;
+    auto dist_3 = dist * (dist * dist + 1.0e-6);  // softening of 10^-3
     auto ax = dx / dist_3;
     auto ay = dy / dist_3;
     auto az = dz / dist_3;
@@ -54,8 +55,8 @@ struct CUDANBodyODE {
                                                 n_pairs, n_particles);
   }
 
-  CUDANBodyODE(std::array<double, n_particles> const& masses)
-      : masses{masses} {}
+  CUDANBodyODE(std::array<double, n_particles> const& ms) : masses{ms} {}
+  CUDANBodyODE(double ms) { std::fill(masses.begin(), masses.end(), ms); }
 };
 
 template <int n_var>
@@ -69,7 +70,10 @@ struct RawCudaOutput {
                cudaMemcpyDeviceToHost);
     times.push_back(t);
     states.push_back(host_x);
+    std::cout << "\rt = " << t;
   }
+
+  ~RawCudaOutput() { std::cout << '\n'; }
 };
 
 int main() {
@@ -87,16 +91,27 @@ int main() {
   // auto host_x0 = std::array{1.0, 3.0, 0.0, -2.0, -1.0, 0.0, 1.0, -1.0, 0.0,
   //                           0.0, 0.0, 0.0, 0.0,  0.0,  0.0, 0.0, 0.0,  0.0};
   // Five-Body Double Figure-8
-  auto host_x0 =
-      std::array{1.657666,  0.0,       0.0, 0.439775,  -0.169717, 0.0,
-                 -1.268608, -0.267651, 0.0, -1.268608, 0.267651,  0.0,
-                 0.439775,  0.169717,  0.0, 0.0,       -0.593786, 0.0,
-                 1.822785,  0.128248,  0.0, 1.271564,  0.168645,  0.0,
-                 -1.271564, 0.168645,  0.0, -1.822785, 0.128248,  0.0};
-  auto constexpr n_var = host_x0.size();
+  // auto host_x0 =
+  //    std::array{1.657666,  0.0,       0.0, 0.439775,  -0.169717, 0.0,
+  //               -1.268608, -0.267651, 0.0, -1.268608, 0.267651,  0.0,
+  //               0.439775,  0.169717,  0.0, 0.0,       -0.593786, 0.0,
+  //               1.822785,  0.128248,  0.0, 1.271564,  0.168645,  0.0,
+  //               -1.271564, 0.168645,  0.0, -1.822785, 0.128248,  0.0};
+  // auto const n_var = host_x0.size();
+  // 1024-Body Cube
+  auto constexpr N = 1024;
+  auto constexpr L = 1.0;
+  auto constexpr n_var = N * 6;
+  auto host_x0 = std::vector<double>(n_var);
+  auto gen = std::mt19937{0};
+  auto dist = std::uniform_real_distribution<double>(0.0, L);
+  for (auto i = 0; i < host_x0.size() / 2; ++i) {
+    host_x0[i] = dist(gen);
+  }
   auto t0 = 0.0;
-  auto tf = 6.3;
-  auto host_tol = std::array<double, n_var>{};
+  auto tf = std::sqrt(L * L * L / N);
+  std::cout << "End time = " << tf << '\n';
+  auto host_tol = std::vector<double>(n_var);
   std::fill(host_tol.begin(), host_tol.end(), 1.0e-10);
   double* dev_x0 = nullptr;
   cudaMalloc(&dev_x0, n_var * sizeof(double));
@@ -106,7 +121,7 @@ int main() {
   cudaMalloc(&dev_tol, n_var * sizeof(double));
   cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
-  auto masses = std::array{1.0, 1.0, 1.0, 1.0, 1.0};
+  auto masses = 1.0;
   auto ode = CUDANBodyODE<n_var>{masses};
   auto output = RawCudaOutput<n_var>{};
 

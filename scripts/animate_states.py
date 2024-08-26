@@ -48,10 +48,10 @@ def plot_frame(frame_idx, times, positions, ax):
     for i in np.arange(N):
         ax.scatter(current_frame[i * dim], current_frame[i * dim + 1],
                    current_frame[i * dim + 2], marker=',', color='k', alpha=0.2)
-    ax.set_xlim(-2, 2)
-    ax.set_ylim(-2, 2)
-    ax.set_zlim(-2, 2)
-    ax.set_title(f"Number of Particles: {N}\nt = {t:.2f}")
+    ax.set_xlim(0, 1)
+    ax.set_ylim(0, 1)
+    ax.set_zlim(0, 1)
+    ax.set_title(f"Number of Particles: {N}\nt = {t:.2e}")
 
     global total_frames
     progress_percent = ((frame_idx + 1) / total_frames) * 100.0

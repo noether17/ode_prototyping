@@ -8,6 +8,7 @@
 #include "CUDAExpODE.cuh"
 #include "HostUtils.hpp"
 #include "RKEmbeddedCuda.cuh"
+#include "RawCudaOutput.cuh"
 
 TEST(RKEmbeddedCudaTest, ComputeErrorTargetTestSmall) {
   auto constexpr n_var = 10;
@@ -484,20 +485,6 @@ TEST(RKEmbeddedCudaTest, UpdateStateAndErrorLarge) {
   cudaFree(dev_ks);
   cudaFree(dev_x0);
 }
-
-template <int n_var>
-struct RawCudaOutput {
-  std::vector<double> times{};
-  std::vector<std::vector<double>> states{};
-
-  void save_state(double t, double const* x_ptr) {
-    auto host_x = std::vector<double>(n_var);
-    cudaMemcpy(host_x.data(), x_ptr, n_var * sizeof(double),
-               cudaMemcpyDeviceToHost);
-    times.push_back(t);
-    states.push_back(host_x);
-  }
-};
 
 TEST(RKEmbeddedCudaTest, CompareCUDAToCPUHE21) {
   auto constexpr n_var = 10;

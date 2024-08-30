@@ -23,5 +23,6 @@ target_link_libraries(RKEmbeddedCudaTest
   CUDAExpODE
   HostUtils
   RKEmbeddedCuda
+  RawCudaOutput
 )
 add_test(NAME RKEmbeddedCudaTest COMMAND RKEmbeddedCudaTest)

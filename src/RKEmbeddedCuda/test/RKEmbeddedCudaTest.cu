@@ -5,6 +5,7 @@
 #include <memory>
 #include <numeric>
 
+#include "CUDAExpODE.cuh"
 #include "HostUtils.hpp"
 #include "RKEmbeddedCuda.cuh"
 
@@ -211,13 +212,6 @@ TEST(RKEmbeddedCudaTest, EulerStepLarge) {
   cudaFree(dev_f0);
   cudaFree(dev_x0);
 }
-
-template <int n_var>
-struct CUDAExpODE {
-  static void compute_rhs(double const* x, double* f) {
-    cudaMemcpy(f, x, n_var * sizeof(double), cudaMemcpyDeviceToDevice);
-  }
-};
 
 TEST(RKEmbeddedCudaTest, EstimateInitialStepSmall) {
   auto constexpr n_var = 10;

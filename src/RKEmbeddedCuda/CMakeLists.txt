@@ -2,6 +2,8 @@ add_library(CudaUtils INTERFACE CudaUtils.cuh)
 
 add_library(CudaState INTERFACE CudaState.cuh)
 
+add_library(CUDAExpODE INTERFACE CUDAExpODE.cuh)
+
 add_library(HostUtils INTERFACE HostUtils.hpp)
 
 add_library(RKEmbeddedCuda INTERFACE RKEmbeddedCuda.cuh)

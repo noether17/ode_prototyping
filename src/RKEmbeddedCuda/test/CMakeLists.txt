@@ -20,7 +20,7 @@ add_executable(RKEmbeddedCudaTest RKEmbeddedCudaTest.cu)
 target_link_libraries(RKEmbeddedCudaTest
   GTest::GTest
   GTest::Main
-  CudaState
+  HostUtils
   RKEmbeddedCuda
 )
 add_test(NAME RKEmbeddedCudaTest COMMAND RKEmbeddedCudaTest)

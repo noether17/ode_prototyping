@@ -21,6 +21,7 @@ target_link_libraries(RKEmbeddedCudaTest
   GTest::GTest
   GTest::Main
   CUDAExpODE
+  CUDANBodyODE
   HostUtils
   RKEmbeddedCuda
   RawCudaOutput

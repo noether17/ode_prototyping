@@ -1,0 +1,4 @@
+CompileFlags:
+  Add: ['--cuda-gpu-arch=sm_75']
+  Remove: ['-forward-unknown-to-host-compiler', '--expt-relaxed-constexpr',
+    '--extended-lambda', '-arch=native', '--options-file']

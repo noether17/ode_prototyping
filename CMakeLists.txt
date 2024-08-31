@@ -8,6 +8,12 @@ if(CMAKE_CUDA_COMPILER)
   set(CMAKE_CUDA_STANDARD 20)
   set(CMAKE_CUDA_STANDARD_REQUIRED True)
   set(CMAKE_CUDA_ARCHITECTURES native)
+
+  # prevent use of rsp files, which are incompatible with clangd
+  set(CMAKE_CUDA_USE_RESPONSE_FILE_FOR_INCLUDES 0)
+  set(CMAKE_CUDA_USE_RESPONSE_FILE_FOR_LIBRARIES 0)
+  set(CMAKE_CUDA_USE_RESPONSE_FILE_FOR_OBJECTS 0)
+
   set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr --extended-lambda")
 endif()
 

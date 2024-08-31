@@ -27,3 +27,13 @@ target_link_libraries(RKEmbeddedCudaTest
   RawCudaOutput
 )
 add_test(NAME RKEmbeddedCudaTest COMMAND RKEmbeddedCudaTest)
+
+add_executable(CudaNBodyTest CudaNBodyTest.cu)
+target_link_libraries(CudaNBodyTest
+  GTest::GTest
+  GTest::Main
+  CUDANBodyODE
+  RKEmbeddedCuda
+  RawCudaOutput
+)
+add_test(NAME CudaNBodyTest COMMAND CudaNBodyTest)

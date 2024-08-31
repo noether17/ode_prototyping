@@ -1,5 +1,6 @@
 #include <gtest/gtest.h>
 
+#include <array>
 #include <numeric>
 #include <vector>
 
@@ -7,25 +8,43 @@
 #include "RKEmbeddedCuda.cuh"
 #include "RawCudaOutput.cuh"
 
-TEST(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestHE21) {
-  auto constexpr n_var = 10;
-  auto host_x0 = std::vector<double>(n_var);
-  std::iota(host_x0.begin(), host_x0.end(), 0.0);
-  auto t0 = 0.0;
-  auto tf = 10.0;
-  auto host_tol = std::vector<double>(n_var);
-  std::fill(host_tol.begin(), host_tol.end(), 1.0e-6);
-  double* dev_x0 = nullptr;
-  cudaMalloc(&dev_x0, n_var * sizeof(double));
-  cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  double* dev_tol = nullptr;
-  cudaMalloc(&dev_tol, n_var * sizeof(double));
-  cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  auto output = RawCudaOutput<n_var>{};
+class CudaRKEmbeddedConsistencyTest : public testing::Test {
+ protected:
+  auto static constexpr n_var = 10;
+  auto static constexpr t0 = 0.0;
+  auto static constexpr tf = 10.0;
+  auto static constexpr host_x0 = []() {
+    auto x0 = std::array<double, n_var>{};
+    std::iota(x0.begin(), x0.end(), 0.0);
+    return x0;
+  }();
+  auto static constexpr host_tol = []() {
+    auto tol = std::array<double, n_var>{};
+    std::fill(tol.begin(), tol.end(), 1.0e-6);
+    return tol;
+  }();
 
-  auto ode = CUDAExpODE<n_var>{};
+  double* dev_x0{};
+  double* dev_tol{};
+  CUDAExpODE<n_var> ode{};
+  RawCudaOutput<n_var> output{};
+
+  CudaRKEmbeddedConsistencyTest() {
+    cudaMalloc(&dev_x0, n_var * sizeof(double));
+    cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
+               cudaMemcpyHostToDevice);
+    cudaMalloc(&dev_tol, n_var * sizeof(double));
+    cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
+               cudaMemcpyHostToDevice);
+  }
+
+  ~CudaRKEmbeddedConsistencyTest() {
+    cudaFree(dev_tol);
+    cudaFree(dev_x0);
+  }
+};
+
+TEST_F(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestHE21) {
   cuda_integrate<n_var, HE21, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
@@ -48,30 +67,9 @@ TEST(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestHE21) {
   EXPECT_DOUBLE_EQ(0.0, output.states.back().front());
   EXPECT_DOUBLE_EQ(110132.17777934109, output.states.back()[n_var / 2]);
   EXPECT_DOUBLE_EQ(198237.92000281301, output.states.back().back());
-
-  cudaFree(dev_tol);
-  cudaFree(dev_x0);
 }
 
-TEST(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestRKF45) {
-  auto constexpr n_var = 10;
-  auto host_x0 = std::vector<double>(n_var);
-  std::iota(host_x0.begin(), host_x0.end(), 0.0);
-  auto t0 = 0.0;
-  auto tf = 10.0;
-  auto host_tol = std::vector<double>(n_var);
-  std::fill(host_tol.begin(), host_tol.end(), 1.0e-6);
-  double* dev_x0 = nullptr;
-  cudaMalloc(&dev_x0, n_var * sizeof(double));
-  cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  double* dev_tol = nullptr;
-  cudaMalloc(&dev_tol, n_var * sizeof(double));
-  cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  auto output = RawCudaOutput<n_var>{};
-
-  auto ode = CUDAExpODE<n_var>{};
+TEST_F(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestRKF45) {
   cuda_integrate<n_var, RKF45, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
@@ -94,30 +92,9 @@ TEST(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestRKF45) {
   EXPECT_DOUBLE_EQ(0.0, output.states.back().front());
   EXPECT_DOUBLE_EQ(110134.06230636714, output.states.back()[n_var / 2]);
   EXPECT_DOUBLE_EQ(198241.31215146082, output.states.back().back());
-
-  cudaFree(dev_tol);
-  cudaFree(dev_x0);
 }
 
-TEST(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestDOPRI5) {
-  auto constexpr n_var = 10;
-  auto host_x0 = std::vector<double>(n_var);
-  std::iota(host_x0.begin(), host_x0.end(), 0.0);
-  auto t0 = 0.0;
-  auto tf = 10.0;
-  auto host_tol = std::vector<double>(n_var);
-  std::fill(host_tol.begin(), host_tol.end(), 1.0e-6);
-  double* dev_x0 = nullptr;
-  cudaMalloc(&dev_x0, n_var * sizeof(double));
-  cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  double* dev_tol = nullptr;
-  cudaMalloc(&dev_tol, n_var * sizeof(double));
-  cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  auto output = RawCudaOutput<n_var>{};
-
-  auto ode = CUDAExpODE<n_var>{};
+TEST_F(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestDOPRI5) {
   cuda_integrate<n_var, DOPRI5, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
@@ -140,30 +117,9 @@ TEST(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestDOPRI5) {
   EXPECT_DOUBLE_EQ(0.0, output.states.back().front());
   EXPECT_DOUBLE_EQ(110132.46804595242, output.states.back()[n_var / 2]);
   EXPECT_DOUBLE_EQ(198238.44248271445, output.states.back().back());
-
-  cudaFree(dev_tol);
-  cudaFree(dev_x0);
 }
 
-TEST(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestDVERK) {
-  auto constexpr n_var = 10;
-  auto host_x0 = std::vector<double>(n_var);
-  std::iota(host_x0.begin(), host_x0.end(), 0.0);
-  auto t0 = 0.0;
-  auto tf = 10.0;
-  auto host_tol = std::vector<double>(n_var);
-  std::fill(host_tol.begin(), host_tol.end(), 1.0e-6);
-  double* dev_x0 = nullptr;
-  cudaMalloc(&dev_x0, n_var * sizeof(double));
-  cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  double* dev_tol = nullptr;
-  cudaMalloc(&dev_tol, n_var * sizeof(double));
-  cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  auto output = RawCudaOutput<n_var>{};
-
-  auto ode = CUDAExpODE<n_var>{};
+TEST_F(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestDVERK) {
   cuda_integrate<n_var, DVERK, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
@@ -186,30 +142,9 @@ TEST(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestDVERK) {
   EXPECT_DOUBLE_EQ(0.0, output.states.back().front());
   EXPECT_DOUBLE_EQ(110132.30512693951, output.states.back()[n_var / 2]);
   EXPECT_DOUBLE_EQ(198238.14922849112, output.states.back().back());
-
-  cudaFree(dev_tol);
-  cudaFree(dev_x0);
 }
 
-TEST(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestRKF78) {
-  auto constexpr n_var = 10;
-  auto host_x0 = std::vector<double>(n_var);
-  std::iota(host_x0.begin(), host_x0.end(), 0.0);
-  auto t0 = 0.0;
-  auto tf = 10.0;
-  auto host_tol = std::vector<double>(n_var);
-  std::fill(host_tol.begin(), host_tol.end(), 1.0e-6);
-  double* dev_x0 = nullptr;
-  cudaMalloc(&dev_x0, n_var * sizeof(double));
-  cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  double* dev_tol = nullptr;
-  cudaMalloc(&dev_tol, n_var * sizeof(double));
-  cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  auto output = RawCudaOutput<n_var>{};
-
-  auto ode = CUDAExpODE<n_var>{};
+TEST_F(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestRKF78) {
   cuda_integrate<n_var, RKF78, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
@@ -232,7 +167,4 @@ TEST(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestRKF78) {
   EXPECT_DOUBLE_EQ(0.0, output.states.back().front());
   EXPECT_DOUBLE_EQ(110131.78807367239, output.states.back()[n_var / 2]);
   EXPECT_DOUBLE_EQ(198237.21853261034, output.states.back().back());
-
-  cudaFree(dev_tol);
-  cudaFree(dev_x0);
 }

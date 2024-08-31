@@ -21,12 +21,23 @@ target_link_libraries(RKEmbeddedCudaTest
   GTest::GTest
   GTest::Main
   CUDAExpODE
-  CUDANBodyODE
   HostUtils
   RKEmbeddedCuda
   RawCudaOutput
 )
 add_test(NAME RKEmbeddedCudaTest COMMAND RKEmbeddedCudaTest)
+
+add_executable(CudaRKEmbeddedConsistencyTest CudaRKEmbeddedConsistencyTest.cu)
+target_link_libraries(CudaRKEmbeddedConsistencyTest
+  GTest::GTest
+  GTest::Main
+  CUDAExpODE
+  RKEmbeddedCuda
+  RawCudaOutput
+)
+add_test(NAME CudaRKEmbeddedConsistencyTest
+  COMMAND CudaRKEmbeddedConsistencyTest
+)
 
 add_executable(CudaNBodyTest CudaNBodyTest.cu)
 target_link_libraries(CudaNBodyTest

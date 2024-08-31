@@ -1,8 +1,6 @@
 #include <gtest/gtest.h>
 
 #include <cmath>
-#include <iostream>
-#include <memory>
 #include <numeric>
 
 #include "CUDAExpODE.cuh"

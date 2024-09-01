@@ -25,6 +25,9 @@ target_link_libraries(RKEmbeddedCudaTest
   HostUtils
   RKEmbeddedCuda
 )
+target_include_directories(RKEmbeddedCudaTest
+  PUBLIC ${CMAKE_SOURCE_DIR}/src/ButcherTableaus
+)
 add_test(NAME RKEmbeddedCudaTest COMMAND RKEmbeddedCudaTest)
 
 add_executable(CudaRKEmbeddedConsistencyTest CudaRKEmbeddedConsistencyTest.cu)
@@ -39,6 +42,9 @@ target_link_libraries(CudaRKEmbeddedConsistencyTest
   CUDAExpODE
   RKEmbeddedCuda
   RawCudaOutput
+)
+target_include_directories(CudaRKEmbeddedConsistencyTest
+  PUBLIC ${CMAKE_SOURCE_DIR}/src/ButcherTableaus
 )
 add_test(NAME CudaRKEmbeddedConsistencyTest
   COMMAND CudaRKEmbeddedConsistencyTest
@@ -59,6 +65,9 @@ target_link_libraries(CudaRKEmbeddedCPUComparisonTest
   RKEmbeddedCuda
   RawCudaOutput
 )
+target_include_directories(CudaRKEmbeddedCPUComparisonTest
+  PUBLIC ${CMAKE_SOURCE_DIR}/src/ButcherTableaus
+)
 add_test(NAME CudaRKEmbeddedCPUComparisonTest
   COMMAND CudaRKEmbeddedCPUComparisonTest
 )
@@ -71,5 +80,8 @@ target_link_libraries(CudaNBodyTest
   CUDANBodyODE
   RKEmbeddedCuda
   RawCudaOutput
+)
+target_include_directories(CudaNBodyTest
+  PUBLIC ${CMAKE_SOURCE_DIR}/src/ButcherTableaus
 )
 add_test(NAME CudaNBodyTest COMMAND CudaNBodyTest)

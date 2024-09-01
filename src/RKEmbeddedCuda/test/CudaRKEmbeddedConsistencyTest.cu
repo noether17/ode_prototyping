@@ -2,7 +2,6 @@
 
 #include <array>
 #include <numeric>
-#include <vector>
 
 #include "CUDAExpODE.cuh"
 #include "RKEmbeddedCuda.cuh"
@@ -44,7 +43,7 @@ class CudaRKEmbeddedConsistencyTest : public testing::Test {
   }
 };
 
-TEST_F(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestHE21) {
+TEST_F(CudaRKEmbeddedConsistencyTest, HE21) {
   cuda_integrate<n_var, HE21, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
@@ -69,7 +68,7 @@ TEST_F(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestHE21) {
   EXPECT_DOUBLE_EQ(198237.92000281301, output.states.back().back());
 }
 
-TEST_F(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestRKF45) {
+TEST_F(CudaRKEmbeddedConsistencyTest, RKF45) {
   cuda_integrate<n_var, RKF45, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
@@ -94,7 +93,7 @@ TEST_F(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestRKF45) {
   EXPECT_DOUBLE_EQ(198241.31215146082, output.states.back().back());
 }
 
-TEST_F(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestDOPRI5) {
+TEST_F(CudaRKEmbeddedConsistencyTest, DOPRI5) {
   cuda_integrate<n_var, DOPRI5, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
@@ -119,7 +118,7 @@ TEST_F(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestDOPRI5) {
   EXPECT_DOUBLE_EQ(198238.44248271445, output.states.back().back());
 }
 
-TEST_F(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestDVERK) {
+TEST_F(CudaRKEmbeddedConsistencyTest, DVERK) {
   cuda_integrate<n_var, DVERK, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
@@ -144,7 +143,7 @@ TEST_F(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestDVERK) {
   EXPECT_DOUBLE_EQ(198238.14922849112, output.states.back().back());
 }
 
-TEST_F(CudaRKEmbeddedConsistencyTest, CUDAIntegrateConsistencyTestRKF78) {
+TEST_F(CudaRKEmbeddedConsistencyTest, RKF78) {
   cuda_integrate<n_var, RKF78, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 

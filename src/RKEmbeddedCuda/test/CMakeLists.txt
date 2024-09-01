@@ -23,7 +23,6 @@ target_link_libraries(RKEmbeddedCudaTest
   CUDAExpODE
   HostUtils
   RKEmbeddedCuda
-  RawCudaOutput
 )
 add_test(NAME RKEmbeddedCudaTest COMMAND RKEmbeddedCudaTest)
 
@@ -37,6 +36,20 @@ target_link_libraries(CudaRKEmbeddedConsistencyTest
 )
 add_test(NAME CudaRKEmbeddedConsistencyTest
   COMMAND CudaRKEmbeddedConsistencyTest
+)
+
+add_executable(CudaRKEmbeddedCPUComparisonTest
+  CudaRKEmbeddedCPUComparisonTest.cu
+)
+target_link_libraries(CudaRKEmbeddedCPUComparisonTest
+  GTest::GTest
+  GTest::Main
+  CUDAExpODE
+  RKEmbeddedCuda
+  RawCudaOutput
+)
+add_test(NAME CudaRKEmbeddedCPUComparisonTest
+  COMMAND CudaRKEmbeddedCPUComparisonTest
 )
 
 add_executable(CudaNBodyTest CudaNBodyTest.cu)

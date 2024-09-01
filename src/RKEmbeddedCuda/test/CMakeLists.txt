@@ -20,6 +20,7 @@ add_executable(RKEmbeddedCudaTest RKEmbeddedCudaTest.cu)
 target_link_libraries(RKEmbeddedCudaTest
   GTest::GTest
   GTest::Main
+  BTHE21
   CUDAExpODE
   HostUtils
   RKEmbeddedCuda
@@ -30,6 +31,11 @@ add_executable(CudaRKEmbeddedConsistencyTest CudaRKEmbeddedConsistencyTest.cu)
 target_link_libraries(CudaRKEmbeddedConsistencyTest
   GTest::GTest
   GTest::Main
+  BTHE21
+  BTRKF45
+  BTDOPRI5
+  BTDVERK
+  BTRKF78
   CUDAExpODE
   RKEmbeddedCuda
   RawCudaOutput
@@ -44,6 +50,11 @@ add_executable(CudaRKEmbeddedCPUComparisonTest
 target_link_libraries(CudaRKEmbeddedCPUComparisonTest
   GTest::GTest
   GTest::Main
+  BTHE21
+  BTRKF45
+  BTDOPRI5
+  BTDVERK
+  BTRKF78
   CUDAExpODE
   RKEmbeddedCuda
   RawCudaOutput
@@ -56,6 +67,7 @@ add_executable(CudaNBodyTest CudaNBodyTest.cu)
 target_link_libraries(CudaNBodyTest
   GTest::GTest
   GTest::Main
+  BTRKF78
   CUDANBodyODE
   RKEmbeddedCuda
   RawCudaOutput

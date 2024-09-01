@@ -3,6 +3,7 @@
 #include <cmath>
 #include <numeric>
 
+#include "BTHE21.hpp"
 #include "CUDAExpODE.cuh"
 #include "HostUtils.hpp"
 #include "RKEmbeddedCuda.cuh"
@@ -234,11 +235,11 @@ TEST(RKEmbeddedCudaTest, EstimateInitialStepSmall) {
 
   auto ode = CUDAExpODE<n_var>{};
   auto host_cuda_result =
-      cuda_estimate_initial_step<n_var, HE21, CUDAExpODE<n_var>>(
+      cuda_estimate_initial_step<n_var, BTHE21, CUDAExpODE<n_var>>(
           dev_x0, dev_atol, dev_rtol, ode);
 
   auto host_result =
-      host_estimate_initial_step<HE21>(host_x0, host_atol, host_rtol);
+      host_estimate_initial_step<BTHE21>(host_x0, host_atol, host_rtol);
   EXPECT_DOUBLE_EQ(host_result, host_cuda_result);
 
   cudaFree(dev_rtol);
@@ -269,11 +270,11 @@ TEST(RKEmbeddedCudaTest, EstimateInitialStepLarge) {
 
   auto ode = CUDAExpODE<n_var>{};
   auto host_cuda_result =
-      cuda_estimate_initial_step<n_var, HE21, CUDAExpODE<n_var>>(
+      cuda_estimate_initial_step<n_var, BTHE21, CUDAExpODE<n_var>>(
           dev_x0, dev_atol, dev_rtol, ode);
 
   auto host_result =
-      host_estimate_initial_step<HE21>(host_x0, host_atol, host_rtol);
+      host_estimate_initial_step<BTHE21>(host_x0, host_atol, host_rtol);
   EXPECT_DOUBLE_EQ(host_result, host_cuda_result);
 
   cudaFree(dev_rtol);
@@ -291,22 +292,22 @@ TEST(RKEmbeddedCudaTest, RKStagesSmall) {
   cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
   double* dev_ks = nullptr;
-  cudaMalloc(&dev_ks, n_var * HE21::n_stages * sizeof(double));
+  cudaMalloc(&dev_ks, n_var * BTHE21::n_stages * sizeof(double));
   double* dev_temp_state = nullptr;
   cudaMalloc(&dev_temp_state, n_var * sizeof(double));
 
   auto ode = CUDAExpODE<n_var>{};
-  cuda_evaluate_stages<n_var, HE21, CUDAExpODE<n_var>>(dev_x0, dev_temp_state,
-                                                       dev_ks, dt, ode);
+  cuda_evaluate_stages<n_var, BTHE21, CUDAExpODE<n_var>>(dev_x0, dev_temp_state,
+                                                         dev_ks, dt, ode);
 
-  auto host_cuda_result = std::vector<double>(n_var * HE21::n_stages);
+  auto host_cuda_result = std::vector<double>(n_var * BTHE21::n_stages);
   cudaMemcpy(host_cuda_result.data(), dev_ks,
-             n_var * HE21::n_stages * sizeof(double), cudaMemcpyDeviceToHost);
+             n_var * BTHE21::n_stages * sizeof(double), cudaMemcpyDeviceToHost);
   auto host_temp_state = std::vector<double>(n_var);
-  auto host_result = std::vector<double>(n_var * HE21::n_stages);
-  host_evaluate_stages<n_var, HE21, HostExpODE<n_var>>(
+  auto host_result = std::vector<double>(n_var * BTHE21::n_stages);
+  host_evaluate_stages<n_var, BTHE21, HostExpODE<n_var>>(
       host_x0.data(), host_temp_state.data(), host_result.data(), dt);
-  for (auto i = 0; i < n_var * HE21::n_stages; ++i) {
+  for (auto i = 0; i < n_var * BTHE21::n_stages; ++i) {
     EXPECT_DOUBLE_EQ(host_result[i], host_cuda_result[i]);
   }
 
@@ -325,22 +326,22 @@ TEST(RKEmbeddedCudaTest, RKStagesLarge) {
   cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
   double* dev_ks = nullptr;
-  cudaMalloc(&dev_ks, n_var * HE21::n_stages * sizeof(double));
+  cudaMalloc(&dev_ks, n_var * BTHE21::n_stages * sizeof(double));
   double* dev_temp_state = nullptr;
   cudaMalloc(&dev_temp_state, n_var * sizeof(double));
 
   auto ode = CUDAExpODE<n_var>{};
-  cuda_evaluate_stages<n_var, HE21, CUDAExpODE<n_var>>(dev_x0, dev_temp_state,
-                                                       dev_ks, dt, ode);
+  cuda_evaluate_stages<n_var, BTHE21, CUDAExpODE<n_var>>(dev_x0, dev_temp_state,
+                                                         dev_ks, dt, ode);
 
-  auto host_cuda_result = std::vector<double>(n_var * HE21::n_stages);
+  auto host_cuda_result = std::vector<double>(n_var * BTHE21::n_stages);
   cudaMemcpy(host_cuda_result.data(), dev_ks,
-             n_var * HE21::n_stages * sizeof(double), cudaMemcpyDeviceToHost);
+             n_var * BTHE21::n_stages * sizeof(double), cudaMemcpyDeviceToHost);
   auto host_temp_state = std::vector<double>(n_var);
-  auto host_result = std::vector<double>(n_var * HE21::n_stages);
-  host_evaluate_stages<n_var, HE21, HostExpODE<n_var>>(
+  auto host_result = std::vector<double>(n_var * BTHE21::n_stages);
+  host_evaluate_stages<n_var, BTHE21, HostExpODE<n_var>>(
       host_x0.data(), host_temp_state.data(), host_result.data(), dt);
-  for (auto i = 0; i < n_var * HE21::n_stages; ++i) {
+  for (auto i = 0; i < n_var * BTHE21::n_stages; ++i) {
     EXPECT_DOUBLE_EQ(host_result[i], host_cuda_result[i]);
   }
 
@@ -353,14 +354,14 @@ TEST(RKEmbeddedCudaTest, UpdateStateAndErrorSmall) {
   auto constexpr n_var = 10;
   auto host_x0 = std::vector<double>(n_var);
   std::iota(host_x0.begin(), host_x0.end(), 0.0);
-  auto host_ks = std::vector<double>(n_var * HE21::n_stages);
+  auto host_ks = std::vector<double>(n_var * BTHE21::n_stages);
   std::iota(host_ks.begin(), host_ks.end(), 1.0);
   auto dt = 0.1;
-  auto b = HE21::b;
+  auto b = BTHE21::b;
   auto db = []() {
-    auto db = HE21::b;
-    for (auto i = 0; i < HE21::n_stages; ++i) {
-      db[i] -= HE21::bt[i];
+    auto db = BTHE21::b;
+    for (auto i = 0; i < BTHE21::n_stages; ++i) {
+      db[i] -= BTHE21::bt[i];
     }
     return db;
   }();
@@ -369,16 +370,18 @@ TEST(RKEmbeddedCudaTest, UpdateStateAndErrorSmall) {
   cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
   double* dev_ks = nullptr;
-  cudaMalloc(&dev_ks, n_var * HE21::n_stages * sizeof(double));
-  cudaMemcpy(dev_ks, host_ks.data(), n_var * HE21::n_stages * sizeof(double),
+  cudaMalloc(&dev_ks, n_var * BTHE21::n_stages * sizeof(double));
+  cudaMemcpy(dev_ks, host_ks.data(), n_var * BTHE21::n_stages * sizeof(double),
              cudaMemcpyHostToDevice);
   double* dev_x = nullptr;
   cudaMalloc(&dev_x, n_var * sizeof(double));
   double* dev_error_estimate = nullptr;
   cudaMalloc(&dev_error_estimate, n_var * sizeof(double));
 
-  cuda_update_state_and_error<n_var, HE21><<<num_blocks<n_var>(), block_size>>>(
-      dev_x0, dev_ks, dt, dev_x, dev_error_estimate, b, db, HE21::n_stages);
+  cuda_update_state_and_error<n_var, BTHE21>
+      <<<num_blocks<n_var>(), block_size>>>(dev_x0, dev_ks, dt, dev_x,
+                                            dev_error_estimate, b, db,
+                                            BTHE21::n_stages);
 
   auto host_cuda_x = std::vector<double>(n_var);
   cudaMemcpy(host_cuda_x.data(), dev_x, n_var * sizeof(double),
@@ -389,7 +392,7 @@ TEST(RKEmbeddedCudaTest, UpdateStateAndErrorSmall) {
   auto host_x = [&]() {
     auto x = host_x0;
     for (auto i = 0; i < n_var; ++i) {
-      for (auto j = 0; j < HE21::n_stages; ++j) {
+      for (auto j = 0; j < BTHE21::n_stages; ++j) {
         x[i] += b[j] * host_ks[j * n_var + i] * dt;
       }
     }
@@ -399,7 +402,7 @@ TEST(RKEmbeddedCudaTest, UpdateStateAndErrorSmall) {
     auto error_estimate = std::vector<double>(n_var);
     for (auto i = 0; i < n_var; ++i) {
       error_estimate[i] = 0.0;
-      for (auto j = 0; j < HE21::n_stages; ++j) {
+      for (auto j = 0; j < BTHE21::n_stages; ++j) {
         error_estimate[i] += db[j] * host_ks[j * n_var + i] * dt;
       }
     }
@@ -420,14 +423,14 @@ TEST(RKEmbeddedCudaTest, UpdateStateAndErrorLarge) {
   auto constexpr n_var = 1 << 20;
   auto host_x0 = std::vector<double>(n_var);
   std::iota(host_x0.begin(), host_x0.end(), 0.0);
-  auto host_ks = std::vector<double>(n_var * HE21::n_stages);
+  auto host_ks = std::vector<double>(n_var * BTHE21::n_stages);
   std::iota(host_ks.begin(), host_ks.end(), 1.0);
   auto dt = 0.1;
-  auto b = HE21::b;
+  auto b = BTHE21::b;
   auto db = []() {
-    auto db = HE21::b;
-    for (auto i = 0; i < HE21::n_stages; ++i) {
-      db[i] -= HE21::bt[i];
+    auto db = BTHE21::b;
+    for (auto i = 0; i < BTHE21::n_stages; ++i) {
+      db[i] -= BTHE21::bt[i];
     }
     return db;
   }();
@@ -436,16 +439,18 @@ TEST(RKEmbeddedCudaTest, UpdateStateAndErrorLarge) {
   cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
   double* dev_ks = nullptr;
-  cudaMalloc(&dev_ks, n_var * HE21::n_stages * sizeof(double));
-  cudaMemcpy(dev_ks, host_ks.data(), n_var * HE21::n_stages * sizeof(double),
+  cudaMalloc(&dev_ks, n_var * BTHE21::n_stages * sizeof(double));
+  cudaMemcpy(dev_ks, host_ks.data(), n_var * BTHE21::n_stages * sizeof(double),
              cudaMemcpyHostToDevice);
   double* dev_x = nullptr;
   cudaMalloc(&dev_x, n_var * sizeof(double));
   double* dev_error_estimate = nullptr;
   cudaMalloc(&dev_error_estimate, n_var * sizeof(double));
 
-  cuda_update_state_and_error<n_var, HE21><<<num_blocks<n_var>(), block_size>>>(
-      dev_x0, dev_ks, dt, dev_x, dev_error_estimate, b, db, HE21::n_stages);
+  cuda_update_state_and_error<n_var, BTHE21>
+      <<<num_blocks<n_var>(), block_size>>>(dev_x0, dev_ks, dt, dev_x,
+                                            dev_error_estimate, b, db,
+                                            BTHE21::n_stages);
 
   auto host_cuda_x = std::vector<double>(n_var);
   cudaMemcpy(host_cuda_x.data(), dev_x, n_var * sizeof(double),
@@ -456,7 +461,7 @@ TEST(RKEmbeddedCudaTest, UpdateStateAndErrorLarge) {
   auto host_x = [&]() {
     auto x = host_x0;
     for (auto i = 0; i < n_var; ++i) {
-      for (auto j = 0; j < HE21::n_stages; ++j) {
+      for (auto j = 0; j < BTHE21::n_stages; ++j) {
         x[i] += b[j] * host_ks[j * n_var + i] * dt;
       }
     }
@@ -466,7 +471,7 @@ TEST(RKEmbeddedCudaTest, UpdateStateAndErrorLarge) {
     auto error_estimate = std::vector<double>(n_var);
     for (auto i = 0; i < n_var; ++i) {
       error_estimate[i] = 0.0;
-      for (auto j = 0; j < HE21::n_stages; ++j) {
+      for (auto j = 0; j < BTHE21::n_stages; ++j) {
         error_estimate[i] += db[j] * host_ks[j * n_var + i] * dt;
       }
     }

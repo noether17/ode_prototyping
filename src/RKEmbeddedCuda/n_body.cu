@@ -2,9 +2,9 @@
 #include <fstream>
 #include <iostream>
 #include <random>
-#include <string>
 #include <vector>
 
+#include "BTRKF78.hpp"
 #include "RKEmbeddedCuda.cuh"
 
 template <typename MassType>
@@ -125,7 +125,7 @@ int main() {
   auto ode = CUDANBodyODE<n_var>{masses};
   auto output = RawCudaOutput<n_var>{};
 
-  cuda_integrate<n_var, RKF78, CUDANBodyODE<n_var>, RawCudaOutput<n_var>>(
+  cuda_integrate<n_var, BTRKF78, CUDANBodyODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   auto output_file = std::ofstream{"n_body_output.txt"};

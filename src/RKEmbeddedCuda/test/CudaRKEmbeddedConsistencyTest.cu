@@ -3,6 +3,11 @@
 #include <array>
 #include <numeric>
 
+#include "BTDOPRI5.hpp"
+#include "BTDVERK.hpp"
+#include "BTHE21.hpp"
+#include "BTRKF45.hpp"
+#include "BTRKF78.hpp"
 #include "CUDAExpODE.cuh"
 #include "RKEmbeddedCuda.cuh"
 #include "RawCudaOutput.cuh"
@@ -44,7 +49,7 @@ class CudaRKEmbeddedConsistencyTest : public testing::Test {
 };
 
 TEST_F(CudaRKEmbeddedConsistencyTest, HE21) {
-  cuda_integrate<n_var, HE21, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
+  cuda_integrate<n_var, BTHE21, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   EXPECT_EQ(11026, output.times.size());
@@ -69,7 +74,7 @@ TEST_F(CudaRKEmbeddedConsistencyTest, HE21) {
 }
 
 TEST_F(CudaRKEmbeddedConsistencyTest, RKF45) {
-  cuda_integrate<n_var, RKF45, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
+  cuda_integrate<n_var, BTRKF45, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   EXPECT_EQ(50, output.times.size());
@@ -94,7 +99,7 @@ TEST_F(CudaRKEmbeddedConsistencyTest, RKF45) {
 }
 
 TEST_F(CudaRKEmbeddedConsistencyTest, DOPRI5) {
-  cuda_integrate<n_var, DOPRI5, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
+  cuda_integrate<n_var, BTDOPRI5, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   EXPECT_EQ(45, output.times.size());
@@ -119,7 +124,7 @@ TEST_F(CudaRKEmbeddedConsistencyTest, DOPRI5) {
 }
 
 TEST_F(CudaRKEmbeddedConsistencyTest, DVERK) {
-  cuda_integrate<n_var, DVERK, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
+  cuda_integrate<n_var, BTDVERK, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   EXPECT_EQ(32, output.times.size());
@@ -144,7 +149,7 @@ TEST_F(CudaRKEmbeddedConsistencyTest, DVERK) {
 }
 
 TEST_F(CudaRKEmbeddedConsistencyTest, RKF78) {
-  cuda_integrate<n_var, RKF78, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
+  cuda_integrate<n_var, BTRKF78, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   EXPECT_EQ(13, output.times.size());

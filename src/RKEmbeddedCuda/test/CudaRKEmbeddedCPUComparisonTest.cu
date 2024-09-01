@@ -6,25 +6,43 @@
 #include "RKEmbeddedCuda.cuh"
 #include "RawCudaOutput.cuh"
 
-TEST(CudaRKEmbeddedCPUComparisonTest, CompareCUDAToCPUHE21) {
-  auto constexpr n_var = 10;
-  auto host_x0 = std::vector<double>(n_var);
-  std::iota(host_x0.begin(), host_x0.end(), 0.0);
-  auto t0 = 0.0;
-  auto tf = 10.0;
-  auto host_tol = std::vector<double>(n_var);
-  std::fill(host_tol.begin(), host_tol.end(), 1.0e-6);
-  double* dev_x0 = nullptr;
-  cudaMalloc(&dev_x0, n_var * sizeof(double));
-  cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  double* dev_tol = nullptr;
-  cudaMalloc(&dev_tol, n_var * sizeof(double));
-  cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  auto output = RawCudaOutput<n_var>{};
+class CudaRKEmbeddedCPUComparisonTest : public testing::Test {
+ protected:
+  auto static constexpr n_var = 10;
+  auto static constexpr t0 = 0.0;
+  auto static constexpr tf = 10.0;
+  auto static constexpr host_x0 = []() {
+    auto x0 = std::array<double, n_var>{};
+    std::iota(x0.begin(), x0.end(), 0.0);
+    return x0;
+  }();
+  auto static constexpr host_tol = []() {
+    auto tol = std::array<double, n_var>{};
+    std::fill(tol.begin(), tol.end(), 1.0e-6);
+    return tol;
+  }();
 
-  auto ode = CUDAExpODE<n_var>{};
+  double* dev_x0{};
+  double* dev_tol{};
+  CUDAExpODE<n_var> ode{};
+  RawCudaOutput<n_var> output{};
+
+  CudaRKEmbeddedCPUComparisonTest() {
+    cudaMalloc(&dev_x0, n_var * sizeof(double));
+    cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
+               cudaMemcpyHostToDevice);
+    cudaMalloc(&dev_tol, n_var * sizeof(double));
+    cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
+               cudaMemcpyHostToDevice);
+  }
+
+  ~CudaRKEmbeddedCPUComparisonTest() {
+    cudaFree(dev_tol);
+    cudaFree(dev_x0);
+  }
+};
+
+TEST_F(CudaRKEmbeddedCPUComparisonTest, HE21) {
   cuda_integrate<n_var, HE21, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
@@ -51,30 +69,9 @@ TEST(CudaRKEmbeddedCPUComparisonTest, CompareCUDAToCPUHE21) {
               110132.17777934085 * state_tol);
   EXPECT_NEAR(198237.92000281269, output.states.back().back(),
               198237.92000281269 * state_tol);
-
-  cudaFree(dev_tol);
-  cudaFree(dev_x0);
 }
 
-TEST(CudaRKEmbeddedCPUComparisonTest, CompareCUDAToCPURKF45) {
-  auto constexpr n_var = 10;
-  auto host_x0 = std::vector<double>(n_var);
-  std::iota(host_x0.begin(), host_x0.end(), 0.0);
-  auto t0 = 0.0;
-  auto tf = 10.0;
-  auto host_tol = std::vector<double>(n_var);
-  std::fill(host_tol.begin(), host_tol.end(), 1.0e-6);
-  double* dev_x0 = nullptr;
-  cudaMalloc(&dev_x0, n_var * sizeof(double));
-  cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  double* dev_tol = nullptr;
-  cudaMalloc(&dev_tol, n_var * sizeof(double));
-  cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  auto output = RawCudaOutput<n_var>{};
-
-  auto ode = CUDAExpODE<n_var>{};
+TEST_F(CudaRKEmbeddedCPUComparisonTest, RKF45) {
   cuda_integrate<n_var, RKF45, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
@@ -104,30 +101,9 @@ TEST(CudaRKEmbeddedCPUComparisonTest, CompareCUDAToCPURKF45) {
               110134.06230636688 * state_tol);
   EXPECT_NEAR(198241.3121514605, output.states.back().back(),
               198241.3121514605 * state_tol);
-
-  cudaFree(dev_tol);
-  cudaFree(dev_x0);
 }
 
-TEST(CudaRKEmbeddedCPUComparisonTest, CompareCUDAToCPUDOPRI5) {
-  auto constexpr n_var = 10;
-  auto host_x0 = std::vector<double>(n_var);
-  std::iota(host_x0.begin(), host_x0.end(), 0.0);
-  auto t0 = 0.0;
-  auto tf = 10.0;
-  auto host_tol = std::vector<double>(n_var);
-  std::fill(host_tol.begin(), host_tol.end(), 1.0e-6);
-  double* dev_x0 = nullptr;
-  cudaMalloc(&dev_x0, n_var * sizeof(double));
-  cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  double* dev_tol = nullptr;
-  cudaMalloc(&dev_tol, n_var * sizeof(double));
-  cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  auto output = RawCudaOutput<n_var>{};
-
-  auto ode = CUDAExpODE<n_var>{};
+TEST_F(CudaRKEmbeddedCPUComparisonTest, DOPRI5) {
   cuda_integrate<n_var, DOPRI5, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
@@ -156,30 +132,9 @@ TEST(CudaRKEmbeddedCPUComparisonTest, CompareCUDAToCPUDOPRI5) {
               110132.46804595254 * state_tol);
   EXPECT_NEAR(198238.44248271457, output.states.back().back(),
               198238.44248271457 * state_tol);
-
-  cudaFree(dev_tol);
-  cudaFree(dev_x0);
 }
 
-TEST(CudaRKEmbeddedCPUComparisonTest, CompareCUDAToCPUDVERK) {
-  auto constexpr n_var = 10;
-  auto host_x0 = std::vector<double>(n_var);
-  std::iota(host_x0.begin(), host_x0.end(), 0.0);
-  auto t0 = 0.0;
-  auto tf = 10.0;
-  auto host_tol = std::vector<double>(n_var);
-  std::fill(host_tol.begin(), host_tol.end(), 1.0e-6);
-  double* dev_x0 = nullptr;
-  cudaMalloc(&dev_x0, n_var * sizeof(double));
-  cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  double* dev_tol = nullptr;
-  cudaMalloc(&dev_tol, n_var * sizeof(double));
-  cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  auto output = RawCudaOutput<n_var>{};
-
-  auto ode = CUDAExpODE<n_var>{};
+TEST_F(CudaRKEmbeddedCPUComparisonTest, DVERK) {
   cuda_integrate<n_var, DVERK, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
@@ -208,30 +163,9 @@ TEST(CudaRKEmbeddedCPUComparisonTest, CompareCUDAToCPUDVERK) {
               110132.30512693945 * state_tol);
   EXPECT_NEAR(198238.14922849106, output.states.back().back(),
               198238.14922849106 * state_tol);
-
-  cudaFree(dev_tol);
-  cudaFree(dev_x0);
 }
 
-TEST(CudaRKEmbeddedCPUComparisonTest, CompareCUDAToCPURKF78) {
-  auto constexpr n_var = 10;
-  auto host_x0 = std::vector<double>(n_var);
-  std::iota(host_x0.begin(), host_x0.end(), 0.0);
-  auto t0 = 0.0;
-  auto tf = 10.0;
-  auto host_tol = std::vector<double>(n_var);
-  std::fill(host_tol.begin(), host_tol.end(), 1.0e-6);
-  double* dev_x0 = nullptr;
-  cudaMalloc(&dev_x0, n_var * sizeof(double));
-  cudaMemcpy(dev_x0, host_x0.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  double* dev_tol = nullptr;
-  cudaMalloc(&dev_tol, n_var * sizeof(double));
-  cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
-             cudaMemcpyHostToDevice);
-  auto output = RawCudaOutput<n_var>{};
-
-  auto ode = CUDAExpODE<n_var>{};
+TEST_F(CudaRKEmbeddedCPUComparisonTest, RKF78) {
   cuda_integrate<n_var, RKF78, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
@@ -261,7 +195,4 @@ TEST(CudaRKEmbeddedCPUComparisonTest, CompareCUDAToCPURKF78) {
               110131.78807367262 * state_tol);
   EXPECT_NEAR(198237.21853261057, output.states.back().back(),
               198237.21853261057 * state_tol);
-
-  cudaFree(dev_tol);
-  cudaFree(dev_x0);
 }

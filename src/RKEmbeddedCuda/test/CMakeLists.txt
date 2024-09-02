@@ -21,7 +21,7 @@ target_link_libraries(RKEmbeddedCudaTest
   GTest::GTest
   GTest::Main
   BTHE21
-  CUDAExpODE
+  CudaExpOde
   HostUtils
   RKEmbeddedCuda
 )
@@ -39,7 +39,7 @@ target_link_libraries(CudaRKEmbeddedConsistencyTest
   BTDOPRI5
   BTDVERK
   BTRKF78
-  CUDAExpODE
+  CudaExpOde
   RKEmbeddedCuda
   RawCudaOutput
 )
@@ -61,7 +61,7 @@ target_link_libraries(CudaRKEmbeddedCPUComparisonTest
   BTDOPRI5
   BTDVERK
   BTRKF78
-  CUDAExpODE
+  CudaExpOde
   RKEmbeddedCuda
   RawCudaOutput
 )

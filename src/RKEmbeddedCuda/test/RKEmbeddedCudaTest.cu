@@ -4,7 +4,7 @@
 #include <numeric>
 
 #include "BTHE21.hpp"
-#include "CUDAExpODE.cuh"
+#include "CudaExpOde.cuh"
 #include "HostUtils.hpp"
 #include "RKEmbeddedCuda.cuh"
 
@@ -233,9 +233,9 @@ TEST(RKEmbeddedCudaTest, EstimateInitialStepSmall) {
   cudaMemcpy(dev_rtol, host_rtol.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
 
-  auto ode = CUDAExpODE<n_var>{};
+  auto ode = CudaExpOde<n_var>{};
   auto host_cuda_result =
-      cuda_estimate_initial_step<n_var, BTHE21, CUDAExpODE<n_var>>(
+      cuda_estimate_initial_step<n_var, BTHE21, CudaExpOde<n_var>>(
           dev_x0, dev_atol, dev_rtol, ode);
 
   auto host_result =
@@ -268,9 +268,9 @@ TEST(RKEmbeddedCudaTest, EstimateInitialStepLarge) {
   cudaMemcpy(dev_rtol, host_rtol.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
 
-  auto ode = CUDAExpODE<n_var>{};
+  auto ode = CudaExpOde<n_var>{};
   auto host_cuda_result =
-      cuda_estimate_initial_step<n_var, BTHE21, CUDAExpODE<n_var>>(
+      cuda_estimate_initial_step<n_var, BTHE21, CudaExpOde<n_var>>(
           dev_x0, dev_atol, dev_rtol, ode);
 
   auto host_result =
@@ -296,8 +296,8 @@ TEST(RKEmbeddedCudaTest, RKStagesSmall) {
   double* dev_temp_state = nullptr;
   cudaMalloc(&dev_temp_state, n_var * sizeof(double));
 
-  auto ode = CUDAExpODE<n_var>{};
-  cuda_evaluate_stages<n_var, BTHE21, CUDAExpODE<n_var>>(dev_x0, dev_temp_state,
+  auto ode = CudaExpOde<n_var>{};
+  cuda_evaluate_stages<n_var, BTHE21, CudaExpOde<n_var>>(dev_x0, dev_temp_state,
                                                          dev_ks, dt, ode);
 
   auto host_cuda_result = std::vector<double>(n_var * BTHE21::n_stages);
@@ -330,8 +330,8 @@ TEST(RKEmbeddedCudaTest, RKStagesLarge) {
   double* dev_temp_state = nullptr;
   cudaMalloc(&dev_temp_state, n_var * sizeof(double));
 
-  auto ode = CUDAExpODE<n_var>{};
-  cuda_evaluate_stages<n_var, BTHE21, CUDAExpODE<n_var>>(dev_x0, dev_temp_state,
+  auto ode = CudaExpOde<n_var>{};
+  cuda_evaluate_stages<n_var, BTHE21, CudaExpOde<n_var>>(dev_x0, dev_temp_state,
                                                          dev_ks, dt, ode);
 
   auto host_cuda_result = std::vector<double>(n_var * BTHE21::n_stages);

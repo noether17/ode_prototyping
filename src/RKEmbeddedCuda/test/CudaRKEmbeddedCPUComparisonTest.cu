@@ -8,7 +8,7 @@
 #include "BTHE21.hpp"
 #include "BTRKF45.hpp"
 #include "BTRKF78.hpp"
-#include "CUDAExpODE.cuh"
+#include "CudaExpOde.cuh"
 #include "RKEmbeddedCuda.cuh"
 #include "RawCudaOutput.cuh"
 
@@ -30,7 +30,7 @@ class CudaRKEmbeddedCPUComparisonTest : public testing::Test {
 
   double* dev_x0{};
   double* dev_tol{};
-  CUDAExpODE<n_var> ode{};
+  CudaExpOde<n_var> ode{};
   RawCudaOutput<n_var> output{};
 
   CudaRKEmbeddedCPUComparisonTest() {
@@ -49,7 +49,7 @@ class CudaRKEmbeddedCPUComparisonTest : public testing::Test {
 };
 
 TEST_F(CudaRKEmbeddedCPUComparisonTest, HE21) {
-  cuda_integrate<n_var, BTHE21, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
+  cuda_integrate<n_var, BTHE21, CudaExpOde<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   EXPECT_EQ(11026, output.times.size());
@@ -78,7 +78,7 @@ TEST_F(CudaRKEmbeddedCPUComparisonTest, HE21) {
 }
 
 TEST_F(CudaRKEmbeddedCPUComparisonTest, RKF45) {
-  cuda_integrate<n_var, BTRKF45, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
+  cuda_integrate<n_var, BTRKF45, CudaExpOde<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   // TODO: Investigate differences between CPU and CUDA algorithms
@@ -110,7 +110,7 @@ TEST_F(CudaRKEmbeddedCPUComparisonTest, RKF45) {
 }
 
 TEST_F(CudaRKEmbeddedCPUComparisonTest, DOPRI5) {
-  cuda_integrate<n_var, BTDOPRI5, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
+  cuda_integrate<n_var, BTDOPRI5, CudaExpOde<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   // TODO: Investigate differences between CPU and CUDA algorithms
@@ -141,7 +141,7 @@ TEST_F(CudaRKEmbeddedCPUComparisonTest, DOPRI5) {
 }
 
 TEST_F(CudaRKEmbeddedCPUComparisonTest, DVERK) {
-  cuda_integrate<n_var, BTDVERK, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
+  cuda_integrate<n_var, BTDVERK, CudaExpOde<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   // TODO: Investigate differences between CPU and CUDA algorithms
@@ -172,7 +172,7 @@ TEST_F(CudaRKEmbeddedCPUComparisonTest, DVERK) {
 }
 
 TEST_F(CudaRKEmbeddedCPUComparisonTest, RKF78) {
-  cuda_integrate<n_var, BTRKF78, CUDAExpODE<n_var>, RawCudaOutput<n_var>>(
+  cuda_integrate<n_var, BTRKF78, CudaExpOde<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   // TODO: Investigate differences between CPU and CUDA algorithms

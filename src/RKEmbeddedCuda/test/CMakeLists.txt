@@ -77,7 +77,7 @@ target_link_libraries(CudaNBodyTest
   GTest::GTest
   GTest::Main
   BTRKF78
-  CUDANBodyODE
+  CudaNBodyOde
   RKEmbeddedCuda
   RawCudaOutput
 )

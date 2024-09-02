@@ -38,7 +38,7 @@ __global__ void cuda_n_body_acc_kernel(double const* x, double* a,
 }
 
 template <int n_var>
-struct CUDANBodyODE {
+struct CudaNBodyOde {
   auto static constexpr n_particles = n_var / 6;
   auto static constexpr n_pairs = n_particles * (n_particles - 1) / 2;
   auto static constexpr dim = 3;
@@ -52,6 +52,6 @@ struct CUDANBodyODE {
                                                 n_pairs, n_particles);
   }
 
-  CUDANBodyODE(std::array<double, n_particles> const& masses)
+  CudaNBodyOde(std::array<double, n_particles> const& masses)
       : masses{masses} {}
 };

@@ -41,7 +41,7 @@ __global__ void cuda_n_body_acc_kernel(double const* x, double* a,
 }
 
 template <int n_var>
-struct CUDANBodyODE {
+struct CudaNBodyOde {
   auto static constexpr n_particles = n_var / 6;
   auto static constexpr n_pairs = n_particles * (n_particles - 1) / 2;
   auto static constexpr dim = 3;
@@ -55,8 +55,8 @@ struct CUDANBodyODE {
                                                 n_pairs, n_particles);
   }
 
-  CUDANBodyODE(std::array<double, n_particles> const& ms) : masses{ms} {}
-  CUDANBodyODE(double ms) { std::fill(masses.begin(), masses.end(), ms); }
+  CudaNBodyOde(std::array<double, n_particles> const& ms) : masses{ms} {}
+  CudaNBodyOde(double ms) { std::fill(masses.begin(), masses.end(), ms); }
 };
 
 template <int n_var>
@@ -122,10 +122,10 @@ int main() {
   cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
   auto masses = 1.0;
-  auto ode = CUDANBodyODE<n_var>{masses};
+  auto ode = CudaNBodyOde<n_var>{masses};
   auto output = RawCudaOutput<n_var>{};
 
-  cuda_integrate<n_var, BTRKF78, CUDANBodyODE<n_var>, RawCudaOutput<n_var>>(
+  cuda_integrate<n_var, BTRKF78, CudaNBodyOde<n_var>, RawCudaOutput<n_var>>(
       dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
 
   auto output_file = std::ofstream{"n_body_output.txt"};

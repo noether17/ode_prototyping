@@ -8,8 +8,8 @@ add_library(HostUtils INTERFACE HostUtils.hpp)
 
 add_library(RKEmbeddedCuda INTERFACE RKEmbeddedCuda.cuh)
 
-add_library(CUDANBodyODE INTERFACE CUDANBodyODE.cuh)
-target_link_libraries(CUDANBodyODE INTERFACE RKEmbeddedCuda)
+add_library(CudaNBodyOde INTERFACE CudaNBodyOde.cuh)
+target_link_libraries(CudaNBodyOde INTERFACE RKEmbeddedCuda)
 
 add_library(RawCudaOutput INTERFACE RawCudaOutput.cuh)
 

@@ -6,23 +6,7 @@
 #include "BTRKF78.hpp"
 #include "CudaNBodyOde.cuh"
 #include "RKEmbeddedCuda.cuh"
-
-template <int n_var>
-struct RawCudaOutput {
-  std::vector<double> times{};
-  std::vector<std::vector<double>> states{};
-
-  void save_state(double t, double const* x_ptr) {
-    auto host_x = std::vector<double>(n_var);
-    cudaMemcpy(host_x.data(), x_ptr, n_var * sizeof(double),
-               cudaMemcpyDeviceToHost);
-    times.push_back(t);
-    states.push_back(host_x);
-    std::cout << "\rt = " << t;
-  }
-
-  ~RawCudaOutput() { std::cout << '\n'; }
-};
+#include "RawCudaOutput.cuh"
 
 int main() {
   // Simple Two-Body Orbit
@@ -72,10 +56,11 @@ int main() {
   auto masses = std::array<double, N>{};
   std::fill(masses.begin(), masses.end(), 1.0);
   auto ode = CudaNBodyOde<n_var>{masses, 1.0e-3};
-  auto output = RawCudaOutput<n_var>{};
+  auto output = RawCudaOutputWithProgress<n_var>{};
 
-  cuda_integrate<n_var, BTRKF78, CudaNBodyOde<n_var>, RawCudaOutput<n_var>>(
-      dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
+  cuda_integrate<n_var, BTRKF78, CudaNBodyOde<n_var>,
+                 RawCudaOutputWithProgress<n_var>>(dev_x0, t0, tf, dev_tol,
+                                                   dev_tol, ode, output);
 
   auto output_file = std::ofstream{"n_body_output.txt"};
   for (auto i = 0; i < output.times.size(); ++i) {

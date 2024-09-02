@@ -23,8 +23,7 @@ TEST(CudaNBodyTest, SimpleTwoBodyOrbit) {
   cudaMalloc(&dev_tol, n_var * sizeof(double));
   cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
-  auto masses = std::array{1.0, 1.0};
-  auto ode = CudaNBodyOde<n_var>{masses};
+  auto ode = CudaNBodyOde<n_var>{};
   auto output = RawCudaOutput<n_var>{};
 
   cuda_integrate<n_var, BTRKF78, CudaNBodyOde<n_var>, RawCudaOutput<n_var>>(
@@ -75,8 +74,7 @@ TEST(CudaNBodyTest, ThreeBodyFigureEight) {
   cudaMalloc(&dev_tol, n_var * sizeof(double));
   cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
-  auto masses = std::array{1.0, 1.0, 1.0};
-  auto ode = CudaNBodyOde<n_var>{masses};
+  auto ode = CudaNBodyOde<n_var>{};
   auto output = RawCudaOutput<n_var>{};
 
   cuda_integrate<n_var, BTRKF78, CudaNBodyOde<n_var>, RawCudaOutput<n_var>>(
@@ -134,11 +132,12 @@ TEST(CudaNBodyTest, PythagoreanThreeBody) {
   cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
   auto masses = std::array{3.0, 4.0, 5.0};
-  auto ode = CudaNBodyOde<n_var>{masses};
+  auto ode = CudaNBodyOdeWithMasses<n_var>{masses};
   auto output = RawCudaOutput<n_var>{};
 
-  cuda_integrate<n_var, BTRKF78, CudaNBodyOde<n_var>, RawCudaOutput<n_var>>(
-      dev_x0, t0, tf, dev_tol, dev_tol, ode, output);
+  cuda_integrate<n_var, BTRKF78, CudaNBodyOdeWithMasses<n_var>,
+                 RawCudaOutput<n_var>>(dev_x0, t0, tf, dev_tol, dev_tol, ode,
+                                       output);
 
   EXPECT_EQ(2604, output.times.size());
   EXPECT_DOUBLE_EQ(0.0, output.times.front());
@@ -195,8 +194,7 @@ TEST(CudaNBodyTest, FiveBodyDoubleFigureEight) {
   cudaMalloc(&dev_tol, n_var * sizeof(double));
   cudaMemcpy(dev_tol, host_tol.data(), n_var * sizeof(double),
              cudaMemcpyHostToDevice);
-  auto masses = std::array{1.0, 1.0, 1.0, 1.0, 1.0};
-  auto ode = CudaNBodyOde<n_var>{masses};
+  auto ode = CudaNBodyOde<n_var>{};
   auto output = RawCudaOutput<n_var>{};
 
   cuda_integrate<n_var, BTRKF78, CudaNBodyOde<n_var>, RawCudaOutput<n_var>>(

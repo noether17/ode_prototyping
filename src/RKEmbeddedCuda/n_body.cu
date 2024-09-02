@@ -31,7 +31,7 @@ int main() {
   //               -1.271564, 0.168645,  0.0, -1.822785, 0.128248,  0.0};
   // auto const n_var = host_x0.size();
   // 1024-Body Cube
-  auto constexpr N = 1024;
+  auto constexpr N = 16;
   auto constexpr L = 1.0;
   auto constexpr n_var = N * 6;
   auto host_x0 = std::vector<double>(n_var);

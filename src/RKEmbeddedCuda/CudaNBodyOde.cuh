@@ -24,7 +24,7 @@ __global__ void cuda_n_body_acc_kernel(double const* x, double* a,
     auto dz = jz - iz;
     auto dist_2 = dx * dx + dy * dy + dz * dz;
     auto dist = std::sqrt(dist_2);
-    auto dist_3 = dist * (dist * dist + softening_2);
+    auto dist_3 = dist * (dist_2 + softening_2);
     auto ax = dx / dist_3;
     auto ay = dy / dist_3;
     auto az = dz / dist_3;

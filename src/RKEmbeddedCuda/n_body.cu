@@ -13,6 +13,18 @@ auto constexpr L = 1.0;
 auto constexpr n_var = N * 6;
 auto init_state_and_tol() -> std::pair<double*, double*>;
 
+template <typename Output>
+void write_to_file(Output const& output, std::string const& filename) {
+  auto output_file = std::ofstream{filename};
+  for (auto i = 0; i < output.times.size(); ++i) {
+    output_file << output.times[i];
+    for (auto j = 0; j < n_var; ++j) {
+      output_file << ',' << output.states[i][j];
+    }
+    output_file << '\n';
+  }
+}
+
 int main() {
   auto t0 = 0.0;
   auto tf = std::sqrt(L * L * L / N);
@@ -25,14 +37,7 @@ int main() {
                  RawCudaOutputWithProgress<n_var>>(dev_x0, t0, tf, dev_tol,
                                                    dev_tol, ode, output);
 
-  auto output_file = std::ofstream{"n_body_output.txt"};
-  for (auto i = 0; i < output.times.size(); ++i) {
-    output_file << output.times[i];
-    for (auto j = 0; j < n_var; ++j) {
-      output_file << ',' << output.states[i][j];
-    }
-    output_file << '\n';
-  }
+  write_to_file(output, "n_body_output.txt");
 
   cudaFree(dev_tol);
   cudaFree(dev_x0);
@@ -41,28 +46,6 @@ int main() {
 }
 
 auto init_state_and_tol() -> std::pair<double*, double*> {
-  // Simple Two-Body Orbit
-  // auto host_x0 =
-  //     std::array{1.0, 0.0, 0.0, -1.0, 0.0, 0.0, 0.0, 0.5, 0.0, 0.0, -0.5,
-  //     0.0};
-  // Three-Body Figure-8
-  // auto host_x0 =
-  //    std::array{0.9700436,   -0.24308753, 0.0, -0.9700436,  0.24308753,  0.0,
-  //               0.0,         0.0,         0.0, 0.466203685, 0.43236573,  0.0,
-  //               0.466203685, 0.43236573,  0.0, -0.93240737, -0.86473146,
-  //               0.0};
-  // Pythagorean Three-Body
-  // auto host_x0 = std::array{1.0, 3.0, 0.0, -2.0, -1.0, 0.0, 1.0, -1.0, 0.0,
-  //                           0.0, 0.0, 0.0, 0.0,  0.0,  0.0, 0.0, 0.0,  0.0};
-  // Five-Body Double Figure-8
-  // auto host_x0 =
-  //    std::array{1.657666,  0.0,       0.0, 0.439775,  -0.169717, 0.0,
-  //               -1.268608, -0.267651, 0.0, -1.268608, 0.267651,  0.0,
-  //               0.439775,  0.169717,  0.0, 0.0,       -0.593786, 0.0,
-  //               1.822785,  0.128248,  0.0, 1.271564,  0.168645,  0.0,
-  //               -1.271564, 0.168645,  0.0, -1.822785, 0.128248,  0.0};
-  // auto const n_var = host_x0.size();
-  // 1024-Body Cube
   auto host_x0 = std::vector<double>(n_var);
   auto gen = std::mt19937{0};
   auto dist = std::uniform_real_distribution<double>(0.0, L);

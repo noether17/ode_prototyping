@@ -1,8 +1,14 @@
+#include <chrono>
 #include <fstream>
 #include <iostream>
 #include <random>
+#include <string>
 #include <vector>
 
+#include "BTDOPRI5.hpp"
+#include "BTDVERK.hpp"
+#include "BTHE21.hpp"
+#include "BTRKF45.hpp"
 #include "BTRKF78.hpp"
 #include "CudaNBodyOde.cuh"
 #include "RKEmbeddedCuda.cuh"
@@ -25,24 +31,77 @@ void write_to_file(Output const& output, std::string const& filename) {
   }
 }
 
-int main() {
+template <typename ButcherTableau>
+auto bt_to_string() -> std::string;
+
+template <>
+auto bt_to_string<BTHE21>() -> std::string {
+  return "HE21";
+}
+
+template <>
+auto bt_to_string<BTRKF45>() -> std::string {
+  return "RKF45";
+}
+
+template <>
+auto bt_to_string<BTDOPRI5>() -> std::string {
+  return "DOPRI5";
+}
+
+template <>
+auto bt_to_string<BTDVERK>() -> std::string {
+  return "DVERK";
+}
+
+template <>
+auto bt_to_string<BTRKF78>() -> std::string {
+  return "RKF78";
+}
+
+template <typename ButcherTableau>
+auto run_simulation() {
+  auto bt_name = bt_to_string<ButcherTableau>();
+  std::cout << "Starting simulation using " << bt_name << " method.\n";
+
   auto t0 = 0.0;
   auto tf = std::sqrt(L * L * L / N);
   std::cout << "End time = " << tf << '\n';
+
   auto [dev_x0, dev_tol] = init_state_and_tol();
   auto ode = CudaNBodyOde<n_var>{1.0e-3};
   auto output = RawCudaOutputWithProgress<n_var>{};
 
-  cuda_integrate<n_var, BTRKF78, CudaNBodyOde<n_var>,
+  auto start = std::chrono::steady_clock::now();
+  cuda_integrate<n_var, ButcherTableau, CudaNBodyOde<n_var>,
                  RawCudaOutputWithProgress<n_var>>(dev_x0, t0, tf, dev_tol,
                                                    dev_tol, ode, output);
+  auto duration = std::chrono::steady_clock::now() - start;
 
-  write_to_file(output, "n_body_output.txt");
+  auto filename = "cuda_n_body_output_" + bt_name + ".txt";
+  write_to_file(output, filename);
 
   cudaFree(dev_tol);
   cudaFree(dev_x0);
 
-  return 0;
+  return duration.count();
+}
+
+int main() {
+  auto duration = run_simulation<BTHE21>() * 1.0e-9;
+  std::cout << "Completed in " << duration << "s.\n";
+
+  duration = run_simulation<BTRKF45>() * 1.0e-9;
+  std::cout << "Completed in " << duration << "s.\n";
+
+  duration = run_simulation<BTDOPRI5>() * 1.0e-9;
+  std::cout << "Completed in " << duration << "s.\n";
+
+  duration = run_simulation<BTDVERK>() * 1.0e-9;
+  std::cout << "Completed in " << duration << "s.\n";
+
+  duration = run_simulation<BTRKF78>() * 1.0e-9;
+  std::cout << "Completed in " << duration << "s.\n";
 }
 
 auto init_state_and_tol() -> std::pair<double*, double*> {

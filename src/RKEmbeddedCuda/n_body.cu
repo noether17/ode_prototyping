@@ -14,7 +14,7 @@
 #include "RKEmbeddedCuda.cuh"
 #include "RawCudaOutput.cuh"
 
-auto constexpr N = 16;
+auto constexpr N = 1024;
 auto constexpr L = 1.0;
 auto constexpr n_var = N * 6;
 auto init_state_and_tol() -> std::pair<double*, double*>;
@@ -85,7 +85,8 @@ auto run_simulation() {
                                                    dev_tol, ode, output);
   auto duration = std::chrono::steady_clock::now() - start;
 
-  auto filename = "cuda_n_body_output_" + bt_name + ".bin";
+  auto filename =
+      "cuda_n_body_" + std::to_string(N) + "_particles_" + bt_name + ".bin";
   write_to_file(output, filename);
 
   cudaFree(dev_tol);
@@ -95,10 +96,10 @@ auto run_simulation() {
 }
 
 int main() {
-  auto duration = run_simulation<BTHE21>() * 1.0e-9;
-  std::cout << "Completed in " << duration << "s.\n";
+  // auto duration = run_simulation<BTHE21>() * 1.0e-9;
+  // std::cout << "Completed in " << duration << "s.\n";
 
-  duration = run_simulation<BTRKF45>() * 1.0e-9;
+  auto duration = run_simulation<BTRKF45>() * 1.0e-9;
   std::cout << "Completed in " << duration << "s.\n";
 
   duration = run_simulation<BTDOPRI5>() * 1.0e-9;

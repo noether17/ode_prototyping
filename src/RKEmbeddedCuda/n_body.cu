@@ -21,13 +21,20 @@ auto init_state_and_tol() -> std::pair<double*, double*>;
 
 template <typename Output>
 void write_to_file(Output const& output, std::string const& filename) {
-  auto output_file = std::ofstream{filename};
+  auto output_file = std::ofstream(filename, std::ios::out | std::ios::binary);
+  auto n_rows = output.times.size();
+  auto n_cols = static_cast<std::size_t>(n_var + 1);
+  output_file.write(reinterpret_cast<char const*>(&n_rows),
+                    sizeof(std::size_t));
+  output_file.write(reinterpret_cast<char const*>(&n_cols),
+                    sizeof(std::size_t));
   for (auto i = 0; i < output.times.size(); ++i) {
-    output_file << output.times[i];
+    output_file.write(reinterpret_cast<char const*>(&output.times[i]),
+                      sizeof(double));
     for (auto j = 0; j < n_var; ++j) {
-      output_file << ',' << output.states[i][j];
+      output_file.write(reinterpret_cast<char const*>(&output.states[i][j]),
+                        sizeof(double));
     }
-    output_file << '\n';
   }
 }
 
@@ -78,7 +85,7 @@ auto run_simulation() {
                                                    dev_tol, ode, output);
   auto duration = std::chrono::steady_clock::now() - start;
 
-  auto filename = "cuda_n_body_output_" + bt_name + ".txt";
+  auto filename = "cuda_n_body_output_" + bt_name + ".bin";
   write_to_file(output, filename);
 
   cudaFree(dev_tol);

@@ -109,3 +109,46 @@ struct CudaNBodyOde {
 
   CudaNBodyOde(double softening = 0.0) : softening_2{softening * softening} {}
 };
+
+__global__ void cuda_n_body_acc_kernel_simple(double const* x, double* a,
+                                              int n_particles,
+                                              double softening_sq) {
+  auto i = blockIdx.x * blockDim.x + threadIdx.x;
+  while (i < n_particles) {
+    a[3 * i] = 0.0;
+    a[3 * i + 1] = 0.0;
+    a[3 * i + 2] = 0.0;
+    for (int j = 0; j < n_particles; ++j) {
+      if (i == j) {
+        continue;
+      }
+      auto dx = x[3 * j] - x[3 * i];
+      auto dy = x[3 * j + 1] - x[3 * i + 1];
+      auto dz = x[3 * j + 2] - x[3 * i + 2];
+      auto dist_sq = dx * dx + dy * dy + dz * dz;
+      auto dist = std::sqrt(dist_sq);
+      auto denominator = dist * (dist_sq + softening_sq);
+      a[3 * i] += dx / denominator;
+      a[3 * i + 1] += dy / denominator;
+      a[3 * i + 2] += dy / denominator;
+    }
+    i += blockDim.x * gridDim.x;
+  }
+}
+
+template <int n_var>
+struct CudaNBodyOdeSimple {
+  auto static constexpr n_particles = n_var / 6;
+
+  double softening_sq{};
+  void compute_rhs(double const* x, double* f) {
+    cudaMemcpy(f, x + n_var / 2, (n_var / 2) * sizeof(double),
+               cudaMemcpyDeviceToDevice);
+    cudaMemset(f + n_var / 2, 0, (n_var / 2) * sizeof(double));
+    cuda_n_body_acc_kernel_simple<<<num_blocks<n_particles>(), block_size>>>(
+        x, f + n_var / 2, n_particles, softening_sq);
+  }
+
+  CudaNBodyOdeSimple(double softening = 0.0)
+      : softening_sq{softening * softening} {}
+};

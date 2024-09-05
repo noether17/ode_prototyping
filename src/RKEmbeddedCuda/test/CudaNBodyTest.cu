@@ -1,9 +1,53 @@
 #include <gtest/gtest.h>
 
+#include <numeric>
+
 #include "BTRKF78.hpp"
 #include "CudaNBodyOde.cuh"
 #include "RKEmbeddedCuda.cuh"
 #include "RawCudaOutput.cuh"
+
+TEST(CudaNBodyTest, ComparePairwiseAlgorithmToSimple) {
+  auto constexpr n_particles = 1024;
+  auto constexpr n_var = n_particles * 6;
+  auto constexpr host_x = []() {
+    auto x = std::array<double, n_var>{};
+    std::iota(x.begin(), x.end(), 0.0);
+    return x;
+  }();
+  double* dev_x_simple = nullptr;
+  cudaMalloc(&dev_x_simple, n_var * sizeof(double));
+  cudaMemcpy(dev_x_simple, host_x.data(), n_var * sizeof(double),
+             cudaMemcpyHostToDevice);
+  double* dev_f_simple = nullptr;
+  cudaMalloc(&dev_f_simple, n_var * sizeof(double));
+  double* dev_x_pairwise = nullptr;
+  cudaMalloc(&dev_x_pairwise, n_var * sizeof(double));
+  cudaMemcpy(dev_x_pairwise, host_x.data(), n_var * sizeof(double),
+             cudaMemcpyHostToDevice);
+  double* dev_f_pairwise = nullptr;
+  cudaMalloc(&dev_f_pairwise, n_var * sizeof(double));
+
+  auto simple = CudaNBodyOdeSimple<n_var>{};
+  simple.compute_rhs(dev_x_simple, dev_f_simple);
+  auto pairwise = CudaNBodyOde<n_var>{};
+  pairwise.compute_rhs(dev_x_pairwise, dev_f_pairwise);
+
+  auto host_f_simple = std::array<double, n_var>{};
+  cudaMemcpy(host_f_simple.data(), dev_f_simple, n_var * sizeof(double),
+             cudaMemcpyDeviceToHost);
+  auto host_f_pairwise = std::array<double, n_var>{};
+  cudaMemcpy(host_f_pairwise.data(), dev_f_pairwise, n_var * sizeof(double),
+             cudaMemcpyDeviceToHost);
+  for (auto i = 0; i < n_var; ++i) {
+    EXPECT_NEAR(host_f_simple[i], host_f_pairwise[i], 1.0e-16);
+  }
+
+  cudaFree(dev_f_pairwise);
+  cudaFree(dev_x_pairwise);
+  cudaFree(dev_f_simple);
+  cudaFree(dev_x_simple);
+}
 
 // The following tests are n-body scenarios from Roa, et al.
 

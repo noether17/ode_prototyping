@@ -85,3 +85,10 @@ target_include_directories(CudaNBodyTest
   PUBLIC ${CMAKE_SOURCE_DIR}/src/ButcherTableaus
 )
 add_test(NAME CudaNBodyTest COMMAND CudaNBodyTest)
+
+add_executable(CudaNBodyBenchmark CudaNBodyBenchmark.cu)
+target_link_libraries(CudaNBodyBenchmark
+  CudaNBodyOde
+  benchmark::benchmark
+  benchmark::benchmark_main
+)

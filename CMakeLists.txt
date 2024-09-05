@@ -26,6 +26,8 @@ enable_testing()
 find_package(GTest 1.14.0 REQUIRED)
 include_directories(${GTEST_INCLUDE_DIRS})
 
+find_package(benchmark 1.8.2 REQUIRED)
+
 if (CMAKE_COMPILER_IS_GNUCXX AND COVERAGE)
   message(STATUS "Code coverage enabled")
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} --coverage")

@@ -1,4 +1,5 @@
 import argparse
+import math
 import matplotlib.animation as anim
 import matplotlib.pyplot as plt
 import numpy as np
@@ -26,7 +27,8 @@ def main():
             n_cols = int.from_bytes(data_file.read(8), 'little')
             states = np.array([[struct.unpack('d', data_file.read(8))[0]
                                 for j in np.arange(n_cols)]
-                               for i in np.arange(n_rows)])
+                               for i in np.arange(math.ceil(n_rows / 20))])
+            print(states)
     else:
         states = np.loadtxt(filename, delimiter=',', dtype=float)
     times = states[:, 0]

@@ -14,7 +14,7 @@
 #include "RKEmbeddedCuda.cuh"
 #include "RawCudaOutput.cuh"
 
-auto constexpr N = 1024;
+auto constexpr N = 2048;
 auto constexpr L = 1.0;
 auto constexpr n_var = N * 6;
 auto init_state_and_tol() -> std::pair<double*, double*>;
@@ -28,7 +28,7 @@ void write_to_file(Output const& output, std::string const& filename) {
                     sizeof(std::size_t));
   output_file.write(reinterpret_cast<char const*>(&n_cols),
                     sizeof(std::size_t));
-  for (auto i = 0; i < output.times.size(); ++i) {
+  for (auto i = 0; i < output.times.size(); i += 20) {
     output_file.write(reinterpret_cast<char const*>(&output.times[i]),
                       sizeof(double));
     for (auto j = 0; j < n_var; ++j) {
@@ -72,7 +72,7 @@ auto run_simulation() {
   std::cout << "Starting simulation using " << bt_name << " method.\n";
 
   auto t0 = 0.0;
-  auto tf = std::sqrt(L * L * L / N);
+  auto tf = 10.0 * std::sqrt(L * L * L / N);
   std::cout << "End time = " << tf << '\n';
 
   auto [dev_x0, dev_tol] = init_state_and_tol();
@@ -85,8 +85,8 @@ auto run_simulation() {
                                                    dev_tol, ode, output);
   auto duration = std::chrono::steady_clock::now() - start;
 
-  auto filename =
-      "cuda_n_body_" + std::to_string(N) + "_particles_" + bt_name + ".bin";
+  auto filename = "cuda_n_body_spinny_" + std::to_string(N) + "_particles_" +
+                  bt_name + ".bin";
   write_to_file(output, filename);
 
   cudaFree(dev_tol);
@@ -99,16 +99,16 @@ int main() {
   // auto duration = run_simulation<BTHE21>() * 1.0e-9;
   // std::cout << "Completed in " << duration << "s.\n";
 
-  auto duration = run_simulation<BTRKF45>() * 1.0e-9;
-  std::cout << "Completed in " << duration << "s.\n";
+  // auto duration = run_simulation<BTRKF45>() * 1.0e-9;
+  // std::cout << "Completed in " << duration << "s.\n";
 
-  duration = run_simulation<BTDOPRI5>() * 1.0e-9;
-  std::cout << "Completed in " << duration << "s.\n";
+  // duration = run_simulation<BTDOPRI5>() * 1.0e-9;
+  // std::cout << "Completed in " << duration << "s.\n";
 
-  duration = run_simulation<BTDVERK>() * 1.0e-9;
-  std::cout << "Completed in " << duration << "s.\n";
+  // duration = run_simulation<BTDVERK>() * 1.0e-9;
+  // std::cout << "Completed in " << duration << "s.\n";
 
-  duration = run_simulation<BTRKF78>() * 1.0e-9;
+  auto duration = run_simulation<BTRKF78>() * 1.0e-9;
   std::cout << "Completed in " << duration << "s.\n";
 }
 
@@ -118,6 +118,16 @@ auto init_state_and_tol() -> std::pair<double*, double*> {
   auto dist = std::uniform_real_distribution<double>(0.0, L);
   for (auto i = 0; i < host_x0.size() / 2; ++i) {
     host_x0[i] = dist(gen);
+    if (i % 3 == 2) {
+      host_x0[i] = L / 2.0 + 0.25 * (host_x0[i] - L / 2.0);
+    }
+  }
+  // add some spin
+  for (auto i = 0; i < N; ++i) {
+    auto const velocity_offset = host_x0.size() / 2;
+    auto const omega = 2.0 / std::sqrt(L * L * L / N);
+    host_x0[velocity_offset + 3 * i] = -omega * (host_x0[3 * i + 1] - L / 2.0);
+    host_x0[velocity_offset + 3 * i + 1] = omega * (host_x0[3 * i] - L / 2.0);
   }
   auto host_tol = std::vector<double>(n_var);
   std::fill(host_tol.begin(), host_tol.end(), 1.0e-10);

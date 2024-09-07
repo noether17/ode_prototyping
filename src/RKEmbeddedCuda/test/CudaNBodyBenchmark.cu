@@ -27,6 +27,7 @@ static void BM_NBodySimple(benchmark::State& state) {
              cudaMemcpyHostToDevice);
   double* dev_f = nullptr;
   cudaMalloc(&dev_f, n_var * sizeof(double));
+  cudaDeviceSynchronize();
 
   auto simple_n_body = CudaNBodyOdeSimple<n_var>{};
   for (auto _ : state) {
@@ -67,6 +68,7 @@ static void BM_NBodyPairwise(benchmark::State& state) {
              cudaMemcpyHostToDevice);
   double* dev_f = nullptr;
   cudaMalloc(&dev_f, n_var * sizeof(double));
+  cudaDeviceSynchronize();
 
   auto pairwise_n_body = CudaNBodyOde<n_var>{};
   for (auto _ : state) {

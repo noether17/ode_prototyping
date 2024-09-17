@@ -4,7 +4,8 @@
 #include <numeric>
 
 #include "AllocatedState.hpp"
-#include "DVERK.hpp"
+#include "BTDVERK.hpp"
+#include "SingleThreadedIntegrator.hpp"
 
 class DVERKVanDerPolTest : public testing::Test {
  protected:
@@ -21,7 +22,8 @@ class DVERKVanDerPolTest : public testing::Test {
   auto static inline const atol = AllocatedState<2>(std::array{tol, tol});
   auto static inline const rtol = atol;
 
-  DVERK<decltype(ode_van), AllocatedState<2>> integrator{ode_van};
+  SingleThreadedIntegrator<BTDVERK, decltype(ode_van), AllocatedState<2>>
+      integrator{ode_van};
 };
 
 /* Consistency tests (testing for double equality) are to ensure no accidental
@@ -59,7 +61,8 @@ TEST(DVERKExpTest, IntegrationStepsAreConsistent) {
   auto tf = 10.0;
   auto tol = AllocatedState<n_var>{};
   fill(tol, 1.0e-6);
-  auto integrator = DVERK<decltype(ode_exp), AllocatedState<n_var>>{ode_exp};
+  auto integrator = SingleThreadedIntegrator<BTDVERK, decltype(ode_exp),
+                                             AllocatedState<n_var>>{ode_exp};
 
   integrator.integrate(x0, t0, tf, tol, tol);
 

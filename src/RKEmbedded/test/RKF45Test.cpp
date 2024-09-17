@@ -4,7 +4,8 @@
 #include <numeric>
 
 #include "AllocatedState.hpp"
-#include "RKF45.hpp"
+#include "BTRKF45.hpp"
+#include "SingleThreadedIntegrator.hpp"
 
 class RKF45VanDerPolTest : public testing::Test {
  protected:
@@ -21,7 +22,8 @@ class RKF45VanDerPolTest : public testing::Test {
   auto static inline const atol = AllocatedState<2>(std::array{tol, tol});
   auto static inline const rtol = atol;
 
-  RKF45<decltype(ode_van), AllocatedState<2>> integrator{ode_van};
+  SingleThreadedIntegrator<BTRKF45, decltype(ode_van), AllocatedState<2>>
+      integrator{ode_van};
 };
 
 /* Consistency tests (testing for double equality) are to ensure no accidental
@@ -59,7 +61,8 @@ TEST(RKF45ExpTest, IntegrationStepsAreConsistent) {
   auto tf = 10.0;
   auto tol = AllocatedState<n_var>{};
   fill(tol, 1.0e-6);
-  auto integrator = RKF45<decltype(ode_exp), AllocatedState<n_var>>{ode_exp};
+  auto integrator = SingleThreadedIntegrator<BTRKF45, decltype(ode_exp),
+                                             AllocatedState<n_var>>{ode_exp};
 
   integrator.integrate(x0, t0, tf, tol, tol);
 

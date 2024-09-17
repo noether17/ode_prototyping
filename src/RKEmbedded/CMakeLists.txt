@@ -2,19 +2,30 @@ add_library(ODEState INTERFACE ODEState.hpp)
 
 add_library(RKEmbedded INTERFACE RKEmbedded.hpp)
 
-add_library(HE21 INTERFACE HE21.hpp)
-add_library(RKF45 INTERFACE RKF45.hpp)
-add_library(DOPRI5 INTERFACE DOPRI5.hpp)
-add_library(RKF78 INTERFACE RKF78.hpp)
-add_library(DVERK INTERFACE DVERK.hpp)
+add_library(SingleThreadedIntegrator INTERFACE SingleThreadedIntegrator.hpp)
 
 add_library(AllocatedState INTERFACE AllocatedState.hpp)
 target_link_libraries(AllocatedState INTERFACE ODEState)
 
 add_executable(main main.cpp)
-target_link_libraries(main RKEmbedded RKF45 DOPRI5 RKF78 DVERK AllocatedState)
+target_include_directories(main PUBLIC ${CMAKE_SOURCE_DIR}/src/ButcherTableaus)
+target_link_libraries(main
+  RKEmbedded
+  SingleThreadedIntegrator
+  BTRKF45
+  BTDOPRI5
+  BTRKF78
+  BTDVERK
+  AllocatedState
+)
 
 add_executable(n_body_cpu n_body.cpp)
-target_link_libraries(n_body_cpu RKEmbedded RKF78 AllocatedState)
+target_include_directories(n_body_cpu PUBLIC ${CMAKE_SOURCE_DIR}/src/ButcherTableaus)
+target_link_libraries(n_body_cpu
+  RKEmbedded
+  SingleThreadedIntegrator
+  BTRKF78
+  AllocatedState
+)
 
 add_subdirectory(test)

@@ -2,13 +2,12 @@
 #include <chrono>
 #include <iostream>
 
-#include "DOPRI5.hpp"
-#include "DVERK.hpp"
-#include "RKF45.hpp"
-#include "RKF78.hpp"
 #include "AllocatedState.hpp"
-
-namespace vws = std::views;
+#include "BTDOPRI5.hpp"
+#include "BTDVERK.hpp"
+#include "BTRKF45.hpp"
+#include "BTRKF78.hpp"
+#include "SingleThreadedIntegrator.hpp"
 
 int main() {
   auto ode = [](AllocatedState<2> const& x, AllocatedState<2>& dxdt) {
@@ -21,7 +20,8 @@ int main() {
   auto const atol = AllocatedState<2>(std::array{tol, tol});
   auto const rtol = AllocatedState<2>(std::array{tol, tol});
 
-  auto integrator_RKF45 = RKF45<decltype(ode), AllocatedState<2>>(ode);
+  auto integrator_RKF45 =
+      SingleThreadedIntegrator<BTRKF45, decltype(ode), AllocatedState<2>>(ode);
   auto start = std::chrono::high_resolution_clock::now();
   integrator_RKF45.integrate(x0, 0.0, 10.0, atol, rtol);
   auto end = std::chrono::high_resolution_clock::now();
@@ -40,7 +40,8 @@ int main() {
   // }
   // std::cout << '\n';
 
-  auto integrator_DOPRI5 = DOPRI5<decltype(ode), AllocatedState<2>>(ode);
+  auto integrator_DOPRI5 =
+      SingleThreadedIntegrator<BTDOPRI5, decltype(ode), AllocatedState<2>>(ode);
   start = std::chrono::high_resolution_clock::now();
   integrator_DOPRI5.integrate(x0, 0.0, 10.0, atol, rtol);
   end = std::chrono::high_resolution_clock::now();
@@ -59,7 +60,8 @@ int main() {
   // }
   // std::cout << '\n';
 
-  auto integrator_DVERK = DVERK<decltype(ode), AllocatedState<2>>(ode);
+  auto integrator_DVERK =
+      SingleThreadedIntegrator<BTDVERK, decltype(ode), AllocatedState<2>>(ode);
   start = std::chrono::high_resolution_clock::now();
   integrator_DVERK.integrate(x0, 0.0, 10.0, atol, rtol);
   end = std::chrono::high_resolution_clock::now();
@@ -78,7 +80,8 @@ int main() {
   // }
   // std::cout << '\n';
 
-  auto integrator_RKF78 = RKF78<decltype(ode), AllocatedState<2>>(ode);
+  auto integrator_RKF78 =
+      SingleThreadedIntegrator<BTRKF78, decltype(ode), AllocatedState<2>>(ode);
   start = std::chrono::high_resolution_clock::now();
   integrator_RKF78.integrate(x0, 0.0, 10.0, atol, rtol);
   end = std::chrono::high_resolution_clock::now();

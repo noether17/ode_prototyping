@@ -2,7 +2,8 @@
 #include <fstream>
 
 #include "AllocatedState.hpp"
-#include "RKF78.hpp"
+#include "BTRKF78.hpp"
+#include "SingleThreadedIntegrator.hpp"
 
 int main() {
   // auto x0_data =
@@ -51,8 +52,8 @@ int main() {
       }
     }
   };
-  auto integrator =
-      RKF78<decltype(ode_n_body), AllocatedState<n_var>>{ode_n_body};
+  auto integrator = SingleThreadedIntegrator<BTRKF78, decltype(ode_n_body),
+                                             AllocatedState<n_var>>{ode_n_body};
 
   auto x0 = AllocatedState<n_var>{x0_data};
   auto t0 = 0.0;

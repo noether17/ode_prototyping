@@ -7,6 +7,7 @@ add_library(CudaExpOde INTERFACE CudaExpOde.cuh)
 add_library(HostUtils INTERFACE HostUtils.hpp)
 
 add_library(RKEmbeddedCuda INTERFACE RKEmbeddedCuda.cuh)
+target_link_libraries(RKEmbeddedCuda INTERFACE CudaUtils)
 
 add_library(CudaNBodyOde INTERFACE CudaNBodyOde.cuh)
 target_link_libraries(CudaNBodyOde INTERFACE RKEmbeddedCuda)

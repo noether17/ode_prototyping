@@ -2,12 +2,7 @@
 
 #include <cmath>
 
-auto static constexpr block_size = 256;
-
-template <int N>
-auto consteval num_blocks() {
-  return (N + block_size - 1) / block_size;
-}
+#include "CudaUtils.cuh"
 
 __global__ void cuda_compute_error_target(double const* x, double const* rtol,
                                           double const* atol,

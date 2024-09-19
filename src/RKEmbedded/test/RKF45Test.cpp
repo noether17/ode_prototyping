@@ -5,7 +5,8 @@
 
 #include "AllocatedState.hpp"
 #include "BTRKF45.hpp"
-#include "SingleThreadedIntegrator.hpp"
+#include "RKEmbedded.hpp"
+#include "RawOutput.hpp"
 
 class RKF45VanDerPolTest : public testing::Test {
  protected:
@@ -22,8 +23,10 @@ class RKF45VanDerPolTest : public testing::Test {
   auto static inline const atol = AllocatedState<2>(std::array{tol, tol});
   auto static inline const rtol = atol;
 
-  SingleThreadedIntegrator<BTRKF45, decltype(ode_van), AllocatedState<2>>
-      integrator{ode_van};
+  RKEmbeddedSingleThreaded<AllocatedState<2>, BTRKF45, decltype(ode_van),
+                           RawOutput<AllocatedState<2>>>
+      integrator{};
+  RawOutput<AllocatedState<2>> output{};
 };
 
 /* Consistency tests (testing for double equality) are to ensure no accidental
@@ -31,23 +34,22 @@ class RKF45VanDerPolTest : public testing::Test {
  * than the actual requirements. If an intentional change in algorithm results
  * in small differences in output, these values may be updated. */
 TEST_F(RKF45VanDerPolTest, IntegrationStepsAreConsistent) {
-  integrator.integrate(x0, t0, tf, atol, rtol);
+  integrator.integrate(x0, t0, tf, atol, rtol, ode_van, output);
 
-  EXPECT_EQ(83, integrator.times.size());
-  EXPECT_DOUBLE_EQ(0.0, integrator.times.front());
-  EXPECT_DOUBLE_EQ(0.65364467640860291,
-                   integrator.times[integrator.times.size() / 2]);
-  EXPECT_DOUBLE_EQ(2.0, integrator.times.back());
+  EXPECT_EQ(83, output.times.size());
+  EXPECT_DOUBLE_EQ(0.0, output.times.front());
+  EXPECT_DOUBLE_EQ(0.65364467640860291, output.times[output.times.size() / 2]);
+  EXPECT_DOUBLE_EQ(2.0, output.times.back());
 
-  EXPECT_EQ(83, integrator.states.size());
-  EXPECT_DOUBLE_EQ(2.0, integrator.states.front()[0]);
-  EXPECT_DOUBLE_EQ(0.0, integrator.states.front()[1]);
+  EXPECT_EQ(83, output.states.size());
+  EXPECT_DOUBLE_EQ(2.0, output.states.front()[0]);
+  EXPECT_DOUBLE_EQ(0.0, output.states.front()[1]);
   EXPECT_DOUBLE_EQ(1.7493089062893852,
-                   integrator.states[integrator.states.size() / 2][0]);
+                   output.states[output.states.size() / 2][0]);
   EXPECT_DOUBLE_EQ(-0.61420762201954171,
-                   integrator.states[integrator.states.size() / 2][1]);
-  EXPECT_DOUBLE_EQ(0.32331666497810646, integrator.states.back()[0]);
-  EXPECT_DOUBLE_EQ(-1.8329745707118268, integrator.states.back()[1]);
+                   output.states[output.states.size() / 2][1]);
+  EXPECT_DOUBLE_EQ(0.32331666497810646, output.states.back()[0]);
+  EXPECT_DOUBLE_EQ(-1.8329745707118268, output.states.back()[1]);
 }
 
 TEST(RKF45ExpTest, IntegrationStepsAreConsistent) {
@@ -61,27 +63,29 @@ TEST(RKF45ExpTest, IntegrationStepsAreConsistent) {
   auto tf = 10.0;
   auto tol = AllocatedState<n_var>{};
   fill(tol, 1.0e-6);
-  auto integrator = SingleThreadedIntegrator<BTRKF45, decltype(ode_exp),
-                                             AllocatedState<n_var>>{ode_exp};
+  auto integrator =
+      RKEmbeddedSingleThreaded<AllocatedState<n_var>, BTRKF45,
+                               decltype(ode_exp),
+                               RawOutput<AllocatedState<n_var>>>{};
+  auto output = RawOutput<AllocatedState<n_var>>{};
 
-  integrator.integrate(x0, t0, tf, tol, tol);
+  integrator.integrate(x0, t0, tf, tol, tol, ode_exp, output);
 
-  EXPECT_EQ(50, integrator.times.size());
-  EXPECT_DOUBLE_EQ(0.0, integrator.times.front());
-  EXPECT_DOUBLE_EQ(5.0888631842534933,
-                   integrator.times[integrator.times.size() / 2]);
-  EXPECT_DOUBLE_EQ(10.0, integrator.times.back());
+  EXPECT_EQ(50, output.times.size());
+  EXPECT_DOUBLE_EQ(0.0, output.times.front());
+  EXPECT_DOUBLE_EQ(5.0888631842534933, output.times[output.times.size() / 2]);
+  EXPECT_DOUBLE_EQ(10.0, output.times.back());
 
-  EXPECT_EQ(50, integrator.states.size());
-  EXPECT_DOUBLE_EQ(0.0, integrator.states.front()[0]);
-  EXPECT_DOUBLE_EQ(5.0, integrator.states.front()[n_var / 2]);
-  EXPECT_DOUBLE_EQ(9.0, integrator.states.front()[n_var - 1]);
-  EXPECT_DOUBLE_EQ(0.0, integrator.states[integrator.states.size() / 2][0]);
+  EXPECT_EQ(50, output.states.size());
+  EXPECT_DOUBLE_EQ(0.0, output.states.front()[0]);
+  EXPECT_DOUBLE_EQ(5.0, output.states.front()[n_var / 2]);
+  EXPECT_DOUBLE_EQ(9.0, output.states.front()[n_var - 1]);
+  EXPECT_DOUBLE_EQ(0.0, output.states[output.states.size() / 2][0]);
   EXPECT_DOUBLE_EQ(811.03335805992742,
-                   integrator.states[integrator.states.size() / 2][n_var / 2]);
+                   output.states[output.states.size() / 2][n_var / 2]);
   EXPECT_DOUBLE_EQ(1459.8600445078696,
-                   integrator.states[integrator.states.size() / 2][n_var - 1]);
-  EXPECT_DOUBLE_EQ(0.0, integrator.states.back()[0]);
-  EXPECT_DOUBLE_EQ(110134.06230636688, integrator.states.back()[n_var / 2]);
-  EXPECT_DOUBLE_EQ(198241.3121514605, integrator.states.back()[n_var - 1]);
+                   output.states[output.states.size() / 2][n_var - 1]);
+  EXPECT_DOUBLE_EQ(0.0, output.states.back()[0]);
+  EXPECT_DOUBLE_EQ(110134.06230636688, output.states.back()[n_var / 2]);
+  EXPECT_DOUBLE_EQ(198241.3121514605, output.states.back()[n_var - 1]);
 }

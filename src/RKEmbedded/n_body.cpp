@@ -3,7 +3,8 @@
 
 #include "AllocatedState.hpp"
 #include "BTRKF78.hpp"
-#include "SingleThreadedIntegrator.hpp"
+#include "RKEmbedded.hpp"
+#include "RawOutput.hpp"
 
 int main() {
   // auto x0_data =
@@ -52,8 +53,11 @@ int main() {
       }
     }
   };
-  auto integrator = SingleThreadedIntegrator<BTRKF78, decltype(ode_n_body),
-                                             AllocatedState<n_var>>{ode_n_body};
+  auto integrator =
+      RKEmbeddedSingleThreaded<AllocatedState<n_var>, BTRKF78,
+                               decltype(ode_n_body),
+                               RawOutput<AllocatedState<n_var>>>{};
+  auto output = RawOutput<AllocatedState<n_var>>{};
 
   auto x0 = AllocatedState<n_var>{x0_data};
   auto t0 = 0.0;
@@ -61,13 +65,13 @@ int main() {
   auto tol = AllocatedState<n_var>{};
   fill(tol, 1.0e-10);
 
-  integrator.integrate(x0, t0, tf, tol, tol);
+  integrator.integrate(x0, t0, tf, tol, tol, ode_n_body, output);
 
   auto output_file = std::ofstream{"RKF78_n_body_output.txt"};
-  for (std::size_t i = 0; i < integrator.times.size(); ++i) {
-    output_file << integrator.times[i];
+  for (std::size_t i = 0; i < output.times.size(); ++i) {
+    output_file << output.times[i];
     for (std::size_t j = 0; j < n_var; ++j) {
-      output_file << ',' << integrator.states[i][j];
+      output_file << ',' << output.states[i][j];
     }
     output_file << '\n';
   }

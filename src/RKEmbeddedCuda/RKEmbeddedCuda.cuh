@@ -104,7 +104,7 @@ __global__ void cuda_vector_diff(double const* x0, double const* x1, double* dx,
   }
 }
 
-template <int n_var, typename RKMethod, typename ODE>
+template <int n_var, typename ButcherTableau, typename ODE>
 auto cuda_estimate_initial_step(double* dev_x0, double* dev_atol,
                                 double* dev_rtol, ODE& ode) {
   double* dev_error_target = nullptr;
@@ -131,10 +131,10 @@ auto cuda_estimate_initial_step(double* dev_x0, double* dev_atol,
   cuda_vector_diff<<<num_blocks<n_var>(), block_size>>>(dev_f0, dev_f1, dev_df,
                                                         n_var);
   auto d2 = cuda_rk_norm<n_var>(dev_df, dev_error_target) / dt0;
-  auto dt1 =
-      (std::max(d1, d2) <= 1.0e-15)
-          ? std::max(1.0e-6, dt0 * 1.0e-3)
-          : std::pow(0.01 / std::max(d1, d2), (1.0 / (1.0 + RKMethod::p)));
+  auto dt1 = (std::max(d1, d2) <= 1.0e-15)
+                 ? std::max(1.0e-6, dt0 * 1.0e-3)
+                 : std::pow(0.01 / std::max(d1, d2),
+                            (1.0 / (1.0 + ButcherTableau::p)));
 
   cudaFree(dev_df);
   cudaFree(dev_f1);
@@ -158,20 +158,20 @@ __global__ void cuda_rk_stage(double const* x0, double* ks, double* temp_state,
   }
 }
 
-template <int n_var, typename RKMethod, typename ODE>
+template <int n_var, typename ButcherTableau, typename ODE>
 void cuda_evaluate_stages(double const* dev_x0, double* dev_temp_state,
                           double* dev_ks, double dt, ODE& ode) {
   ode.compute_rhs(dev_x0, dev_ks);
-  for (auto stage = 1; stage < RKMethod::n_stages; ++stage) {
+  for (auto stage = 1; stage < ButcherTableau::n_stages; ++stage) {
     cudaMemset(dev_temp_state, 0, n_var * sizeof(double));
     cuda_rk_stage<<<num_blocks<n_var>(), block_size>>>(
         dev_x0, dev_ks, dev_temp_state, dt, stage, n_var,
-        RKMethod::a[stage - 1]);
+        ButcherTableau::a[stage - 1]);
     ode.compute_rhs(dev_temp_state, dev_ks + stage * n_var);
   }
 }
 
-template <int n_var, typename RKMethod, typename bArray>
+template <int n_var, typename ButcherTableau, typename bArray>
 __global__ void cuda_update_state_and_error(double const* x0, double const* ks,
                                             double dt, double* x,
                                             double* error_estimate, bArray b,
@@ -212,24 +212,24 @@ __global__ void cuda_add(double const* a, double const* b, double* c,
   }
 }
 
-template <int n_var, typename RKMethod, typename ODE, typename Output>
+template <int n_var, typename ButcherTableau, typename ODE, typename Output>
 void cuda_integrate(double* dev_x0, double t0, double tf, double* dev_atol,
                     double* dev_rtol, ODE& ode, Output& output) {
   auto constexpr max_step_scale = 6.0;
   auto constexpr min_step_scale = 0.33;
   auto constexpr db = []() {
-    auto db = RKMethod::b;
-    for (auto i = 0; i < RKMethod::b.size(); ++i) {
-      db[i] -= RKMethod::bt[i];
+    auto db = ButcherTableau::b;
+    for (auto i = 0; i < ButcherTableau::b.size(); ++i) {
+      db[i] -= ButcherTableau::bt[i];
     }
     return db;
   }();
-  auto constexpr q = std::min(RKMethod::p, RKMethod::pt);
+  auto constexpr q = std::min(ButcherTableau::p, ButcherTableau::pt);
   auto const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
   double* dev_ks = nullptr;
-  cudaMalloc(&dev_ks, n_var * RKMethod::n_stages * sizeof(double));
-  auto dt = cuda_estimate_initial_step<n_var, RKMethod, ODE>(dev_x0, dev_atol,
-                                                             dev_rtol, ode);
+  cudaMalloc(&dev_ks, n_var * ButcherTableau::n_stages * sizeof(double));
+  auto dt = cuda_estimate_initial_step<n_var, ButcherTableau, ODE>(
+      dev_x0, dev_atol, dev_rtol, ode);
 
   double* dev_x = nullptr;
   cudaMalloc(&dev_x, n_var * sizeof(double));
@@ -244,13 +244,13 @@ void cuda_integrate(double* dev_x0, double t0, double tf, double* dev_atol,
   auto t = t0;
   output.save_state(t, dev_x);
   while (t < tf) {
-    cuda_evaluate_stages<n_var, RKMethod, ODE>(dev_x0, dev_temp_state, dev_ks,
-                                               dt, ode);
+    cuda_evaluate_stages<n_var, ButcherTableau, ODE>(dev_x0, dev_temp_state,
+                                                     dev_ks, dt, ode);
 
-    cuda_update_state_and_error<n_var, RKMethod>
-        <<<num_blocks<n_var>(), block_size>>>(dev_x0, dev_ks, dt, dev_x,
-                                              dev_error_estimate, RKMethod::b,
-                                              db, RKMethod::n_stages);
+    cuda_update_state_and_error<n_var, ButcherTableau>
+        <<<num_blocks<n_var>(), block_size>>>(
+            dev_x0, dev_ks, dt, dev_x, dev_error_estimate, ButcherTableau::b,
+            db, ButcherTableau::n_stages);
 
     cuda_compute_error_target<<<num_blocks<n_var>(), block_size>>>(
         dev_x0, dev_x, dev_rtol, dev_atol, dev_error_target, n_var);

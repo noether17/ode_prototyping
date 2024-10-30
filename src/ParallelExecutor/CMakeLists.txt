@@ -1,0 +1,1 @@
+add_library(ParallelExecutor INTERFACE ParallelExecutor.hpp)

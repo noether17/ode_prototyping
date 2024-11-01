@@ -72,6 +72,8 @@ class ParallelExecutor {
     latch.wait();
   }
 
+  auto constexpr n_threads() const { return std::ssize(m_threads); }
+
  private:
   std::stop_source m_stop_source{};
   std::function<void(int, int)> m_task{};

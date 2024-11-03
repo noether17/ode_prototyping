@@ -3,7 +3,7 @@
 
 #include "AllocatedState.hpp"
 #include "BTRKF78.hpp"
-#include "ParallelExecutor.hpp"
+#include "ParallelThreadPool.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
 
@@ -54,10 +54,11 @@ int main() {
       }
     }
   };
-  auto thread_pool = ParallelExecutor(8);
+  auto thread_pool = ParallelThreadPool(8);
   auto integrator =
       RKEmbeddedParallel<AllocatedState<n_var>, BTRKF78, decltype(ode_n_body),
-                         RawOutput<AllocatedState<n_var>>>{};
+                         RawOutput<AllocatedState<n_var>>,
+                         ParallelThreadPool>{};
   auto output = RawOutput<AllocatedState<n_var>>{};
 
   auto x0 = AllocatedState<n_var>{x0_data};

@@ -4,10 +4,8 @@
 #include <cmath>
 #include <numeric>
 
-#include "ParallelExecutor.hpp"
-
 template <typename StateType, typename ButcherTableau, typename ODE,
-          typename Output>
+          typename Output, typename ParallelExecutor>
 class RKEmbeddedParallel {
  public:
   auto integrate(StateType x0, double t0, double tf, StateType atol,

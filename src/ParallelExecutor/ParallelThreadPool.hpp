@@ -2,6 +2,7 @@
 
 #include <functional>
 #include <latch>
+#include <numeric>
 #include <thread>
 #include <vector>
 
@@ -70,6 +71,29 @@ class ParallelThreadPool {
       flag = true;
     }
     latch.wait();
+  }
+
+  template <typename T, typename BinaryOp, typename TransformOp,
+            typename... Args>
+  auto transform_reduce(T init_val, BinaryOp reduce, TransformOp transform,
+                        int n_items, Args&&... transform_args) {
+    auto const n_threads = std::ssize(m_threads);
+    auto thread_partial_results = std::vector<T>(n_threads);
+    auto n_items_per_thread = (n_items + n_threads - 1) / n_threads;
+    call_parallel_kernel(
+        [&](int thread_id) {
+          auto thread_partial_result = T{};
+          for (auto i = thread_id * n_items_per_thread;
+               i < (thread_id + 1) * n_items_per_thread and i < n_items; ++i) {
+            auto transform_result = transform(i, transform_args...);
+            thread_partial_result =
+                reduce(thread_partial_result, transform_result);
+          }
+          thread_partial_results[thread_id] = thread_partial_result;
+        },
+        n_threads);
+    return std::accumulate(thread_partial_results.begin(),
+                           thread_partial_results.end(), init_val, reduce);
   }
 
   auto constexpr n_threads() const { return std::ssize(m_threads); }

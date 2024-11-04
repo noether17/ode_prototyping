@@ -2,7 +2,9 @@
 
 #include <array>
 #include <cmath>
+#include <functional>
 #include <numeric>
+#include <vector>
 
 template <typename StateType, typename ButcherTableau, typename ODE,
           typename Output, typename ParallelExecutor>
@@ -102,23 +104,14 @@ class RKEmbeddedParallel {
 
   auto static rk_norm(ParallelExecutor& exe, StateType const& v,
                       StateType const& scale) {
-    auto const n_threads = exe.n_threads();
-    auto const n_var = std::ssize(v);
-    auto thread_partial_results = std::vector<double>(n_threads);
-    auto n_items_per_thread = (n_var + n_threads - 1) / n_threads;
-    exe.call_parallel_kernel(
-        [&](int thread_id) {
-          auto thread_partial_result = 0.0;
-          for (auto i = thread_id * n_items_per_thread;
-               i < (thread_id + 1) * n_items_per_thread and i < n_var; ++i) {
-            auto scaled_value = v[i] / scale[i];
-            thread_partial_result += scaled_value * scaled_value;
-          }
-          thread_partial_results[thread_id] = thread_partial_result;
-        },
-        n_threads);
-    return std::sqrt(std::accumulate(thread_partial_results.begin(),
-                                     thread_partial_results.end(), 0.0) /
+    auto n_var = std::ssize(v);
+    return std::sqrt(exe.transform_reduce(
+                         0.0, std::plus<>{},
+                         [&](int i) {
+                           auto scaled_value = v[i] / scale[i];
+                           return scaled_value * scaled_value;
+                         },
+                         n_var) /
                      n_var);
   }
 

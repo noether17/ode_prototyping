@@ -23,10 +23,4 @@ struct SingleThreadedExecutor {
     }
     return result;
   }
-
-  // TODO: This is needed temporarily for compatibility with
-  // RKEmbeddedParallel's expectation of ParallelThreadPool. Need to modify the
-  // interface of ParallelThreadPool to allow caller to request a reduction
-  // without needing n_threads().
-  auto static constexpr n_threads() { return 1; }
 };

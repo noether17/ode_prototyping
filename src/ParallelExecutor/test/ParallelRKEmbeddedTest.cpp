@@ -1,32 +1,34 @@
 #include <gtest/gtest.h>
 
+#include <algorithm>
 #include <array>
 #include <numeric>
 
-#include "AllocatedState.hpp"
 #include "BTDOPRI5.hpp"
 #include "BTDVERK.hpp"
 #include "BTHE21.hpp"
 #include "BTRKF45.hpp"
 #include "BTRKF78.hpp"
+#include "HeapState.hpp"
 #include "ParallelThreadPool.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
 
 struct VanDerPolTest {
   auto static constexpr n_var = 2;
-  auto static inline const x0 = AllocatedState<n_var>(std::array{2.0, 0.0});
+  auto static inline const x0 = HeapState<double, n_var>(std::array{2.0, 0.0});
   auto static constexpr t0 = 0.0;
   auto static constexpr tf = 2.0;
   auto static constexpr tol = 1.0e-10;
-  auto static inline const atol = AllocatedState<n_var>(std::array{tol, tol});
+  auto static inline const atol =
+      HeapState<double, n_var>(std::array{tol, tol});
   auto static inline const rtol = atol;
   auto constexpr operator()(auto const& x, auto& dxdt) {
     auto constexpr eps = 1.0;
     dxdt[0] = x[1];
     dxdt[1] = eps * (1.0 - x[0] * x[0]) * x[1] - x[0];
   }
-  RawOutput<AllocatedState<n_var>> output{};
+  RawOutput<HeapState<double, n_var>> output{};
 };
 
 struct ExponentialTest {
@@ -36,26 +38,30 @@ struct ExponentialTest {
     std::iota(temp.begin(), temp.end(), 0.0);
     return temp;
   }();
-  auto static inline const x0 = AllocatedState<n_var>(x0_data);
+  auto static inline const x0 = HeapState<double, n_var>(x0_data);
   auto static constexpr t0 = 0.0;
   auto static constexpr tf = 10.0;
   auto static constexpr tol = 1.0e-6;
   auto static inline const atol = [] {
-    auto temp = AllocatedState<n_var>{};
-    fill(temp, tol);
+    auto temp = HeapState<double, n_var>{};
+    std::fill(temp.data(), temp.data() + n_var, tol);
     return temp;
   }();
   auto static inline const rtol = atol;
-  auto constexpr operator()(auto const& x, auto& dxdt) { dxdt = x; }
-  RawOutput<AllocatedState<n_var>> output{};
+  auto constexpr operator()(auto const& x, auto& dxdt) {
+    for (auto i = 0; i < std::ssize(x); ++i) {
+      dxdt[i] = x[i];
+    }
+  }
+  RawOutput<HeapState<double, n_var>> output{};
 };
 
 class ParallelRKEmbeddedTest : public testing::Test {
  protected:
   template <typename ButcherTableau, typename ODE>
   using Integrator =
-      RKEmbeddedParallel<AllocatedState<ODE::n_var>, ButcherTableau, ODE,
-                         RawOutput<AllocatedState<ODE::n_var>>,
+      RKEmbeddedParallel<HeapState, double, ODE::n_var, ButcherTableau, ODE,
+                         RawOutput<HeapState<double, ODE::n_var>>,
                          ParallelThreadPool>;
   ParallelThreadPool executor{8};
 };

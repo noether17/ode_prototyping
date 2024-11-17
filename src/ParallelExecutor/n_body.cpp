@@ -1,8 +1,9 @@
+#include <algorithm>
 #include <array>
 #include <fstream>
 
-#include "AllocatedState.hpp"
 #include "BTRKF78.hpp"
+#include "HeapState.hpp"
 #include "ParallelThreadPool.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
@@ -27,8 +28,8 @@ int main() {
   auto masses = std::array{1.0, 1.0, 1.0, 1.0, 1.0};
   auto constexpr n_var = x0_data.size();
 
-  auto ode_n_body = [masses](AllocatedState<n_var> const& x,
-                             AllocatedState<n_var>& dxdt) {
+  auto ode_n_body = [masses](std::span<double const, n_var> x,
+                             std::span<double, n_var> dxdt) {
     auto constexpr vel_offset = n_var / 2;
     for (std::size_t i = 0; i < vel_offset; ++i) {
       dxdt[i] = x[i + vel_offset];
@@ -55,17 +56,16 @@ int main() {
     }
   };
   auto thread_pool = ParallelThreadPool(8);
-  auto integrator =
-      RKEmbeddedParallel<AllocatedState<n_var>, BTRKF78, decltype(ode_n_body),
-                         RawOutput<AllocatedState<n_var>>,
-                         ParallelThreadPool>{};
-  auto output = RawOutput<AllocatedState<n_var>>{};
+  auto integrator = RKEmbeddedParallel<
+      HeapState, double, n_var, BTRKF78, decltype(ode_n_body),
+      RawOutput<HeapState<double, n_var>>, ParallelThreadPool>{};
+  auto output = RawOutput<HeapState<double, n_var>>{};
 
-  auto x0 = AllocatedState<n_var>{x0_data};
+  auto x0 = HeapState<double, n_var>{x0_data};
   auto t0 = 0.0;
   auto tf = 6.3;
-  auto tol = AllocatedState<n_var>{};
-  fill(tol, 1.0e-10);
+  auto tol = HeapState<double, n_var>{};
+  std::fill(tol.data(), tol.data() + n_var, 1.0e-10);
 
   integrator.integrate(x0, t0, tf, tol, tol, ode_n_body, output, thread_pool);
 

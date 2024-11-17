@@ -11,12 +11,14 @@
 #define ENABLE_CUDA
 #endif
 
-template <typename StateType, typename ButcherTableau, typename ODE,
-          typename Output, typename ParallelExecutor>
+template <template <typename, int> typename StateContainer, typename ValueType,
+          int NVAR, typename ButcherTableau, typename ODE, typename Output,
+          typename ParallelExecutor>
 class RKEmbeddedParallel {
  public:
-  void integrate(StateType x0, double t0, double tf, StateType atol,
-                 StateType rtol, ODE ode, Output& output,
+  using OwnedState = StateContainer<ValueType, NVAR>;
+  void integrate(OwnedState x0, double t0, double tf, OwnedState atol,
+                 OwnedState rtol, ODE ode, Output& output,
                  ParallelExecutor& exe) {
     auto static constexpr max_step_scale = 6.0;
     auto static constexpr min_step_scale = 0.33;
@@ -32,15 +34,15 @@ class RKEmbeddedParallel {
     auto static constexpr a = ButcherTableau::a;
     auto static constexpr b = ButcherTableau::b;
     auto static constexpr n_stages = ButcherTableau::n_stages;
-    auto ks = std::array<StateType, n_stages>{};
+    auto ks = StateContainer<typename OwnedState::StateType, n_stages>{};
 
     auto dt = estimate_initial_step(exe, x0, atol, rtol, ode);
     auto t = t0;
     auto x = x0;
     auto n_var = std::ssize(x);
-    auto temp_state = StateType{};
-    auto error_estimate = StateType{};
-    auto error_target = StateType{};
+    auto temp_state = OwnedState{};
+    auto error_estimate = OwnedState{};
+    auto error_target = OwnedState{};
     output.save_state(t, x);
     while (t < tf) {
       // evaluate stages
@@ -110,8 +112,8 @@ class RKEmbeddedParallel {
     }
   }
 
-  auto static rk_norm(ParallelExecutor& exe, StateType const& v,
-                      StateType const& scale) {
+  auto static rk_norm(ParallelExecutor& exe, OwnedState const& v,
+                      OwnedState const& scale) {
     auto n_var = std::ssize(v);
     return std::sqrt(
         exe.transform_reduce(
@@ -125,12 +127,12 @@ class RKEmbeddedParallel {
   }
 
   double static estimate_initial_step(ParallelExecutor& exe,
-                                      StateType const& x0,
-                                      StateType const& atol,
-                                      StateType const& rtol, ODE& ode) {
+                                      OwnedState const& x0,
+                                      OwnedState const& atol,
+                                      OwnedState const& rtol, ODE& ode) {
     auto const n_var = std::ssize(x0);
 
-    auto error_target = StateType{};
+    auto error_target = OwnedState{};
     exe.call_parallel_kernel(
         [error_target = error_target.data(), atol = atol.data(),
          rtol = rtol.data(), x0 = x0.data()] ENABLE_CUDA(int i) {
@@ -138,17 +140,17 @@ class RKEmbeddedParallel {
         },
         n_var);
 
-    auto f0 = StateType{};
+    auto f0 = OwnedState{};
     ode(x0, f0);
     auto d0 = rk_norm(exe, x0, error_target);
     auto d1 = rk_norm(exe, f0, error_target);
     auto dt0 = (d0 < 1.0e-5 or d1 < 1.0e-5) ? 1.0e-6 : 0.01 * (d0 / d1);
 
-    auto x1 = StateType{};
+    auto x1 = OwnedState{};
     exe.call_parallel_kernel([x1 = x1.data(), x0 = x0.data(), f0 = f0.data(),
                               dt0](int i) { x1[i] = x0[i] + f0[i] * dt0; },
                              n_var);
-    auto df = StateType{};
+    auto df = OwnedState{};
     ode(x1, df);
     exe.call_parallel_kernel(
         [df = df.data(), f0 = f0.data()](int i) { df[i] -= f0[i]; }, n_var);

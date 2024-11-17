@@ -33,6 +33,9 @@ class AllocatedState : public ODEState<AllocatedState<N>> {
   auto& operator[](int i) { return (*state_)[i]; }
   auto const& operator[](int i) const { return (*state_)[i]; }
 
+  auto* data() { return state_->data(); }
+  auto const* data() const { return state_->data(); }
+
   auto static constexpr size() { return N; }
 
   template <typename UnaryOp>

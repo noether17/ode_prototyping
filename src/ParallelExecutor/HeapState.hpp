@@ -10,7 +10,7 @@ class HeapState {
  public:
   using StateType = std::array<ValueType, N>;
   HeapState() : state_{std::make_unique<StateType>()} {}
-  HeapState(std::span<ValueType const, N> state)
+  explicit HeapState(std::span<ValueType const, N> state)
       : state_{std::make_unique<StateType>()} {
     std::copy(state.begin(), state.end(), state_->begin());
   }

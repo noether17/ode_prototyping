@@ -29,12 +29,18 @@ class RKEmbeddedParallel {
       }
       return db;
     }();
+    auto state_a =
+        StateContainer<typename decltype(ButcherTableau::a)::value_type,
+                       std::ssize(ButcherTableau::a)>{ButcherTableau::a};
+    auto state_b =
+        StateContainer<typename decltype(ButcherTableau::b)::value_type,
+                       std::ssize(ButcherTableau::b)>{ButcherTableau::b};
+    auto state_db =
+        StateContainer<typename decltype(db)::value_type, std::ssize(db)>{db};
     auto constexpr q = std::min(ButcherTableau::p, ButcherTableau::pt);
     auto static const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
-    auto static constexpr a = ButcherTableau::a;
-    auto static constexpr b = ButcherTableau::b;
-    auto static constexpr n_stages = ButcherTableau::n_stages;
-    auto ks = StateContainer<typename OwnedState::StateType, n_stages>{};
+    auto ks = StateContainer<typename OwnedState::StateType,
+                             ButcherTableau::n_stages>{};
 
     auto dt = estimate_initial_step(exe, x0, atol, rtol, ode);
     auto t = t0;
@@ -47,43 +53,63 @@ class RKEmbeddedParallel {
     while (t < tf) {
       // evaluate stages
       ode(x0, ks[0]);
-      for (auto stage = 1; stage < n_stages; ++stage) {
+      for (auto stage = 1; stage < ButcherTableau::n_stages; ++stage) {
         exe.call_parallel_kernel(
-            [temp_state = temp_state.data(), ks = ks.data(), x0 = x0.data(),
-             stage, dt](int i) {
+            [stage, dt] ENABLE_CUDA(
+                int i, std::span<ValueType, NVAR> temp_state,
+                std::span<typename decltype(ButcherTableau::a)::value_type,
+                          std::ssize(ButcherTableau::a)>
+                    a,
+                std::span<typename OwnedState::StateType,
+                          ButcherTableau::n_stages>
+                    ks,
+                std::span<ValueType, NVAR> x0) {
               temp_state[i] = 0.0;
               for (auto j = 0; j < stage; ++j) {
                 temp_state[i] += a[stage - 1][j] * ks[j][i];
               }
               temp_state[i] = x0[i] + temp_state[i] * dt;
             },
-            n_var);
+            n_var, temp_state, state_a, ks, x0);
         ode(temp_state, ks[stage]);
       }
 
       // advance the state and compute the error estimate
       exe.call_parallel_kernel(
-          [x = x.data(), error_estimate = error_estimate.data(), ks = ks.data(),
-           x0 = x0.data(), dt](int i) {
+          [dt] ENABLE_CUDA(
+              int i, std::span<ValueType, NVAR> x,
+              std::span<ValueType, NVAR> error_estimate,
+              std::span<typename decltype(ButcherTableau::b)::value_type const,
+                        std::ssize(ButcherTableau::b)>
+                  b,
+              std::span<typename decltype(db)::value_type const, std::ssize(db)>
+                  db,
+              std::span<typename OwnedState::StateType const,
+                        ButcherTableau::n_stages>
+                  ks,
+              std::span<ValueType const, NVAR> x0) {
             x[i] = 0.0;
             error_estimate[i] = 0.0;
-            for (auto j = 0; j < n_stages; ++j) {
+            for (auto j = 0; j < ButcherTableau::n_stages; ++j) {
               x[i] += b[j] * ks[j][i];
               error_estimate[i] += db[j] * ks[j][i];
             }
             x[i] = x0[i] + x[i] * dt;
             error_estimate[i] *= dt;
           },
-          n_var);
+          n_var, x, error_estimate, state_b, state_db, ks, x0);
 
       // estimate error
       exe.call_parallel_kernel(
-          [error_target = error_target.data(), atol = atol.data(),
-           rtol = rtol.data(), x = x.data(), x0 = x0.data()](int i) {
+          [] ENABLE_CUDA(int i, std::span<ValueType, NVAR> error_target,
+                         std::span<ValueType const, NVAR> atol,
+                         std::span<ValueType const, NVAR> rtol,
+                         std::span<ValueType const, NVAR> x,
+                         std::span<ValueType const, NVAR> x0) {
             error_target[i] =
                 atol[i] + rtol[i] * std::max(std::abs(x[i]), std::abs(x0[i]));
           },
-          n_var);
+          n_var, error_target, atol, rtol, x, x0);
       auto scaled_error = rk_norm(exe, error_estimate, error_target);
 
       // accept or reject the step
@@ -112,33 +138,34 @@ class RKEmbeddedParallel {
     }
   }
 
-  auto static rk_norm(ParallelExecutor& exe, OwnedState const& v,
-                      OwnedState const& scale) {
+  ValueType static rk_norm(ParallelExecutor& exe,
+                           std::span<ValueType const, NVAR> v,
+                           std::span<ValueType const, NVAR> scale) {
     auto n_var = std::ssize(v);
-    return std::sqrt(
-        exe.transform_reduce(
-            0.0, std::plus<>{},
-            [v = v.data(), scale = scale.data()] ENABLE_CUDA(int i) {
-              auto scaled_value = v[i] / scale[i];
-              return scaled_value * scaled_value;
-            },
-            n_var) /
-        n_var);
+    return std::sqrt(exe.transform_reduce(
+                         0.0, std::plus<>{},
+                         [v, scale] ENABLE_CUDA(int i) {
+                           auto scaled_value = v[i] / scale[i];
+                           return scaled_value * scaled_value;
+                         },
+                         n_var) /
+                     n_var);
   }
 
   double static estimate_initial_step(ParallelExecutor& exe,
-                                      OwnedState const& x0,
-                                      OwnedState const& atol,
-                                      OwnedState const& rtol, ODE& ode) {
+                                      std::span<ValueType const, NVAR> x0,
+                                      std::span<ValueType const, NVAR> atol,
+                                      std::span<ValueType const, NVAR> rtol,
+                                      ODE& ode) {
     auto const n_var = std::ssize(x0);
 
     auto error_target = OwnedState{};
     exe.call_parallel_kernel(
-        [error_target = error_target.data(), atol = atol.data(),
-         rtol = rtol.data(), x0 = x0.data()] ENABLE_CUDA(int i) {
+        [atol, rtol, x0] ENABLE_CUDA(int i,
+                                     std::span<ValueType, NVAR> error_target) {
           error_target[i] = atol[i] + rtol[i] * std::abs(x0[i]);
         },
-        n_var);
+        n_var, error_target);
 
     auto f0 = OwnedState{};
     ode(x0, f0);
@@ -147,13 +174,18 @@ class RKEmbeddedParallel {
     auto dt0 = (d0 < 1.0e-5 or d1 < 1.0e-5) ? 1.0e-6 : 0.01 * (d0 / d1);
 
     auto x1 = OwnedState{};
-    exe.call_parallel_kernel([x1 = x1.data(), x0 = x0.data(), f0 = f0.data(),
-                              dt0](int i) { x1[i] = x0[i] + f0[i] * dt0; },
-                             n_var);
+    exe.call_parallel_kernel(
+        [x0, dt0] ENABLE_CUDA(int i, std::span<ValueType, NVAR> x1,
+                              std::span<ValueType const, NVAR> f0) {
+          x1[i] = x0[i] + f0[i] * dt0;
+        },
+        n_var, x1, f0);
     auto df = OwnedState{};
     ode(x1, df);
     exe.call_parallel_kernel(
-        [df = df.data(), f0 = f0.data()](int i) { df[i] -= f0[i]; }, n_var);
+        [] ENABLE_CUDA(int i, std::span<ValueType, NVAR> df,
+                       std::span<ValueType const, NVAR> f0) { df[i] -= f0[i]; },
+        n_var, df, f0);
     auto d2 = rk_norm(exe, df, error_target) / dt0;
 
     auto constexpr p = ButcherTableau::p;

@@ -1,7 +1,8 @@
 #pragma once
 
 #include <iostream>
-#include <utility>
+
+#include "CudaErrorCheck.cuh"
 
 #define GPU_ERROR_CHECK(result) \
   { cuda_assert((result), __FILE__, __LINE__); }
@@ -96,27 +97,32 @@ class CudaExecutor {
   void call_parallel_kernel(int n_items, Args... args) {
     cuda_call_parallel_kernel<parallel_kernel, Args...>
         <<<n_blocks(n_items), block_size>>>(n_items, args...);
+    CUDA_ERROR_CHECK(cudaGetLastError());
   }
 
   template <typename T, auto reduce, auto transform, typename... TransformArgs>
   auto transform_reduce(T init_val, int n_items,
                         TransformArgs... transform_args) {
     auto dev_result = (T*){nullptr};
-    cudaMalloc(&dev_result, sizeof(T));
+    CUDA_ERROR_CHECK(cudaMalloc(&dev_result, sizeof(T)));
     auto dev_block_results = (T*){nullptr};
-    cudaMalloc(&dev_block_results, n_blocks(n_items) * sizeof(T));
+    CUDA_ERROR_CHECK(
+        cudaMalloc(&dev_block_results, n_blocks(n_items) * sizeof(T)));
 
     cuda_transform_reduce<T, reduce, transform>
         <<<n_blocks(n_items), block_size>>>(dev_block_results, n_items,
                                             transform_args...);
+    CUDA_ERROR_CHECK(cudaGetLastError());
     cuda_transform_reduce_final<T, reduce>
         <<<1, block_size>>>(dev_result, dev_block_results, n_blocks(n_items));
+    CUDA_ERROR_CHECK(cudaGetLastError());
 
     auto result = T{};
-    cudaMemcpy(&result, dev_result, sizeof(T), cudaMemcpyDeviceToHost);
+    CUDA_ERROR_CHECK(
+        cudaMemcpy(&result, dev_result, sizeof(T), cudaMemcpyDeviceToHost));
 
-    cudaFree(dev_block_results);
-    cudaFree(dev_result);
+    CUDA_ERROR_CHECK(cudaFree(dev_block_results));
+    CUDA_ERROR_CHECK(cudaFree(dev_result));
 
     return result;
   }

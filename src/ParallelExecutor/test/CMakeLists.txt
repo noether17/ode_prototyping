@@ -18,3 +18,11 @@ target_link_libraries(ParallelRKEmbeddedTest
   RKEmbeddedParallel
 )
 add_test(NAME ParallelRKEmbeddedTest COMMAND ParallelRKEmbeddedTest)
+
+add_executable(CudaStateTest CudaStateTest.cu)
+target_link_libraries(CudaStateTest
+  GTest::GTest
+  GTest::Main
+  CudaState
+)
+add_test(NAME CudaStateTest COMMAND CudaStateTest)

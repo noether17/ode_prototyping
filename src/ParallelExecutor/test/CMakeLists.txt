@@ -26,3 +26,12 @@ target_link_libraries(CudaStateTest
   CudaState
 )
 add_test(NAME CudaStateTest COMMAND CudaStateTest)
+
+add_executable(CudaExecutorTest CudaExecutorTest.cu)
+target_link_libraries(CudaExecutorTest
+  GTest::GTest
+  GTest::Main
+  CudaState
+  CudaExecutor
+)
+add_test(NAME CudaExecutorTest COMMAND CudaExecutorTest)

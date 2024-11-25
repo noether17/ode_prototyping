@@ -4,6 +4,7 @@
 #include <latch>
 #include <numeric>
 #include <thread>
+#include <utility>
 #include <vector>
 
 template <typename Predicate>
@@ -60,7 +61,8 @@ class ParallelThreadPool {
   void call_parallel_kernel(int n_items, Args... args) {
     auto latch = std::latch{std::ssize(m_threads)};
     m_n_items = n_items;
-    m_task = [&latch, args...](int thread_begin, int thread_end) {
+    m_task = [&latch, ... args = std::move(args)](int thread_begin,
+                                                  int thread_end) {
       for (auto i = thread_begin; i < thread_end; ++i) {
         parallel_kernel(i, args...);
       }

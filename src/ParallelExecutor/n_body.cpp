@@ -28,6 +28,7 @@ int main() {
   auto masses = std::array{1.0, 1.0, 1.0, 1.0, 1.0};
   auto constexpr n_var = x0_data.size();
 
+  // TODO: Make this parallel.
   auto ode_n_body = [masses](std::span<double const, n_var> x,
                              std::span<double, n_var> dxdt) {
     auto constexpr vel_offset = n_var / 2;

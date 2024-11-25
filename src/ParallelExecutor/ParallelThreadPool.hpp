@@ -56,14 +56,13 @@ class ParallelThreadPool {
 
   ~ParallelThreadPool() { m_stop_source.request_stop(); }
 
-  template <typename ParallelKernel, typename... Args>
-  void call_parallel_kernel(ParallelKernel kernel, int n_items,
-                            Args&&... args) {
+  template <auto parallel_kernel, typename... Args>
+  void call_parallel_kernel(int n_items, Args... args) {
     auto latch = std::latch{std::ssize(m_threads)};
     m_n_items = n_items;
-    m_task = [&](int thread_begin, int thread_end) {
+    m_task = [&latch, args...](int thread_begin, int thread_end) {
       for (auto i = thread_begin; i < thread_end; ++i) {
-        kernel(i, args...);
+        parallel_kernel(i, args...);
       }
       latch.count_down();
     };
@@ -73,25 +72,29 @@ class ParallelThreadPool {
     latch.wait();
   }
 
-  template <typename T, typename BinaryOp, typename TransformOp,
-            typename... Args>
-  auto transform_reduce(T init_val, BinaryOp reduce, TransformOp transform,
-                        int n_items, Args&&... transform_args) {
+  template <typename T, auto reduce, auto transform, typename... TransformArgs>
+  void static constexpr transform_reduce_kernel(
+      int thread_id, T* thread_partial_results, int n_items,
+      int n_items_per_thread, TransformArgs... transform_args) {
+    auto thread_partial_result = T{};
+    for (auto i = thread_id * n_items_per_thread;
+         i < (thread_id + 1) * n_items_per_thread and i < n_items; ++i) {
+      auto transform_result = transform(i, transform_args...);
+      thread_partial_result = reduce(thread_partial_result, transform_result);
+    }
+    thread_partial_results[thread_id] = thread_partial_result;
+  }
+
+  template <typename T, auto reduce, auto transform, typename... TransformArgs>
+  auto transform_reduce(T init_val, int n_items,
+                        TransformArgs... transform_args) {
     auto const n_threads = std::ssize(m_threads);
     auto thread_partial_results = std::vector<T>(n_threads);
     auto n_items_per_thread = (n_items + n_threads - 1) / n_threads;
-    call_parallel_kernel(
-        [&](int thread_id) {
-          auto thread_partial_result = T{};
-          for (auto i = thread_id * n_items_per_thread;
-               i < (thread_id + 1) * n_items_per_thread and i < n_items; ++i) {
-            auto transform_result = transform(i, transform_args...);
-            thread_partial_result =
-                reduce(thread_partial_result, transform_result);
-          }
-          thread_partial_results[thread_id] = thread_partial_result;
-        },
-        n_threads);
+    call_parallel_kernel<
+        transform_reduce_kernel<T, reduce, transform, TransformArgs...>>(
+        n_threads, thread_partial_results.data(), n_items, n_items_per_thread,
+        transform_args...);
     return std::accumulate(thread_partial_results.begin(),
                            thread_partial_results.end(), init_val, reduce);
   }

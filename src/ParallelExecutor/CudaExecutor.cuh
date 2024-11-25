@@ -1,25 +1,6 @@
 #pragma once
 
-#include <iostream>
-
 #include "CudaErrorCheck.cuh"
-
-#define GPU_ERROR_CHECK(result) \
-  { cuda_assert((result), __FILE__, __LINE__); }
-inline void cuda_assert(cudaError_t ec, char const* file, int line) {
-  if (ec != cudaSuccess) {
-    std::cerr << "CUDA ERROR: " << cudaGetErrorString(ec) << " at " << file
-              << ":" << line << ".\n";
-    int runtime_version;
-    cudaRuntimeGetVersion(&runtime_version);
-    int driver_version;
-    cudaDriverGetVersion(&driver_version);
-    std::cerr << "Runtime API version: " << runtime_version << '\n';
-    std::cerr << "Driver API version: " << driver_version << '\n';
-  } else {
-    std::cout << "CUDA SUCCESS at " << file << ":" << line << ".\n";
-  }
-}
 
 auto static constexpr block_size = 256;
 

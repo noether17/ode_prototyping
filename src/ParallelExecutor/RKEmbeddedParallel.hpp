@@ -124,12 +124,12 @@ class RKEmbeddedParallel {
     output.save_state(t, x);
     while (t < tf) {
       // evaluate stages
-      ode(x0, ks[0]);
+      ode(exe, x0, ks[0]);
       for (auto stage = 1; stage < ButcherTableau::n_stages; ++stage) {
         exe.template call_parallel_kernel<rk_stage_kernel>(
             n_var, stage, dt, temp_state.data(), state_a.data(), ks.data(),
             x0.data());
-        ode(temp_state, ks[stage]);
+        ode(exe, temp_state, ks[stage]);
       }
 
       // advance the state and compute the error estimate
@@ -217,7 +217,7 @@ class RKEmbeddedParallel {
         n_var, error_target.data(), x0.data(), atol.data(), rtol.data());
 
     auto f0 = OwnedState{};
-    ode(x0, f0);
+    ode(exe, x0, f0);
     auto d0 = rk_norm(exe, x0, error_target);
     auto d1 = rk_norm(exe, f0, error_target);
     auto dt0 = (d0 < 1.0e-5 or d1 < 1.0e-5) ? 1.0e-6 : 0.01 * (d0 / d1);
@@ -226,7 +226,7 @@ class RKEmbeddedParallel {
     exe.template call_parallel_kernel<euler_step_kernel>(
         n_var, x1.data(), x0.data(), f0.data(), dt0);
     auto df = OwnedState{};
-    ode(x1, df);
+    ode(exe, x1, df);
     exe.template call_parallel_kernel<difference_kernel>(n_var, df.data(),
                                                          f0.data());
     auto d2 = rk_norm(exe, df, error_target) / dt0;

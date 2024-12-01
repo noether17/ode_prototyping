@@ -23,7 +23,7 @@ struct VanDerPolTest {
   auto static inline const atol =
       HeapState<double, n_var>(std::array{tol, tol});
   auto static inline const rtol = atol;
-  auto constexpr operator()(auto const& x, auto& dxdt) {
+  auto constexpr operator()(auto&, auto const& x, auto& dxdt) {
     auto constexpr eps = 1.0;
     dxdt[0] = x[1];
     dxdt[1] = eps * (1.0 - x[0] * x[0]) * x[1] - x[0];
@@ -48,7 +48,7 @@ struct ExponentialTest {
     return temp;
   }();
   auto static inline const rtol = atol;
-  auto constexpr operator()(auto const& x, auto& dxdt) {
+  auto constexpr operator()(auto&, auto const& x, auto& dxdt) {
     for (auto i = 0; i < std::ssize(x); ++i) {
       dxdt[i] = x[i];
     }

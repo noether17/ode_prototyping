@@ -10,6 +10,7 @@
 template <int N>
 class AllocatedState : public ODEState<AllocatedState<N>> {
  public:
+  using value_type = double;
   AllocatedState() : state_{std::make_unique<std::array<double, N>>()} {}
   AllocatedState(std::span<double const, N> state)
       : state_{std::make_unique<std::array<double, N>>()} {

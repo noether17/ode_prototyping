@@ -9,6 +9,7 @@ template <typename ValueType, int N>
 class HeapState {
  public:
   using StateType = std::array<ValueType, N>;
+  using value_type = ValueType;
   HeapState() : state_{std::make_unique<StateType>()} {}
   explicit HeapState(std::span<ValueType const, N> state)
       : state_{std::make_unique<StateType>()} {

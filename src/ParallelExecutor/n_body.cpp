@@ -29,8 +29,7 @@ int main() {
   auto constexpr n_var = x0_data.size();
 
   // TODO: Make this parallel.
-  auto ode_n_body = [masses](auto&, std::span<double const, n_var> x,
-                             std::span<double, n_var> dxdt) {
+  auto ode_n_body = [masses](auto&, auto const& x, double* dxdt) {
     auto constexpr vel_offset = n_var / 2;
     for (std::size_t i = 0; i < vel_offset; ++i) {
       dxdt[i] = x[i + vel_offset];

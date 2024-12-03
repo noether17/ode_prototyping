@@ -91,19 +91,19 @@ TEST_F(CudaRKEmbeddedTest, HE21VanDerPolConsistencyTest) {
 
   EXPECT_EQ(183012, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
-  EXPECT_DOUBLE_EQ(0.9274958393895415,
+  EXPECT_DOUBLE_EQ(0.92749583938957947,
                    test.output.times[test.output.times.size() / 2]);
   EXPECT_DOUBLE_EQ(2.0, test.output.times.back());
 
   EXPECT_EQ(183012, test.output.states.size());
   EXPECT_DOUBLE_EQ(2.0, test.output.states.front()[0]);
   EXPECT_DOUBLE_EQ(0.0, test.output.states.front()[1]);
-  EXPECT_DOUBLE_EQ(1.5633864957650419,
+  EXPECT_DOUBLE_EQ(1.5633864957649997,
                    test.output.states[test.output.states.size() / 2][0]);
-  EXPECT_DOUBLE_EQ(-0.74391761303139381,
+  EXPECT_DOUBLE_EQ(-0.74391761303142623,
                    test.output.states[test.output.states.size() / 2][1]);
-  EXPECT_DOUBLE_EQ(0.32331666707211976, test.output.states.back()[0]);
-  EXPECT_DOUBLE_EQ(-1.8329745679629066, test.output.states.back()[1]);
+  EXPECT_DOUBLE_EQ(0.32331666707212042, test.output.states.back()[0]);
+  EXPECT_DOUBLE_EQ(-1.8329745679629208, test.output.states.back()[1]);
 }
 
 // This test contains small, but nonzero differences from single-threaded.
@@ -129,10 +129,10 @@ TEST_F(CudaRKEmbeddedTest, HE21ExponentialConsistencyTest) {
       790.81720024690196,
       test.output.states[test.output.states.size() / 2][test.n_var / 2]);
   EXPECT_DOUBLE_EQ(
-      1423.4709604444222,
+      1423.4709604444181,
       test.output.states[test.output.states.size() / 2][test.n_var - 1]);
   EXPECT_DOUBLE_EQ(0.0, test.output.states.back()[0]);
-  EXPECT_DOUBLE_EQ(110132.17777934042,
+  EXPECT_DOUBLE_EQ(110132.17777934125,
                    test.output.states.back()[test.n_var / 2]);
   EXPECT_DOUBLE_EQ(198237.92000281205,
                    test.output.states.back()[test.n_var - 1]);
@@ -147,19 +147,19 @@ TEST_F(CudaRKEmbeddedTest, RKF45VanDerPolConsistencyTest) {
 
   EXPECT_EQ(83, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
-  EXPECT_DOUBLE_EQ(0.65364467640860291,
+  EXPECT_DOUBLE_EQ(0.65364467697913309,
                    test.output.times[test.output.times.size() / 2]);
   EXPECT_DOUBLE_EQ(2.0, test.output.times.back());
 
   EXPECT_EQ(83, test.output.states.size());
   EXPECT_DOUBLE_EQ(2.0, test.output.states.front()[0]);
   EXPECT_DOUBLE_EQ(0.0, test.output.states.front()[1]);
-  EXPECT_DOUBLE_EQ(1.7493089062893852,
+  EXPECT_DOUBLE_EQ(1.7493089059389617,
                    test.output.states[test.output.states.size() / 2][0]);
-  EXPECT_DOUBLE_EQ(-0.61420762201954171,
+  EXPECT_DOUBLE_EQ(-0.61420762229567305,
                    test.output.states[test.output.states.size() / 2][1]);
-  EXPECT_DOUBLE_EQ(0.32331666497810646, test.output.states.back()[0]);
-  EXPECT_DOUBLE_EQ(-1.8329745707118268, test.output.states.back()[1]);
+  EXPECT_DOUBLE_EQ(0.3233166649781048, test.output.states.back()[0]);
+  EXPECT_DOUBLE_EQ(-1.8329745707118286, test.output.states.back()[1]);
 }
 
 // This test contains small, but nonzero differences from single-threaded.
@@ -172,7 +172,7 @@ TEST_F(CudaRKEmbeddedTest, RKF45ExponentialConsistencyTest) {
 
   EXPECT_EQ(50, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
-  EXPECT_DOUBLE_EQ(5.0888631842535412,
+  EXPECT_DOUBLE_EQ(5.0888631842530918,
                    test.output.times[test.output.times.size() / 2]);
   EXPECT_DOUBLE_EQ(10.0, test.output.times.back());
 
@@ -182,16 +182,15 @@ TEST_F(CudaRKEmbeddedTest, RKF45ExponentialConsistencyTest) {
   EXPECT_DOUBLE_EQ(9.0, test.output.states.front()[test.n_var - 1]);
   EXPECT_DOUBLE_EQ(0.0, test.output.states[test.output.states.size() / 2][0]);
   EXPECT_DOUBLE_EQ(
-      811.03335805996585,
+      811.03335805960103,
       test.output.states[test.output.states.size() / 2][test.n_var / 2]);
   EXPECT_DOUBLE_EQ(
-      1459.8600445079389,
+      1459.8600445072816,
       test.output.states[test.output.states.size() / 2][test.n_var - 1]);
   EXPECT_DOUBLE_EQ(0.0, test.output.states.back()[0]);
-  EXPECT_DOUBLE_EQ(110134.0623063667,
+  EXPECT_DOUBLE_EQ(110134.06230636722,
                    test.output.states.back()[test.n_var / 2]);
-  EXPECT_DOUBLE_EQ(198241.31215146015,
-                   test.output.states.back()[test.n_var - 1]);
+  EXPECT_DOUBLE_EQ(198241.312151461, test.output.states.back()[test.n_var - 1]);
 }
 
 TEST_F(CudaRKEmbeddedTest, DOPRI5VanDerPolConsistencyTest) {
@@ -203,19 +202,19 @@ TEST_F(CudaRKEmbeddedTest, DOPRI5VanDerPolConsistencyTest) {
 
   EXPECT_EQ(76, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
-  EXPECT_DOUBLE_EQ(0.67149697578171041,
+  EXPECT_DOUBLE_EQ(0.6714969756893634,
                    test.output.times[test.output.times.size() / 2]);
   EXPECT_DOUBLE_EQ(2.0, test.output.times.back());
 
   EXPECT_EQ(76, test.output.states.size());
   EXPECT_DOUBLE_EQ(2.0, test.output.states.front()[0]);
   EXPECT_DOUBLE_EQ(0.0, test.output.states.front()[1]);
-  EXPECT_DOUBLE_EQ(1.7382670271053748,
+  EXPECT_DOUBLE_EQ(1.7382670271628891,
                    test.output.states[test.output.states.size() / 2][0]);
-  EXPECT_DOUBLE_EQ(-0.62280413467104634,
+  EXPECT_DOUBLE_EQ(-0.62280413462679141,
                    test.output.states[test.output.states.size() / 2][1]);
-  EXPECT_DOUBLE_EQ(0.32331666704309109, test.output.states.back()[0]);
-  EXPECT_DOUBLE_EQ(-1.8329745679718159, test.output.states.back()[1]);
+  EXPECT_DOUBLE_EQ(0.32331666704309209, test.output.states.back()[0]);
+  EXPECT_DOUBLE_EQ(-1.8329745679718148, test.output.states.back()[1]);
 }
 
 // This test contains small, but nonzero differences from single-threaded.
@@ -228,7 +227,7 @@ TEST_F(CudaRKEmbeddedTest, DOPRI5ExponentialConsistencyTest) {
 
   EXPECT_EQ(45, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
-  EXPECT_DOUBLE_EQ(4.9896555947532066,
+  EXPECT_DOUBLE_EQ(4.9896555947727883,
                    test.output.times[test.output.times.size() / 2]);
   EXPECT_DOUBLE_EQ(10.0, test.output.times.back());
 
@@ -238,15 +237,15 @@ TEST_F(CudaRKEmbeddedTest, DOPRI5ExponentialConsistencyTest) {
   EXPECT_DOUBLE_EQ(9.0, test.output.states.front()[test.n_var - 1]);
   EXPECT_DOUBLE_EQ(0.0, test.output.states[test.output.states.size() / 2][0]);
   EXPECT_DOUBLE_EQ(
-      734.42960843523724,
+      734.42960844961965,
       test.output.states[test.output.states.size() / 2][test.n_var / 2]);
   EXPECT_DOUBLE_EQ(
-      1321.9732951834274,
+      1321.9732952093148,
       test.output.states[test.output.states.size() / 2][test.n_var - 1]);
   EXPECT_DOUBLE_EQ(0.0, test.output.states.back()[0]);
-  EXPECT_DOUBLE_EQ(110132.46804595206,
+  EXPECT_DOUBLE_EQ(110132.46804595251,
                    test.output.states.back()[test.n_var / 2]);
-  EXPECT_DOUBLE_EQ(198238.4424827139,
+  EXPECT_DOUBLE_EQ(198238.44248271445,
                    test.output.states.back()[test.n_var - 1]);
 }
 
@@ -259,19 +258,19 @@ TEST_F(CudaRKEmbeddedTest, DVERKVanDerPolConsistencyTest) {
 
   EXPECT_EQ(42, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
-  EXPECT_DOUBLE_EQ(0.66331345368999683,
+  EXPECT_DOUBLE_EQ(0.6633134538972123,
                    test.output.times[test.output.times.size() / 2]);
   EXPECT_DOUBLE_EQ(2.0, test.output.times.back());
 
   EXPECT_EQ(42, test.output.states.size());
   EXPECT_DOUBLE_EQ(2.0, test.output.states.front()[0]);
   EXPECT_DOUBLE_EQ(0.0, test.output.states.front()[1]);
-  EXPECT_DOUBLE_EQ(1.7433476890385384,
+  EXPECT_DOUBLE_EQ(1.7433476889102977,
                    test.output.states[test.output.states.size() / 2][0]);
-  EXPECT_DOUBLE_EQ(-0.61887401617955773,
+  EXPECT_DOUBLE_EQ(-0.61887401627929084,
                    test.output.states[test.output.states.size() / 2][1]);
-  EXPECT_DOUBLE_EQ(0.32331666651502594, test.output.states.back()[0]);
-  EXPECT_DOUBLE_EQ(-1.8329745684699728, test.output.states.back()[1]);
+  EXPECT_DOUBLE_EQ(0.32331666651502444, test.output.states.back()[0]);
+  EXPECT_DOUBLE_EQ(-1.8329745684699745, test.output.states.back()[1]);
 }
 
 TEST_F(CudaRKEmbeddedTest, DVERKExponentialConsistencyTest) {
@@ -283,7 +282,7 @@ TEST_F(CudaRKEmbeddedTest, DVERKExponentialConsistencyTest) {
 
   EXPECT_EQ(32, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
-  EXPECT_DOUBLE_EQ(5.1178634791056821,
+  EXPECT_DOUBLE_EQ(5.1178634788750603,
                    test.output.times[test.output.times.size() / 2]);
   EXPECT_DOUBLE_EQ(10.0, test.output.times.back());
 
@@ -293,15 +292,15 @@ TEST_F(CudaRKEmbeddedTest, DVERKExponentialConsistencyTest) {
   EXPECT_DOUBLE_EQ(9.0, test.output.states.front()[test.n_var - 1]);
   EXPECT_DOUBLE_EQ(0.0, test.output.states[test.output.states.size() / 2][0]);
   EXPECT_DOUBLE_EQ(
-      834.89108343292787,
+      834.89108324038477,
       test.output.states[test.output.states.size() / 2][test.n_var / 2]);
   EXPECT_DOUBLE_EQ(
-      1502.8039501792707,
+      1502.8039498326918,
       test.output.states[test.output.states.size() / 2][test.n_var - 1]);
   EXPECT_DOUBLE_EQ(0.0, test.output.states.back()[0]);
-  EXPECT_DOUBLE_EQ(110132.30512693945,
+  EXPECT_DOUBLE_EQ(110132.30512693933,
                    test.output.states.back()[test.n_var / 2]);
-  EXPECT_DOUBLE_EQ(198238.14922849106,
+  EXPECT_DOUBLE_EQ(198238.14922849069,
                    test.output.states.back()[test.n_var - 1]);
 }
 
@@ -314,19 +313,19 @@ TEST_F(CudaRKEmbeddedTest, RKF78VanDerPolConsistencyTest) {
 
   EXPECT_EQ(15, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
-  EXPECT_DOUBLE_EQ(0.72814921744061389,
+  EXPECT_DOUBLE_EQ(0.72815440043062785,
                    test.output.times[test.output.times.size() / 2]);
   EXPECT_DOUBLE_EQ(2.0, test.output.times.back());
 
   EXPECT_EQ(15, test.output.states.size());
   EXPECT_DOUBLE_EQ(2.0, test.output.states.front()[0]);
   EXPECT_DOUBLE_EQ(0.0, test.output.states.front()[1]);
-  EXPECT_DOUBLE_EQ(1.7022210141241134,
+  EXPECT_DOUBLE_EQ(1.7022176470385422,
                    test.output.states[test.output.states.size() / 2][0]);
-  EXPECT_DOUBLE_EQ(-0.64964031512382325,
+  EXPECT_DOUBLE_EQ(-0.64964274849420467,
                    test.output.states[test.output.states.size() / 2][1]);
-  EXPECT_DOUBLE_EQ(0.3233166666554449, test.output.states.back()[0]);
-  EXPECT_DOUBLE_EQ(-1.8329745686289092, test.output.states.back()[1]);
+  EXPECT_DOUBLE_EQ(0.32331666665543596, test.output.states.back()[0]);
+  EXPECT_DOUBLE_EQ(-1.8329745686289227, test.output.states.back()[1]);
 }
 
 TEST_F(CudaRKEmbeddedTest, RKF78ExponentialConsistencyTest) {
@@ -338,7 +337,7 @@ TEST_F(CudaRKEmbeddedTest, RKF78ExponentialConsistencyTest) {
 
   EXPECT_EQ(13, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
-  EXPECT_DOUBLE_EQ(4.4481779636028618,
+  EXPECT_DOUBLE_EQ(4.4481779636137997,
                    test.output.times[test.output.times.size() / 2]);
   EXPECT_DOUBLE_EQ(10.0, test.output.times.back());
 
@@ -348,13 +347,13 @@ TEST_F(CudaRKEmbeddedTest, RKF78ExponentialConsistencyTest) {
   EXPECT_DOUBLE_EQ(9.0, test.output.states.front()[test.n_var - 1]);
   EXPECT_DOUBLE_EQ(0.0, test.output.states[test.output.states.size() / 2][0]);
   EXPECT_DOUBLE_EQ(
-      427.3544878966228,
+      427.35448790129726,
       test.output.states[test.output.states.size() / 2][test.n_var / 2]);
   EXPECT_DOUBLE_EQ(
-      769.23807821392074,
+      769.23807822233516,
       test.output.states[test.output.states.size() / 2][test.n_var - 1]);
   EXPECT_DOUBLE_EQ(0.0, test.output.states.back()[0]);
-  EXPECT_DOUBLE_EQ(110131.78807367262,
+  EXPECT_DOUBLE_EQ(110131.78807367253,
                    test.output.states.back()[test.n_var / 2]);
   EXPECT_DOUBLE_EQ(198237.21853261057,
                    test.output.states.back()[test.n_var - 1]);

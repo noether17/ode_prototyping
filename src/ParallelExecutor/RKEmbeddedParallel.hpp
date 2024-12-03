@@ -9,6 +9,7 @@ template <template <typename, int> typename StateContainer, typename ValueType,
           int NVAR, typename ButcherTableau, typename ODE, typename Output,
           typename ParallelExecutor>
 class RKEmbeddedParallel {
+ public:
   using OwnedState = StateContainer<ValueType, NVAR>;
   //[stage, dt](
   //    int i, std::span<ValueType, NVAR> temp_state,
@@ -88,7 +89,6 @@ class RKEmbeddedParallel {
         atol[i] + rtol[i] * std::max(std::abs(x[i]), std::abs(x0[i]));
   }
 
- public:
   void integrate(OwnedState x0, double t0, double tf, OwnedState atol,
                  OwnedState rtol, ODE ode, Output& output,
                  ParallelExecutor& exe) {
@@ -174,15 +174,16 @@ class RKEmbeddedParallel {
     return scaled_value * scaled_value;
   }
 
+  auto static constexpr add(ValueType a, ValueType b) { return a + b; }
+
   ValueType static rk_norm(ParallelExecutor& exe,
                            std::span<ValueType const, NVAR> v,
                            std::span<ValueType const, NVAR> scale) {
     auto n_var = std::ssize(v);
-    return std::sqrt(
-        exe.template transform_reduce<ValueType, std::plus<ValueType>{},
-                                      scaled_value_squared_kernel>(
-            0.0, n_var, v.data(), scale.data()) /
-        n_var);
+    return std::sqrt(exe.template transform_reduce<ValueType, add,
+                                                   scaled_value_squared_kernel>(
+                         0.0, n_var, v.data(), scale.data()) /
+                     n_var);
   }
 
   auto static constexpr compute_error_target_kernel(int i,

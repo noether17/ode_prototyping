@@ -32,7 +32,7 @@ def main():
     plt.gca().set_aspect('equal')
     plt.show()
 
-    cuda_data = np.loadtxt("n_body_output.txt", delimiter=',')
+    cuda_data = np.loadtxt("RKF78_cuda_n_body_output.txt", delimiter=',')
     cuda_times = cuda_data[:, 0]
     state_offset = int((cuda_data.shape[1] - 1) / 2)
     cuda_pos = cuda_data[:, 1:1+state_offset]

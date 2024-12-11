@@ -84,33 +84,6 @@ int main() {
   auto masses = std::array{1.0, 1.0, 1.0, 1.0, 1.0};
   auto constexpr n_var = x0_data.size();
 
-  // auto ode_n_body = [masses](auto&, std::span<double const, n_var> x,
-  //                            double* dxdt) {
-  //   auto constexpr vel_offset = n_var / 2;
-  //   for (std::size_t i = 0; i < vel_offset; ++i) {
-  //     dxdt[i] = x[i + vel_offset];
-  //     dxdt[i + vel_offset] = 0.0;
-  //   }
-  //   auto constexpr n_particles = n_var / 6;
-  //   for (std::size_t i = 0; i < n_particles; ++i) {
-  //     for (auto j = i + 1; j < n_particles; ++j) {
-  //       auto dx = x[3 * j] - x[3 * i];
-  //       auto dy = x[3 * j + 1] - x[3 * i + 1];
-  //       auto dz = x[3 * j + 2] - x[3 * i + 2];
-  //       auto dist = std::sqrt(dx * dx + dy * dy + dz * dz);
-  //       auto dist_3 = dist * dist * dist;
-  //       auto ax = dx / dist_3;
-  //       auto ay = dy / dist_3;
-  //       auto az = dz / dist_3;
-  //       dxdt[vel_offset + 3 * i] += ax * masses[j];
-  //       dxdt[vel_offset + 3 * i + 1] += ay * masses[j];
-  //       dxdt[vel_offset + 3 * i + 2] += az * masses[j];
-  //       dxdt[vel_offset + 3 * j] += -ax * masses[i];
-  //       dxdt[vel_offset + 3 * j + 1] += -ay * masses[i];
-  //       dxdt[vel_offset + 3 * j + 2] += -az * masses[i];
-  //     }
-  //   }
-  // };
   auto ode_n_body = ODENBody{};
   auto cuda_exe = CudaExecutor{};
   auto integrator =

@@ -13,23 +13,7 @@
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
 #include "SingleThreadedExecutor.hpp"
-
-struct VanDerPolTest {
-  auto static constexpr n_var = 2;
-  auto static inline const x0 = HeapState<double, n_var>(std::array{2.0, 0.0});
-  auto static constexpr t0 = 0.0;
-  auto static constexpr tf = 2.0;
-  auto static constexpr tol = 1.0e-10;
-  auto static inline const atol =
-      HeapState<double, n_var>(std::array{tol, tol});
-  auto static inline const rtol = atol;
-  auto constexpr operator()(auto&, auto const& x, auto* dxdt) {
-    auto constexpr eps = 1.0;
-    dxdt[0] = x[1];
-    dxdt[1] = eps * (1.0 - x[0] * x[0]) * x[1] - x[0];
-  }
-  RawOutput<HeapState<double, n_var>> output{};
-};
+#include "VanDerPolTest.hpp"
 
 struct ExponentialTest {
   auto static constexpr n_var = 10;
@@ -71,8 +55,8 @@ class SingleThreadedRKEmbeddedTest : public testing::Test {
  * than the actual requirements. If an intentional change in algorithm results
  * in small differences in output, these values may be updated. */
 TEST_F(SingleThreadedRKEmbeddedTest, HE21VanDerPolConsistencyTest) {
-  auto test = VanDerPolTest{};
-  auto integrator = Integrator<BTHE21, VanDerPolTest>{};
+  auto test = VanDerPolTest<HeapState>{};
+  auto integrator = Integrator<BTHE21, VanDerPolTest<HeapState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -126,8 +110,8 @@ TEST_F(SingleThreadedRKEmbeddedTest, HE21ExponentialConsistencyTest) {
 }
 
 TEST_F(SingleThreadedRKEmbeddedTest, RKF45VanDerPolConsistencyTest) {
-  auto test = VanDerPolTest{};
-  auto integrator = Integrator<BTRKF45, VanDerPolTest>{};
+  auto test = VanDerPolTest<HeapState>{};
+  auto integrator = Integrator<BTRKF45, VanDerPolTest<HeapState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -181,8 +165,8 @@ TEST_F(SingleThreadedRKEmbeddedTest, RKF45ExponentialConsistencyTest) {
 }
 
 TEST_F(SingleThreadedRKEmbeddedTest, DOPRI5VanDerPolConsistencyTest) {
-  auto test = VanDerPolTest{};
-  auto integrator = Integrator<BTDOPRI5, VanDerPolTest>{};
+  auto test = VanDerPolTest<HeapState>{};
+  auto integrator = Integrator<BTDOPRI5, VanDerPolTest<HeapState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -236,8 +220,8 @@ TEST_F(SingleThreadedRKEmbeddedTest, DOPRI5ExponentialConsistencyTest) {
 }
 
 TEST_F(SingleThreadedRKEmbeddedTest, DVERKVanDerPolConsistencyTest) {
-  auto test = VanDerPolTest{};
-  auto integrator = Integrator<BTDVERK, VanDerPolTest>{};
+  auto test = VanDerPolTest<HeapState>{};
+  auto integrator = Integrator<BTDVERK, VanDerPolTest<HeapState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -291,8 +275,8 @@ TEST_F(SingleThreadedRKEmbeddedTest, DVERKExponentialConsistencyTest) {
 }
 
 TEST_F(SingleThreadedRKEmbeddedTest, RKF78VanDerPolConsistencyTest) {
-  auto test = VanDerPolTest{};
-  auto integrator = Integrator<BTRKF78, VanDerPolTest>{};
+  auto test = VanDerPolTest<HeapState>{};
+  auto integrator = Integrator<BTRKF78, VanDerPolTest<HeapState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);

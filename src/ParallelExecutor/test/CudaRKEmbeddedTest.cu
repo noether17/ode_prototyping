@@ -13,30 +13,7 @@
 #include "HeapState.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
-
-struct VanDerPolTest {
-  auto static constexpr n_var = 2;
-  auto static inline const x0 = CudaState<double, n_var>(std::array{2.0, 0.0});
-  auto static constexpr t0 = 0.0;
-  auto static constexpr tf = 2.0;
-  auto static constexpr tol = 1.0e-10;
-  auto static inline const atol =
-      CudaState<double, n_var>(std::array{tol, tol});
-  auto static inline const rtol = atol;
-  auto static constexpr ode_kernel(int i, double const* x, double* dxdt) {
-    // This kernel is not ideal for GPU parallelization, but fine for testing.
-    if (i == 0) {
-      dxdt[0] = x[1];
-    } else if (i == 1) {
-      auto constexpr eps = 1.0;
-      dxdt[1] = eps * (1.0 - x[0] * x[0]) * x[1] - x[0];
-    }
-  }
-  auto constexpr operator()(auto& exe, auto const& x, auto* dxdt) {
-    exe.template call_parallel_kernel<ode_kernel>(n_var, x.data(), dxdt);
-  }
-  RawOutput<HeapState<double, n_var>> output{};
-};
+#include "VanDerPolTest.hpp"
 
 struct ExponentialTest {
   auto static constexpr n_var = 10;
@@ -83,8 +60,8 @@ class CudaRKEmbeddedTest : public testing::Test {
  * than the actual requirements. If an intentional change in algorithm results
  * in small differences in output, these values may be updated. */
 TEST_F(CudaRKEmbeddedTest, HE21VanDerPolConsistencyTest) {
-  auto test = VanDerPolTest{};
-  auto integrator = Integrator<BTHE21, VanDerPolTest>{};
+  auto test = VanDerPolTest<CudaState>{};
+  auto integrator = Integrator<BTHE21, VanDerPolTest<CudaState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -139,8 +116,8 @@ TEST_F(CudaRKEmbeddedTest, HE21ExponentialConsistencyTest) {
 }
 
 TEST_F(CudaRKEmbeddedTest, RKF45VanDerPolConsistencyTest) {
-  auto test = VanDerPolTest{};
-  auto integrator = Integrator<BTRKF45, VanDerPolTest>{};
+  auto test = VanDerPolTest<CudaState>{};
+  auto integrator = Integrator<BTRKF45, VanDerPolTest<CudaState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -194,8 +171,8 @@ TEST_F(CudaRKEmbeddedTest, RKF45ExponentialConsistencyTest) {
 }
 
 TEST_F(CudaRKEmbeddedTest, DOPRI5VanDerPolConsistencyTest) {
-  auto test = VanDerPolTest{};
-  auto integrator = Integrator<BTDOPRI5, VanDerPolTest>{};
+  auto test = VanDerPolTest<CudaState>{};
+  auto integrator = Integrator<BTDOPRI5, VanDerPolTest<CudaState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -250,8 +227,8 @@ TEST_F(CudaRKEmbeddedTest, DOPRI5ExponentialConsistencyTest) {
 }
 
 TEST_F(CudaRKEmbeddedTest, DVERKVanDerPolConsistencyTest) {
-  auto test = VanDerPolTest{};
-  auto integrator = Integrator<BTDVERK, VanDerPolTest>{};
+  auto test = VanDerPolTest<CudaState>{};
+  auto integrator = Integrator<BTDVERK, VanDerPolTest<CudaState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -305,8 +282,8 @@ TEST_F(CudaRKEmbeddedTest, DVERKExponentialConsistencyTest) {
 }
 
 TEST_F(CudaRKEmbeddedTest, RKF78VanDerPolConsistencyTest) {
-  auto test = VanDerPolTest{};
-  auto integrator = Integrator<BTRKF78, VanDerPolTest>{};
+  auto test = VanDerPolTest<CudaState>{};
+  auto integrator = Integrator<BTRKF78, VanDerPolTest<CudaState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);

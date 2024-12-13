@@ -9,36 +9,12 @@
 #include "BTHE21.hpp"
 #include "BTRKF45.hpp"
 #include "BTRKF78.hpp"
+#include "ExponentialTest.hpp"
 #include "HeapState.hpp"
 #include "ParallelThreadPool.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
 #include "VanDerPolTest.hpp"
-
-struct ExponentialTest {
-  auto static constexpr n_var = 10;
-  auto static constexpr x0_data = [] {
-    auto temp = std::array<double, n_var>{};
-    std::iota(temp.begin(), temp.end(), 0.0);
-    return temp;
-  }();
-  auto static inline const x0 = HeapState<double, n_var>(x0_data);
-  auto static constexpr t0 = 0.0;
-  auto static constexpr tf = 10.0;
-  auto static constexpr tol = 1.0e-6;
-  auto static inline const atol = [] {
-    auto temp = HeapState<double, n_var>{};
-    std::fill(temp.data(), temp.data() + n_var, tol);
-    return temp;
-  }();
-  auto static inline const rtol = atol;
-  auto constexpr operator()(auto&, auto const& x, auto* dxdt) {
-    for (auto i = 0; i < std::ssize(x); ++i) {
-      dxdt[i] = x[i];
-    }
-  }
-  RawOutput<HeapState<double, n_var>> output{};
-};
 
 class ParallelRKEmbeddedTest : public testing::Test {
  protected:
@@ -80,8 +56,8 @@ TEST_F(ParallelRKEmbeddedTest, HE21VanDerPolConsistencyTest) {
 
 // This test contains small, but nonzero differences from single-threaded.
 TEST_F(ParallelRKEmbeddedTest, HE21ExponentialConsistencyTest) {
-  auto test = ExponentialTest{};
-  auto integrator = Integrator<BTHE21, ExponentialTest>{};
+  auto test = ExponentialTest<HeapState>{};
+  auto integrator = Integrator<BTHE21, ExponentialTest<HeapState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -136,8 +112,8 @@ TEST_F(ParallelRKEmbeddedTest, RKF45VanDerPolConsistencyTest) {
 
 // This test contains small, but nonzero differences from single-threaded.
 TEST_F(ParallelRKEmbeddedTest, RKF45ExponentialConsistencyTest) {
-  auto test = ExponentialTest{};
-  auto integrator = Integrator<BTRKF45, ExponentialTest>{};
+  auto test = ExponentialTest<HeapState>{};
+  auto integrator = Integrator<BTRKF45, ExponentialTest<HeapState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -192,8 +168,8 @@ TEST_F(ParallelRKEmbeddedTest, DOPRI5VanDerPolConsistencyTest) {
 
 // This test contains small, but nonzero differences from single-threaded.
 TEST_F(ParallelRKEmbeddedTest, DOPRI5ExponentialConsistencyTest) {
-  auto test = ExponentialTest{};
-  auto integrator = Integrator<BTDOPRI5, ExponentialTest>{};
+  auto test = ExponentialTest<HeapState>{};
+  auto integrator = Integrator<BTDOPRI5, ExponentialTest<HeapState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -247,8 +223,8 @@ TEST_F(ParallelRKEmbeddedTest, DVERKVanDerPolConsistencyTest) {
 }
 
 TEST_F(ParallelRKEmbeddedTest, DVERKExponentialConsistencyTest) {
-  auto test = ExponentialTest{};
-  auto integrator = Integrator<BTDVERK, ExponentialTest>{};
+  auto test = ExponentialTest<HeapState>{};
+  auto integrator = Integrator<BTDVERK, ExponentialTest<HeapState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -302,8 +278,8 @@ TEST_F(ParallelRKEmbeddedTest, RKF78VanDerPolConsistencyTest) {
 }
 
 TEST_F(ParallelRKEmbeddedTest, RKF78ExponentialConsistencyTest) {
-  auto test = ExponentialTest{};
-  auto integrator = Integrator<BTRKF78, ExponentialTest>{};
+  auto test = ExponentialTest<HeapState>{};
+  auto integrator = Integrator<BTRKF78, ExponentialTest<HeapState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);

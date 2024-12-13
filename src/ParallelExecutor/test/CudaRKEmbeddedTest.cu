@@ -10,40 +10,11 @@
 #include "BTRKF78.hpp"
 #include "CudaExecutor.cuh"
 #include "CudaState.cuh"
+#include "ExponentialTest.hpp"
 #include "HeapState.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
 #include "VanDerPolTest.hpp"
-
-struct ExponentialTest {
-  auto static constexpr n_var = 10;
-  auto static constexpr x0_data = [] {
-    auto temp = std::array<double, n_var>{};
-    std::iota(temp.begin(), temp.end(), 0.0);
-    return temp;
-  }();
-  auto static inline const x0 = CudaState<double, n_var>(x0_data);
-  auto static constexpr t0 = 0.0;
-  auto static constexpr tf = 10.0;
-  auto static constexpr tol = 1.0e-6;
-  auto static inline const atol = [] {
-    auto host_temp = std::array<double, n_var>{};
-    std::fill(host_temp.begin(), host_temp.end(), tol);
-    auto temp = CudaState<double, n_var>{host_temp};
-    return temp;
-  }();
-  auto static inline const rtol = atol;
-  auto static constexpr ode_kernel(int i, double const* x, double* dxdt) {
-    dxdt[i] = x[i];
-    printf("Thread %d with x = %lf and dxdt = %lf\n", i, x[i], dxdt[i]);
-  }
-  auto constexpr operator()(auto& exe, auto const& x, auto* dxdt) {
-    // exe.template call_parallel_kernel<ode_kernel>(n_var, x.data(), dxdt);
-    cudaMemcpy(dxdt, x.data(), x.size() * sizeof(double),
-               cudaMemcpyDeviceToDevice);
-  }
-  RawOutput<HeapState<double, n_var>> output{};
-};
 
 class CudaRKEmbeddedTest : public testing::Test {
  protected:
@@ -85,8 +56,8 @@ TEST_F(CudaRKEmbeddedTest, HE21VanDerPolConsistencyTest) {
 
 // This test contains small, but nonzero differences from single-threaded.
 TEST_F(CudaRKEmbeddedTest, HE21ExponentialConsistencyTest) {
-  auto test = ExponentialTest{};
-  auto integrator = Integrator<BTHE21, ExponentialTest>{};
+  auto test = ExponentialTest<CudaState>{};
+  auto integrator = Integrator<BTHE21, ExponentialTest<CudaState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -141,8 +112,8 @@ TEST_F(CudaRKEmbeddedTest, RKF45VanDerPolConsistencyTest) {
 
 // This test contains small, but nonzero differences from single-threaded.
 TEST_F(CudaRKEmbeddedTest, RKF45ExponentialConsistencyTest) {
-  auto test = ExponentialTest{};
-  auto integrator = Integrator<BTRKF45, ExponentialTest>{};
+  auto test = ExponentialTest<CudaState>{};
+  auto integrator = Integrator<BTRKF45, ExponentialTest<CudaState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -196,8 +167,8 @@ TEST_F(CudaRKEmbeddedTest, DOPRI5VanDerPolConsistencyTest) {
 
 // This test contains small, but nonzero differences from single-threaded.
 TEST_F(CudaRKEmbeddedTest, DOPRI5ExponentialConsistencyTest) {
-  auto test = ExponentialTest{};
-  auto integrator = Integrator<BTDOPRI5, ExponentialTest>{};
+  auto test = ExponentialTest<CudaState>{};
+  auto integrator = Integrator<BTDOPRI5, ExponentialTest<CudaState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -251,8 +222,8 @@ TEST_F(CudaRKEmbeddedTest, DVERKVanDerPolConsistencyTest) {
 }
 
 TEST_F(CudaRKEmbeddedTest, DVERKExponentialConsistencyTest) {
-  auto test = ExponentialTest{};
-  auto integrator = Integrator<BTDVERK, ExponentialTest>{};
+  auto test = ExponentialTest<CudaState>{};
+  auto integrator = Integrator<BTDVERK, ExponentialTest<CudaState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);
@@ -306,8 +277,8 @@ TEST_F(CudaRKEmbeddedTest, RKF78VanDerPolConsistencyTest) {
 }
 
 TEST_F(CudaRKEmbeddedTest, RKF78ExponentialConsistencyTest) {
-  auto test = ExponentialTest{};
-  auto integrator = Integrator<BTRKF78, ExponentialTest>{};
+  auto test = ExponentialTest<CudaState>{};
+  auto integrator = Integrator<BTRKF78, ExponentialTest<CudaState>>{};
 
   integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
                        test.output, executor);

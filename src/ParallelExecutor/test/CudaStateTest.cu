@@ -3,7 +3,9 @@
 #include <array>
 #include <numeric>
 
+#include "CudaExecutor.cuh"
 #include "CudaState.cuh"
+#include "StateUtils.hpp"
 
 class CudaStateTest : public testing::Test {
  protected:
@@ -73,5 +75,18 @@ TEST_F(CudaStateTest, CudaStateCopyIsIndependent) {
   cuda_state2.copy_to(host_copy2);
   for (auto i = 0; auto const& x : host_copy2) {
     ASSERT_DOUBLE_EQ(i++, x);
+  }
+}
+
+TEST_F(CudaStateTest, CudaStateCanBeFilledWithValue) {
+  auto cuda_state = CudaState<double, N>{};
+  auto cuda_exe = CudaExecutor{};
+
+  fill(cuda_exe, cuda_state, 3.0);
+
+  auto host_copy = std::array<double, N>{};
+  cuda_state.copy_to(host_copy);
+  for (auto const& x : host_copy) {
+    ASSERT_DOUBLE_EQ(3.0, x);
   }
 }

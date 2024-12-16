@@ -46,11 +46,6 @@ class CudaState {
 
   auto static constexpr size() { return N; }
 
-  // TODO: This likely won't work for non-zero values.
-  friend void fill(CudaState& cs, ValueType value) {
-    cudaMemset(cs.m_state, value, N);
-  }
-
  private:
   StateType* m_state{};
 };

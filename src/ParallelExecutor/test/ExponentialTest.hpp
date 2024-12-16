@@ -3,6 +3,7 @@
 #include <array>
 #include <numeric>
 
+#include "ExponentialODE.hpp"
 #include "HeapState.hpp"
 #include "RawOutput.hpp"
 
@@ -26,11 +27,8 @@ struct ExponentialTest {
   }();
   auto static inline const atol = StateType<double, n_var>{tol_array};
   auto static inline const rtol = atol;
-  auto static constexpr ode_kernel(int i, double const* x, double* dxdt) {
-    dxdt[i] = x[i];
-  }
   auto constexpr operator()(auto& exe, auto const& x, auto* dxdt) {
-    exe.template call_parallel_kernel<ode_kernel>(n_var, x.data(), dxdt);
+    exe.template call_parallel_kernel<exp_ode_kernel>(n_var, x.data(), dxdt);
   }
   RawOutput<HeapState<double, n_var>> output{};
 };

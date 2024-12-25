@@ -1,18 +1,9 @@
 #pragma once
 
 #include <array>
-#include <atomic>
 #include <cmath>
 
-template <typename ValueType>
-constexpr void atomic_add(ValueType* a_ptr, ValueType b) {
-#ifndef __CUDA_ARCH__
-  auto atomic_a_ref = std::atomic_ref{*a_ptr};
-  atomic_a_ref += b;
-#else
-  atomicAdd(a_ptr, b);
-#endif
-}
+#include "AtomicUtil.hpp"
 
 template <int n_var, /*auto masses,*/ double softening_sq = 0.0>
 struct NBodyODE {
@@ -77,12 +68,12 @@ struct NBodyODE {
 
     // add contribution of pair to acceleration
     auto a_offset = 3 * n_particles;
-    atomic_add(&dxdt[a_offset + 3 * i], iax);
-    atomic_add(&dxdt[a_offset + 3 * i + 1], iay);
-    atomic_add(&dxdt[a_offset + 3 * i + 2], iaz);
-    atomic_add(&dxdt[a_offset + 3 * j], jax);
-    atomic_add(&dxdt[a_offset + 3 * j + 1], jay);
-    atomic_add(&dxdt[a_offset + 3 * j + 2], jaz);
+    au::atomic_add(&dxdt[a_offset + 3 * i], iax);
+    au::atomic_add(&dxdt[a_offset + 3 * i + 1], iay);
+    au::atomic_add(&dxdt[a_offset + 3 * i + 2], iaz);
+    au::atomic_add(&dxdt[a_offset + 3 * j], jax);
+    au::atomic_add(&dxdt[a_offset + 3 * j + 1], jay);
+    au::atomic_add(&dxdt[a_offset + 3 * j + 2], jaz);
   }
 
   constexpr void operator()(auto& exe, auto const& x, auto* dxdt) {

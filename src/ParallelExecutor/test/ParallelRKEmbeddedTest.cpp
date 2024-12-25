@@ -11,6 +11,7 @@
 #include "BTRKF78.hpp"
 #include "ExponentialTest.hpp"
 #include "HeapState.hpp"
+#include "NBodyTest.hpp"
 #include "ParallelThreadPool.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
@@ -306,4 +307,49 @@ TEST_F(ParallelRKEmbeddedTest, RKF78ExponentialConsistencyTest) {
                    test.output.states.back()[test.n_var / 2]);
   EXPECT_DOUBLE_EQ(198237.21853261057,
                    test.output.states.back()[test.n_var - 1]);
+}
+
+TEST_F(ParallelRKEmbeddedTest, RKF78NBodyTest) {
+  auto test = NBodyTest<HeapState>{};
+  auto integrator = Integrator<BTRKF78, NBodyTest<HeapState>>{};
+
+  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
+                       test.output, executor);
+
+  // midpoint requires looser tolerance because errors resulting from
+  // differences in the order operations are executed may result in the midpoint
+  // being evaluated at a slightly different time.
+  auto const midpoint_tol = 1.657666 * test.tol * test.output.times.size() / 2;
+  EXPECT_EQ(172, test.output.times.size());
+  EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
+  EXPECT_NEAR(3.1699354066499978,
+              test.output.times[test.output.times.size() / 2], midpoint_tol);
+  EXPECT_DOUBLE_EQ(6.3, test.output.times.back());
+
+  EXPECT_EQ(172, test.output.states.size());
+  EXPECT_DOUBLE_EQ(1.657666, test.output.states.front()[0]);
+  EXPECT_DOUBLE_EQ(0.439775, test.output.states.front()[3]);
+  EXPECT_DOUBLE_EQ(-1.268608, test.output.states.front()[6]);
+  EXPECT_DOUBLE_EQ(-1.268608, test.output.states.front()[9]);
+  EXPECT_DOUBLE_EQ(0.439775, test.output.states.front()[12]);
+  EXPECT_NEAR(-1.657049151812777,
+              test.output.states[test.output.states.size() / 2][0],
+              midpoint_tol);
+  EXPECT_NEAR(-0.4911121490063145,
+              test.output.states[test.output.states.size() / 2][3],
+              midpoint_tol);
+  EXPECT_NEAR(1.2323209910919632,
+              test.output.states[test.output.states.size() / 2][6],
+              midpoint_tol);
+  EXPECT_NEAR(1.3042855418414452,
+              test.output.states[test.output.states.size() / 2][9],
+              midpoint_tol);
+  EXPECT_NEAR(-0.38844523211431509,
+              test.output.states[test.output.states.size() / 2][12],
+              midpoint_tol);
+  EXPECT_NEAR(1.6573213121279662, test.output.states.back()[0], test.tol);
+  EXPECT_NEAR(0.46802604979077689, test.output.states.back()[3], test.tol);
+  EXPECT_NEAR(-1.2481480178176445, test.output.states.back()[6], test.tol);
+  EXPECT_NEAR(-1.2883624086182086, test.output.states.back()[9], test.tol);
+  EXPECT_NEAR(0.41116306451711232, test.output.states.back()[12], test.tol);
 }

@@ -7,6 +7,9 @@ add_executable(SingleThreadedRKEmbeddedTest SingleThreadedRKEmbeddedTest.cpp)
 target_link_libraries(SingleThreadedRKEmbeddedTest
   GTest::GTest
   GTest::Main
+  ExponentialODE
+  NBodyODE
+  VanDerPolODE
   RKEmbeddedParallel
 )
 add_test(NAME SingleThreadedRKEmbeddedTest COMMAND SingleThreadedRKEmbeddedTest)
@@ -15,6 +18,9 @@ add_executable(ParallelRKEmbeddedTest ParallelRKEmbeddedTest.cpp)
 target_link_libraries(ParallelRKEmbeddedTest
   GTest::GTest
   GTest::Main
+  ExponentialODE
+  NBodyODE
+  VanDerPolODE
   RKEmbeddedParallel
 )
 add_test(NAME ParallelRKEmbeddedTest COMMAND ParallelRKEmbeddedTest)
@@ -42,6 +48,9 @@ target_link_libraries(CudaRKEmbeddedTest
   GTest::Main
   CudaState
   CudaExecutor
+  ExponentialODE
+  NBodyODE
+  VanDerPolODE
   RKEmbeddedParallel
 )
 add_test(NAME CudaRKEmbeddedTest COMMAND CudaRKEmbeddedTest)

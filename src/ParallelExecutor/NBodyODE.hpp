@@ -5,10 +5,8 @@
 #include <cmath>
 
 template <typename ValueType>
-constexpr void atomic_add(ValueType* a_ptr [[maybe_unused]],
-                          ValueType b [[maybe_unused]]) {
-#ifndef __CUDA__ARCH__
-  //*a_ptr += b;  // TODO: make atomic
+constexpr void atomic_add(ValueType* a_ptr, ValueType b) {
+#ifndef __CUDA_ARCH__
   auto atomic_a_ref = std::atomic_ref{*a_ptr};
   atomic_a_ref += b;
 #else

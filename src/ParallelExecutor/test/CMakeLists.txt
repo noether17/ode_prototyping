@@ -11,6 +11,7 @@ target_link_libraries(SingleThreadedRKEmbeddedTest
   NBodyODE
   VanDerPolODE
   RKEmbeddedParallel
+  SingleThreadedExecutor
 )
 add_test(NAME SingleThreadedRKEmbeddedTest COMMAND SingleThreadedRKEmbeddedTest)
 
@@ -22,6 +23,7 @@ target_link_libraries(ParallelRKEmbeddedTest
   NBodyODE
   VanDerPolODE
   RKEmbeddedParallel
+  ParallelThreadPool
 )
 add_test(NAME ParallelRKEmbeddedTest COMMAND ParallelRKEmbeddedTest)
 
@@ -30,6 +32,7 @@ target_link_libraries(CudaStateTest
   GTest::GTest
   GTest::Main
   CudaState
+  CudaExecutor
 )
 add_test(NAME CudaStateTest COMMAND CudaStateTest)
 

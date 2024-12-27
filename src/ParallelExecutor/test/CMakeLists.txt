@@ -57,6 +57,7 @@ target_link_libraries(CudaStateTest
   GTest::Main
   CudaState
   CudaExecutor
+  StateUtils
 )
 add_test(NAME CudaStateTest COMMAND CudaStateTest)
 

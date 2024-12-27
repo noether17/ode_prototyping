@@ -5,6 +5,7 @@
 
 #include "ExponentialODE.hpp"
 #include "HeapState.hpp"
+#include "ParallelExecutor.hpp"
 #include "RawOutput.hpp"
 
 // Defines parameters for Exponential test.
@@ -28,7 +29,7 @@ struct ExponentialTest {
   auto static inline const atol = StateType<double, n_var>{tol_array};
   auto static inline const rtol = atol;
   auto constexpr operator()(auto& exe, auto const& x, auto* dxdt) {
-    exe.template call_parallel_kernel<exp_ode_kernel>(n_var, x.data(), dxdt);
+    call_parallel_kernel<exp_ode_kernel>(exe, n_var, x.data(), dxdt);
   }
   RawOutput<HeapState<double, n_var>> output{};
 };

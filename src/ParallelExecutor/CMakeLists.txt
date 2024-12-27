@@ -3,6 +3,8 @@ include_directories(
   ${CMAKE_SOURCE_DIR}/src/ButcherTableaus
 )
 add_library(RKEmbeddedParallel INTERFACE RKEmbeddedParallel.hpp)
+target_link_libraries(RKEmbeddedParallel INTERFACE ParallelExecutor)
+
 add_library(CudaState INTERFACE CudaState.cuh)
 
 add_executable(parallel_n_body n_body.cpp)

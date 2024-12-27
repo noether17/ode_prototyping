@@ -4,6 +4,7 @@
 #include <cmath>
 
 #include "AtomicUtil.hpp"
+#include "ParallelExecutor.hpp"
 
 template <int n_var, /*auto masses,*/ double softening_sq = 0.0>
 struct NBodyODE {
@@ -78,13 +79,13 @@ struct NBodyODE {
 
   constexpr void operator()(auto& exe, auto const& x, auto* dxdt) {
     constexpr auto vel_offset = n_var / 2;
-    exe.template call_parallel_kernel<nbody_init_dxdt_kernel>(
-        vel_offset, vel_offset, x.data(), dxdt);
+    call_parallel_kernel<nbody_init_dxdt_kernel>(exe, vel_offset, vel_offset,
+                                                 x.data(), dxdt);
 
     constexpr auto n_particles = n_var / 6;
     constexpr auto n_pairs = n_particles * (n_particles - 1) / 2;
-    exe.template call_parallel_kernel<nbody_acc_kernel>(n_pairs, n_particles,
-                                                        x.data(), dxdt);
+    call_parallel_kernel<nbody_acc_kernel>(exe, n_pairs, n_particles, x.data(),
+                                           dxdt);
   }
 };
 

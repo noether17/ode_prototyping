@@ -59,8 +59,8 @@ struct ODENBody {
     cudaMemcpy(dxdt, x.data() + vel_offset, vel_offset * sizeof(double),
                cudaMemcpyDeviceToDevice);
     cudaMemset(dxdt + vel_offset, 0, vel_offset * sizeof(double));
-    exe.template call_parallel_kernel<ode_kernel>(n_particles, x.data(),
-                                                  dxdt + vel_offset);
+    call_parallel_kernel<ode_kernel>(exe, n_particles, x.data(),
+                                     dxdt + vel_offset);
   }
 };
 

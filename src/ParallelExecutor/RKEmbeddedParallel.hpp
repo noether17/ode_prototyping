@@ -5,6 +5,8 @@
 #include <span>
 #include <vector>
 
+#include "ParallelExecutor.hpp"
+
 template <template <typename, int> typename StateContainer, typename ValueType,
           int NVAR, typename ButcherTableau, typename ODE, typename Output,
           typename ParallelExecutor>
@@ -125,20 +127,20 @@ class RKEmbeddedParallel {
       // evaluate stages
       ode(exe, x0, ks.data());
       for (auto stage = 1; stage < ButcherTableau::n_stages; ++stage) {
-        exe.template call_parallel_kernel<rk_stage_kernel>(
-            n_var, stage, dt, temp_state.data(), state_a.data(), ks.data(),
-            x0.data());
+        call_parallel_kernel<rk_stage_kernel>(exe, n_var, stage, dt,
+                                              temp_state.data(), state_a.data(),
+                                              ks.data(), x0.data());
         ode(exe, temp_state, ks.data() + stage * NVAR);
       }
 
       // advance the state and compute the error estimate
-      exe.template call_parallel_kernel<update_state_and_error_kernel>(
-          n_var, dt, x.data(), error_estimate.data(), state_b.data(),
+      call_parallel_kernel<update_state_and_error_kernel>(
+          exe, n_var, dt, x.data(), error_estimate.data(), state_b.data(),
           state_db.data(), ks.data(), x0.data());
 
       // estimate error
-      exe.template call_parallel_kernel<update_error_target_kernel>(
-          n_var, error_target.data(), atol.data(), rtol.data(), x.data(),
+      call_parallel_kernel<update_error_target_kernel>(
+          exe, n_var, error_target.data(), atol.data(), rtol.data(), x.data(),
           x0.data());
       auto scaled_error = rk_norm(exe, error_estimate, error_target);
 
@@ -180,10 +182,10 @@ class RKEmbeddedParallel {
                            std::span<ValueType const, NVAR> v,
                            std::span<ValueType const, NVAR> scale) {
     auto n_var = std::ssize(v);
-    return std::sqrt(exe.template transform_reduce<ValueType, add,
-                                                   scaled_value_squared_kernel>(
-                         0.0, n_var, v.data(), scale.data()) /
-                     n_var);
+    return std::sqrt(
+        transform_reduce<ValueType, add, scaled_value_squared_kernel>(
+            exe, 0.0, n_var, v.data(), scale.data()) /
+        n_var);
   }
 
   auto static constexpr compute_error_target_kernel(int i,
@@ -213,8 +215,8 @@ class RKEmbeddedParallel {
     auto const n_var = std::ssize(x0);
 
     auto error_target = OwnedState{};
-    exe.template call_parallel_kernel<compute_error_target_kernel>(
-        n_var, error_target.data(), x0.data(), atol.data(), rtol.data());
+    call_parallel_kernel<compute_error_target_kernel>(
+        exe, n_var, error_target.data(), x0.data(), atol.data(), rtol.data());
 
     auto f0 = OwnedState{};
     ode(exe, x0, f0.data());
@@ -223,12 +225,11 @@ class RKEmbeddedParallel {
     auto dt0 = (d0 < 1.0e-5 or d1 < 1.0e-5) ? 1.0e-6 : 0.01 * (d0 / d1);
 
     auto x1 = OwnedState{};
-    exe.template call_parallel_kernel<euler_step_kernel>(
-        n_var, x1.data(), x0.data(), f0.data(), dt0);
+    call_parallel_kernel<euler_step_kernel>(exe, n_var, x1.data(), x0.data(),
+                                            f0.data(), dt0);
     auto df = OwnedState{};
     ode(exe, x1, df.data());
-    exe.template call_parallel_kernel<difference_kernel>(n_var, df.data(),
-                                                         f0.data());
+    call_parallel_kernel<difference_kernel>(exe, n_var, df.data(), f0.data());
     auto d2 = rk_norm(exe, df, error_target) / dt0;
 
     auto constexpr p = ButcherTableau::p;

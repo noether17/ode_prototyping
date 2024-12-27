@@ -1,21 +1,27 @@
 #pragma once
 
 #include "CudaErrorCheck.cuh"
+#include "KernelConcepts.hpp"
 
 auto static constexpr block_size = 256;
 
-template <auto parallel_kernel, typename... Args>
-__global__ void cuda_call_parallel_kernel(int n_items, Args... args) {
+template <auto kernel, typename... Args>
+__global__ void cuda_call_parallel_kernel(int n_items, Args... args)
+  requires ParallelKernel<kernel, Args...>
+{
   auto i = blockIdx.x * blockDim.x + threadIdx.x;
   while (i < n_items) {
-    parallel_kernel(i, args...);
+    kernel(i, args...);
     i += blockDim.x * gridDim.x;
   }
 }
 
 template <typename T, auto reduce, auto transform, typename... TransformArgs>
 __global__ void cuda_transform_reduce(T* block_results, int n_items,
-                                      TransformArgs... transform_args) {
+                                      TransformArgs... transform_args)
+  requires(TransformKernel<transform, T, TransformArgs...> and
+           ReductionOp<reduce, T>)
+{
   __shared__ T cache[block_size];
   auto thread_result = T{};
   auto i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -43,7 +49,9 @@ __global__ void cuda_transform_reduce(T* block_results, int n_items,
 
 template <typename T, auto reduce>
 __global__ void cuda_transform_reduce_final(T* result, T const* block_results,
-                                            int n_block_results) {
+                                            int n_block_results)
+  requires ReductionOp<reduce, T>
+{
   __shared__ T cache[block_size];
   auto thread_result = T{};
   auto i = threadIdx.x;  // final reduction step is always single block
@@ -74,16 +82,21 @@ class CudaExecutor {
   }
 
  public:
-  template <auto parallel_kernel, typename... Args>
-  void call_parallel_kernel(int n_items, Args... args) {
-    cuda_call_parallel_kernel<parallel_kernel, Args...>
+  template <auto kernel, typename... Args>
+  void call_parallel_kernel(int n_items, Args... args)
+    requires ParallelKernel<kernel, Args...>
+  {
+    cuda_call_parallel_kernel<kernel, Args...>
         <<<n_blocks(n_items), block_size>>>(n_items, args...);
     CUDA_ERROR_CHECK(cudaGetLastError());
   }
 
   template <typename T, auto reduce, auto transform, typename... TransformArgs>
   auto transform_reduce(T init_val, int n_items,
-                        TransformArgs... transform_args) {
+                        TransformArgs... transform_args)
+    requires(TransformKernel<transform, T, TransformArgs...> and
+             ReductionOp<reduce, T>)
+  {
     auto dev_result = (T*){nullptr};
     CUDA_ERROR_CHECK(cudaMalloc(&dev_result, sizeof(T)));
     auto dev_block_results = (T*){nullptr};

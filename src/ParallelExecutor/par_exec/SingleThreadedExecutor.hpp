@@ -2,17 +2,24 @@
 
 #include <utility>
 
+#include "KernelConcepts.hpp"
+
 struct SingleThreadedExecutor {
-  template <auto parallel_kernel, typename... Args>
-  void call_parallel_kernel(int n_items, Args... args) {
+  template <auto kernel, typename... Args>
+  void call_parallel_kernel(int n_items, Args... args)
+    requires ParallelKernel<kernel, Args...>
+  {
     for (auto i = 0; i < n_items; ++i) {
-      parallel_kernel(i, std::move(args)...);
+      kernel(i, std::move(args)...);
     }
   }
 
   template <typename T, auto reduce, auto transform, typename... TransformArgs>
   auto transform_reduce(T init_val, int n_items,
-                        TransformArgs... transform_args) {
+                        TransformArgs... transform_args)
+    requires(TransformKernel<transform, T, TransformArgs...> and
+             ReductionOp<reduce, T>)
+  {
     auto result = init_val;
     for (auto i = 0; i < n_items; ++i) {
       auto transform_result = transform(i, std::move(transform_args)...);

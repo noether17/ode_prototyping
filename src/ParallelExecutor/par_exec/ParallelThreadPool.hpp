@@ -7,6 +7,8 @@
 #include <utility>
 #include <vector>
 
+#include "KernelConcepts.hpp"
+
 template <typename Predicate>
 bool spinlock(std::stop_token& stop_token, Predicate pred) {
   for (auto trial = 0; not stop_token.stop_requested(); ++trial) {
@@ -57,14 +59,16 @@ class ParallelThreadPool {
 
   ~ParallelThreadPool() { m_stop_source.request_stop(); }
 
-  template <auto parallel_kernel, typename... Args>
-  void call_parallel_kernel(int n_items, Args... args) {
+  template <auto kernel, typename... Args>
+  void call_parallel_kernel(int n_items, Args... args)
+    requires ParallelKernel<kernel, Args...>
+  {
     auto latch = std::latch{std::ssize(m_threads)};
     m_n_items = n_items;
     m_task = [&latch, ... args = std::move(args)](int thread_begin,
                                                   int thread_end) {
       for (auto i = thread_begin; i < thread_end; ++i) {
-        parallel_kernel(i, args...);
+        kernel(i, args...);
       }
       latch.count_down();
     };
@@ -75,9 +79,14 @@ class ParallelThreadPool {
   }
 
   template <typename T, auto reduce, auto transform, typename... TransformArgs>
-  void static constexpr transform_reduce_kernel(
-      int thread_id, T* thread_partial_results, int n_items,
-      int n_items_per_thread, TransformArgs... transform_args) {
+  void static constexpr transform_reduce_kernel(int thread_id,
+                                                T* thread_partial_results,
+                                                int n_items,
+                                                int n_items_per_thread,
+                                                TransformArgs... transform_args)
+    requires(ReductionOp<reduce, T> and
+             TransformKernel<transform, T, TransformArgs...>)
+  {
     auto thread_partial_result = T{};
     for (auto i = thread_id * n_items_per_thread;
          i < (thread_id + 1) * n_items_per_thread and i < n_items; ++i) {
@@ -89,7 +98,10 @@ class ParallelThreadPool {
 
   template <typename T, auto reduce, auto transform, typename... TransformArgs>
   auto transform_reduce(T init_val, int n_items,
-                        TransformArgs... transform_args) {
+                        TransformArgs... transform_args)
+    requires(ReductionOp<reduce, T> and
+             TransformKernel<transform, T, TransformArgs...>)
+  {
     auto const n_threads = std::ssize(m_threads);
     auto thread_partial_results = std::vector<T>(n_threads);
     auto n_items_per_thread = (n_items + n_threads - 1) / n_threads;

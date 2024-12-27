@@ -8,7 +8,6 @@ target_include_directories(ExponentialTest INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}
 target_link_libraries(ExponentialTest INTERFACE
   ExponentialODE
   HeapState
-  ParallelExecutor
   RawOutput
 )
 
@@ -17,7 +16,6 @@ target_include_directories(NBodyTest INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(NBodyTest INTERFACE
   HeapState
   NBodyODE
-  ParallelExecutor
   RawOutput
 )
 
@@ -25,7 +23,6 @@ add_library(VanDerPolTest INTERFACE VanDerPolTest.hpp)
 target_include_directories(VanDerPolTest INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(VanDerPolTest INTERFACE
   HeapState
-  ParallelExecutor
   RawOutput
   VanDerPolODE
 )

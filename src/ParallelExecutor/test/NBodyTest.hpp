@@ -1,7 +1,6 @@
 #pragma once
 
 #include <array>
-#include <numeric>
 
 #include "HeapState.hpp"
 #include "NBodyODE.hpp"

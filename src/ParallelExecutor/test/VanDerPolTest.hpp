@@ -3,7 +3,6 @@
 #include <array>
 
 #include "HeapState.hpp"
-#include "ParallelExecutor.hpp"
 #include "RawOutput.hpp"
 #include "VanDerPolODE.hpp"
 
@@ -19,7 +18,7 @@ struct VanDerPolTest {
       StateType<double, n_var>(std::array{tol, tol});
   auto static inline const rtol = atol;
   auto constexpr operator()(auto& exe, auto const& x, auto* dxdt) {
-    call_parallel_kernel<VDP_ode_kernel>(exe, n_var, x.data(), dxdt);
+    VanDerPolODE{}(exe, x, dxdt);
   }
   RawOutput<HeapState<double, n_var>> output{};
 };

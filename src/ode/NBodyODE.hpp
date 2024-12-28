@@ -6,8 +6,10 @@
 #include "AtomicUtil.hpp"
 #include "ParallelExecutor.hpp"
 
-template <int n_var, /*auto masses,*/ double softening_sq = 0.0>
+template <int n_var, /*auto masses,*/ double softening = 0.0>
 struct NBodyODE {
+  static constexpr auto softening_sq = softening * softening;
+
   static constexpr void nbody_init_dxdt_kernel(int i, int vel_offset,
                                                double const* x, double* dxdt) {
     dxdt[i] = x[i + vel_offset];

@@ -1,0 +1,2 @@
+add_library(ParticlesInBox INTERFACE ParticlesInBox.hpp)
+target_include_directories(ParticlesInBox INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

@@ -12,12 +12,12 @@
 #include "ExponentialTest.hpp"
 #include "HeapState.hpp"
 #include "NBodyTest.hpp"
-#include "ThreadPoolExecutor.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
+#include "ThreadPoolExecutor.hpp"
 #include "VanDerPolTest.hpp"
 
-class ParallelRKEmbeddedTest : public testing::Test {
+class ThreadPoolRKEmbeddedTest : public testing::Test {
  protected:
   template <typename ButcherTableau, typename ODE>
   using Integrator =
@@ -31,7 +31,7 @@ class ParallelRKEmbeddedTest : public testing::Test {
  * algorithm changes are made during refactoring. These tests are far stricter
  * than the actual requirements. If an intentional change in algorithm results
  * in small differences in output, these values may be updated. */
-TEST_F(ParallelRKEmbeddedTest, HE21VanDerPolConsistencyTest) {
+TEST_F(ThreadPoolRKEmbeddedTest, HE21VanDerPolConsistencyTest) {
   auto test = VanDerPolTest<HeapState>{};
   auto integrator = Integrator<BTHE21, VanDerPolTest<HeapState>>{};
 
@@ -56,7 +56,7 @@ TEST_F(ParallelRKEmbeddedTest, HE21VanDerPolConsistencyTest) {
 }
 
 // This test contains small, but nonzero differences from single-threaded.
-TEST_F(ParallelRKEmbeddedTest, HE21ExponentialConsistencyTest) {
+TEST_F(ThreadPoolRKEmbeddedTest, HE21ExponentialConsistencyTest) {
   auto test = ExponentialTest<HeapState>{};
   auto integrator = Integrator<BTHE21, ExponentialTest<HeapState>>{};
 
@@ -87,7 +87,7 @@ TEST_F(ParallelRKEmbeddedTest, HE21ExponentialConsistencyTest) {
                    test.output.states.back()[test.n_var - 1]);
 }
 
-TEST_F(ParallelRKEmbeddedTest, RKF45VanDerPolConsistencyTest) {
+TEST_F(ThreadPoolRKEmbeddedTest, RKF45VanDerPolConsistencyTest) {
   auto test = VanDerPolTest<HeapState>{};
   auto integrator = Integrator<BTRKF45, VanDerPolTest<HeapState>>{};
 
@@ -112,7 +112,7 @@ TEST_F(ParallelRKEmbeddedTest, RKF45VanDerPolConsistencyTest) {
 }
 
 // This test contains small, but nonzero differences from single-threaded.
-TEST_F(ParallelRKEmbeddedTest, RKF45ExponentialConsistencyTest) {
+TEST_F(ThreadPoolRKEmbeddedTest, RKF45ExponentialConsistencyTest) {
   auto test = ExponentialTest<HeapState>{};
   auto integrator = Integrator<BTRKF45, ExponentialTest<HeapState>>{};
 
@@ -143,7 +143,7 @@ TEST_F(ParallelRKEmbeddedTest, RKF45ExponentialConsistencyTest) {
                    test.output.states.back()[test.n_var - 1]);
 }
 
-TEST_F(ParallelRKEmbeddedTest, DOPRI5VanDerPolConsistencyTest) {
+TEST_F(ThreadPoolRKEmbeddedTest, DOPRI5VanDerPolConsistencyTest) {
   auto test = VanDerPolTest<HeapState>{};
   auto integrator = Integrator<BTDOPRI5, VanDerPolTest<HeapState>>{};
 
@@ -168,7 +168,7 @@ TEST_F(ParallelRKEmbeddedTest, DOPRI5VanDerPolConsistencyTest) {
 }
 
 // This test contains small, but nonzero differences from single-threaded.
-TEST_F(ParallelRKEmbeddedTest, DOPRI5ExponentialConsistencyTest) {
+TEST_F(ThreadPoolRKEmbeddedTest, DOPRI5ExponentialConsistencyTest) {
   auto test = ExponentialTest<HeapState>{};
   auto integrator = Integrator<BTDOPRI5, ExponentialTest<HeapState>>{};
 
@@ -199,7 +199,7 @@ TEST_F(ParallelRKEmbeddedTest, DOPRI5ExponentialConsistencyTest) {
                    test.output.states.back()[test.n_var - 1]);
 }
 
-TEST_F(ParallelRKEmbeddedTest, DVERKVanDerPolConsistencyTest) {
+TEST_F(ThreadPoolRKEmbeddedTest, DVERKVanDerPolConsistencyTest) {
   auto test = VanDerPolTest<HeapState>{};
   auto integrator = Integrator<BTDVERK, VanDerPolTest<HeapState>>{};
 
@@ -223,7 +223,7 @@ TEST_F(ParallelRKEmbeddedTest, DVERKVanDerPolConsistencyTest) {
   EXPECT_DOUBLE_EQ(-1.8329745684699728, test.output.states.back()[1]);
 }
 
-TEST_F(ParallelRKEmbeddedTest, DVERKExponentialConsistencyTest) {
+TEST_F(ThreadPoolRKEmbeddedTest, DVERKExponentialConsistencyTest) {
   auto test = ExponentialTest<HeapState>{};
   auto integrator = Integrator<BTDVERK, ExponentialTest<HeapState>>{};
 
@@ -254,7 +254,7 @@ TEST_F(ParallelRKEmbeddedTest, DVERKExponentialConsistencyTest) {
                    test.output.states.back()[test.n_var - 1]);
 }
 
-TEST_F(ParallelRKEmbeddedTest, RKF78VanDerPolConsistencyTest) {
+TEST_F(ThreadPoolRKEmbeddedTest, RKF78VanDerPolConsistencyTest) {
   auto test = VanDerPolTest<HeapState>{};
   auto integrator = Integrator<BTRKF78, VanDerPolTest<HeapState>>{};
 
@@ -278,7 +278,7 @@ TEST_F(ParallelRKEmbeddedTest, RKF78VanDerPolConsistencyTest) {
   EXPECT_DOUBLE_EQ(-1.8329745686289092, test.output.states.back()[1]);
 }
 
-TEST_F(ParallelRKEmbeddedTest, RKF78ExponentialConsistencyTest) {
+TEST_F(ThreadPoolRKEmbeddedTest, RKF78ExponentialConsistencyTest) {
   auto test = ExponentialTest<HeapState>{};
   auto integrator = Integrator<BTRKF78, ExponentialTest<HeapState>>{};
 
@@ -309,7 +309,7 @@ TEST_F(ParallelRKEmbeddedTest, RKF78ExponentialConsistencyTest) {
                    test.output.states.back()[test.n_var - 1]);
 }
 
-TEST_F(ParallelRKEmbeddedTest, RKF78NBodyTest) {
+TEST_F(ThreadPoolRKEmbeddedTest, RKF78NBodyTest) {
   auto test = NBodyTest<HeapState>{};
   auto integrator = Integrator<BTRKF78, NBodyTest<HeapState>>{};
 

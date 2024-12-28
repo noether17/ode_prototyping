@@ -1,8 +1,3 @@
-include_directories(${CMAKE_SOURCE_DIR}/src/ButcherTableaus
-  ${CMAKE_SOURCE_DIR}/src/ParallelExecutor
-  ${CMAKE_SOURCE_DIR}/src/RKEmbedded
-)
-
 add_library(ExponentialTest INTERFACE ExponentialTest.hpp)
 target_include_directories(ExponentialTest INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
 target_link_libraries(ExponentialTest INTERFACE
@@ -44,8 +39,8 @@ target_link_libraries(SingleThreadedRKEmbeddedTest
 )
 add_test(NAME SingleThreadedRKEmbeddedTest COMMAND SingleThreadedRKEmbeddedTest)
 
-add_executable(ParallelRKEmbeddedTest ParallelRKEmbeddedTest.cpp)
-target_link_libraries(ParallelRKEmbeddedTest
+add_executable(ThreadPoolRKEmbeddedTest ThreadPoolRKEmbeddedTest.cpp)
+target_link_libraries(ThreadPoolRKEmbeddedTest
   GTest::GTest
   GTest::Main
   BTHE21
@@ -59,7 +54,7 @@ target_link_libraries(ParallelRKEmbeddedTest
   RKEmbeddedParallel
   ThreadPoolExecutor
 )
-add_test(NAME ParallelRKEmbeddedTest COMMAND ParallelRKEmbeddedTest)
+add_test(NAME ThreadPoolRKEmbeddedTest COMMAND ThreadPoolRKEmbeddedTest)
 
 add_executable(CudaStateTest CudaStateTest.cu)
 target_link_libraries(CudaStateTest

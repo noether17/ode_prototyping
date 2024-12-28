@@ -6,63 +6,10 @@
 #include "BTRKF78.hpp"
 #include "CudaExecutor.cuh"
 #include "CudaState.cuh"
+#include "HeapState.hpp"
+#include "NBodyODE.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
-
-template <typename CudaStateT>
-struct RawCudaOutput {
-  std::vector<double> times{};
-  std::vector<std::vector<double>> states{};
-
-  void save_state(double t, CudaStateT const& x) {
-    auto host_x = std::vector<double>(x.size());
-    cudaMemcpy(host_x.data(), x.data(), x.size() * sizeof(double),
-               cudaMemcpyDeviceToHost);
-    times.push_back(t);
-    states.push_back(host_x);
-  }
-};
-
-struct ODENBody {
-  static constexpr auto n_particles = 5;
-  static constexpr auto n_var = n_particles * 6;
-  // static inline std::array<double, n_particles> const
-  // masses{1.0, 1.0, 1.0, 1.0,
-  //                                                            1.0};
-  // static double* dev_masses;
-  // ODENBody() {
-  //   cudaMalloc(&dev_masses, n_particles * sizeof(double));
-  //   cudaMemcpy(dev_masses, masses.data(), n_particles * sizeof(double),
-  //              cudaMemcpyHostToDevice);
-  // }
-  //~ODENBody() { cudaFree(dev_masses); }
-  static __device__ void ode_kernel(int i, double const* x, double* dxdt) {
-    for (auto j = i + 1; j < n_particles; ++j) {
-      auto dx = x[3 * j] - x[3 * i];
-      auto dy = x[3 * j + 1] - x[3 * i + 1];
-      auto dz = x[3 * j + 2] - x[3 * i + 2];
-      auto dist = std::sqrt(dx * dx + dy * dy + dz * dz);
-      auto dist_3 = dist * dist * dist;
-      auto ax = dx / dist_3;
-      auto ay = dy / dist_3;
-      auto az = dz / dist_3;
-      atomicAdd(&dxdt[3 * i], ax);
-      atomicAdd(&dxdt[3 * i + 1], ay);
-      atomicAdd(&dxdt[3 * i + 2], az);
-      atomicAdd(&dxdt[3 * j], -ax);
-      atomicAdd(&dxdt[3 * j + 1], -ay);
-      atomicAdd(&dxdt[3 * j + 2], -az);
-    }
-  }
-  void operator()(auto& exe, std::span<double const, n_var> x, double* dxdt) {
-    constexpr auto vel_offset = n_var / 2;
-    cudaMemcpy(dxdt, x.data() + vel_offset, vel_offset * sizeof(double),
-               cudaMemcpyDeviceToDevice);
-    cudaMemset(dxdt + vel_offset, 0, vel_offset * sizeof(double));
-    call_parallel_kernel<ode_kernel>(exe, n_particles, x.data(),
-                                     dxdt + vel_offset);
-  }
-};
 
 int main() {
   // auto x0_data =
@@ -84,13 +31,11 @@ int main() {
   auto masses = std::array{1.0, 1.0, 1.0, 1.0, 1.0};
   auto constexpr n_var = x0_data.size();
 
-  auto ode_n_body = ODENBody{};
   auto cuda_exe = CudaExecutor{};
   auto integrator =
-      RKEmbeddedParallel<CudaState, double, n_var, BTRKF78, ODENBody,
-                         RawCudaOutput<CudaState<double, n_var>>,
-                         CudaExecutor>{};
-  auto output = RawCudaOutput<CudaState<double, n_var>>{};
+      RKEmbeddedParallel<CudaState, double, n_var, BTRKF78, NBodyODE<n_var>,
+                         RawOutput<HeapState<double, n_var>>, CudaExecutor>{};
+  auto output = RawOutput<HeapState<double, n_var>>{};
 
   auto x0 = CudaState<double, n_var>{x0_data};
   auto t0 = 0.0;
@@ -99,7 +44,8 @@ int main() {
   std::fill(host_tol.begin(), host_tol.end(), 1.0e-10);
   auto tol = CudaState<double, n_var>{host_tol};
 
-  integrator.integrate(x0, t0, tf, tol, tol, ode_n_body, output, cuda_exe);
+  integrator.integrate(x0, t0, tf, tol, tol, NBodyODE<n_var>{}, output,
+                       cuda_exe);
 
   auto output_file = std::ofstream{"RKF78_cuda_n_body_output.txt"};
   for (std::size_t i = 0; i < output.times.size(); ++i) {

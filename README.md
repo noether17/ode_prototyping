@@ -1,5 +1,5 @@
 #Introduction
-This repository is for refactoring the ODE integrator provided in Numerical Recipes 3rd Edition.
+This repository is for testing parallel ODE integrators. Currently, parallelism is achieved via a thread pool and via CUDA (a single-threaded implementation is included for completeness). Integration is performed using one of several embedded Runge-Kutta methods, each method being differentiated by its Butcher tableau.
 
 #Building
 ```

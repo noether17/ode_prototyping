@@ -1,7 +1,7 @@
 add_executable(parallel_n_body n_body.cpp)
 target_link_libraries(parallel_n_body
   HeapState
-  ParallelThreadPool
+  ThreadPoolExecutor
   RKEmbeddedParallel
 )
 

@@ -4,7 +4,7 @@
 
 #include "BTRKF78.hpp"
 #include "HeapState.hpp"
-#include "ParallelThreadPool.hpp"
+#include "ThreadPoolExecutor.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
 
@@ -55,10 +55,10 @@ int main() {
       }
     }
   };
-  auto thread_pool = ParallelThreadPool(8);
+  auto thread_pool = ThreadPoolExecutor(8);
   auto integrator = RKEmbeddedParallel<
       HeapState, double, n_var, BTRKF78, decltype(ode_n_body),
-      RawOutput<HeapState<double, n_var>>, ParallelThreadPool>{};
+      RawOutput<HeapState<double, n_var>>, ThreadPoolExecutor>{};
   auto output = RawOutput<HeapState<double, n_var>>{};
 
   auto x0 = HeapState<double, n_var>{x0_data};

@@ -47,7 +47,7 @@ target_link_libraries(ParallelRKEmbeddedTest
   NBodyTest
   VanDerPolTest
   RKEmbeddedParallel
-  ParallelThreadPool
+  ThreadPoolExecutor
 )
 add_test(NAME ParallelRKEmbeddedTest COMMAND ParallelRKEmbeddedTest)
 

@@ -23,9 +23,9 @@ bool spinlock(std::stop_token& stop_token, Predicate pred) {
   return false;
 }
 
-class ParallelThreadPool {
+class ThreadPoolExecutor {
  public:
-  explicit ParallelThreadPool(int n_threads) : m_task_ready_flags(n_threads) {
+  explicit ThreadPoolExecutor(int n_threads) : m_task_ready_flags(n_threads) {
     for (auto thread_id = 0; thread_id < n_threads; ++thread_id) {
       m_threads.emplace_back(
           [this, thread_id, n_threads](std::stop_token stop_token) {
@@ -57,7 +57,7 @@ class ParallelThreadPool {
     }
   }
 
-  ~ParallelThreadPool() { m_stop_source.request_stop(); }
+  ~ThreadPoolExecutor() { m_stop_source.request_stop(); }
 
   template <auto kernel, typename... Args>
   void call_parallel_kernel(int n_items, Args... args)

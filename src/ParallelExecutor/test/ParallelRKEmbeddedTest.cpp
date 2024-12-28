@@ -12,7 +12,7 @@
 #include "ExponentialTest.hpp"
 #include "HeapState.hpp"
 #include "NBodyTest.hpp"
-#include "ParallelThreadPool.hpp"
+#include "ThreadPoolExecutor.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
 #include "VanDerPolTest.hpp"
@@ -23,8 +23,8 @@ class ParallelRKEmbeddedTest : public testing::Test {
   using Integrator =
       RKEmbeddedParallel<HeapState, double, ODE::n_var, ButcherTableau, ODE,
                          RawOutput<HeapState<double, ODE::n_var>>,
-                         ParallelThreadPool>;
-  ParallelThreadPool executor{8};
+                         ThreadPoolExecutor>;
+  ThreadPoolExecutor executor{8};
 };
 
 /* Consistency tests (testing for double equality) are to ensure no accidental

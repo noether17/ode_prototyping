@@ -1,6 +1,6 @@
 add_subdirectory(butcher_tableaus)
 add_subdirectory(cuda_util)
-add_subdirectory(demos)
+add_subdirectory(demo)
 add_subdirectory(integrator)
 add_subdirectory(ode)
 add_subdirectory(output)

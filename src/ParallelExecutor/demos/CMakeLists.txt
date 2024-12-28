@@ -2,6 +2,7 @@ add_executable(threadpool_n_body n_body.cpp)
 target_link_libraries(threadpool_n_body
   HeapState
   NBodyODE
+  RawOutput
   RKEmbeddedParallel
   ThreadPoolExecutor
 )
@@ -12,5 +13,6 @@ target_link_libraries(cuda_n_body
   CudaState
   HeapState
   NBodyODE
+  RawOutput
   RKEmbeddedParallel
 )

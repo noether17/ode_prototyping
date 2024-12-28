@@ -1,0 +1,14 @@
+add_library(BTHE21 INTERFACE BTHE21.hpp)
+target_include_directories(BTHE21 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_library(BTRKF45 INTERFACE BTRKF45.hpp)
+target_include_directories(BTRKF45 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_library(BTDOPRI5 INTERFACE BTDOPRI5.hpp)
+target_include_directories(BTDOPRI5 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_library(BTDVERK INTERFACE BTDVERK.hpp)
+target_include_directories(BTDVERK INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+
+add_library(BTRKF78 INTERFACE BTRKF78.hpp)
+target_include_directories(BTRKF78 INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})

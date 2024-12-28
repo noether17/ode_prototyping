@@ -31,6 +31,11 @@ add_executable(SingleThreadedRKEmbeddedTest SingleThreadedRKEmbeddedTest.cpp)
 target_link_libraries(SingleThreadedRKEmbeddedTest
   GTest::GTest
   GTest::Main
+  BTHE21
+  BTRKF45
+  BTDOPRI5
+  BTDVERK
+  BTRKF78
   ExponentialTest
   NBodyTest
   VanDerPolTest
@@ -43,6 +48,11 @@ add_executable(ParallelRKEmbeddedTest ParallelRKEmbeddedTest.cpp)
 target_link_libraries(ParallelRKEmbeddedTest
   GTest::GTest
   GTest::Main
+  BTHE21
+  BTRKF45
+  BTDOPRI5
+  BTDVERK
+  BTRKF78
   ExponentialTest
   NBodyTest
   VanDerPolTest
@@ -74,6 +84,11 @@ add_executable(CudaRKEmbeddedTest CudaRKEmbeddedTest.cu)
 target_link_libraries(CudaRKEmbeddedTest
   GTest::GTest
   GTest::Main
+  BTHE21
+  BTRKF45
+  BTDOPRI5
+  BTDVERK
+  BTRKF78
   CudaState
   CudaExecutor
   ExponentialTest

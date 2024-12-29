@@ -13,21 +13,6 @@ template <template <typename, int> typename StateContainer, typename ValueType,
 class RKEmbeddedParallel {
  public:
   using OwnedState = StateContainer<ValueType, NVAR>;
-  //[stage, dt](
-  //    int i, std::span<ValueType, NVAR> temp_state,
-  //    std::span<typename decltype(ButcherTableau::a)::value_type,
-  //              std::ssize(ButcherTableau::a)>
-  //        a,
-  //    std::span<typename OwnedState::StateType,
-  //              ButcherTableau::n_stages>
-  //        ks,
-  //    std::span<ValueType, NVAR> x0) {
-  //  temp_state[i] = 0.0;
-  //  for (auto j = 0; j < stage; ++j) {
-  //    temp_state[i] += a[stage - 1][j] * ks[j][i];
-  //  }
-  //  temp_state[i] = x0[i] + temp_state[i] * dt;
-  //},
 
   auto static constexpr rk_stage_kernel(
       int i, int stage, ValueType dt, ValueType* temp_state,
@@ -40,27 +25,6 @@ class RKEmbeddedParallel {
     temp_state[i] = x0[i] + temp_state[i] * dt;
   }
 
-  //[dt](
-  //    int i, std::span<ValueType, NVAR> x,
-  //    std::span<ValueType, NVAR> error_estimate,
-  //    std::span<typename decltype(ButcherTableau::b)::value_type const,
-  //              std::ssize(ButcherTableau::b)>
-  //        b,
-  //    std::span<typename decltype(db)::value_type const, std::ssize(db)>
-  //        db,
-  //    std::span<typename OwnedState::StateType const,
-  //              ButcherTableau::n_stages>
-  //        ks,
-  //    std::span<ValueType const, NVAR> x0) {
-  //  x[i] = 0.0;
-  //  error_estimate[i] = 0.0;
-  //  for (auto j = 0; j < ButcherTableau::n_stages; ++j) {
-  //    x[i] += b[j] * ks[j][i];
-  //    error_estimate[i] += db[j] * ks[j][i];
-  //  }
-  //  x[i] = x0[i] + x[i] * dt;
-  //  error_estimate[i] *= dt;
-  //},
   auto static constexpr update_state_and_error_kernel(
       int i, ValueType dt, ValueType* x, ValueType* error_estimate,
       typename decltype(ButcherTableau::b)::value_type const* b,
@@ -76,14 +40,6 @@ class RKEmbeddedParallel {
     error_estimate[i] *= dt;
   }
 
-  //[](int i, std::span<ValueType, NVAR> error_target,
-  //   std::span<ValueType const, NVAR> atol,
-  //   std::span<ValueType const, NVAR> rtol,
-  //   std::span<ValueType const, NVAR> x,
-  //   std::span<ValueType const, NVAR> x0) {
-  //  error_target[i] =
-  //      atol[i] + rtol[i] * std::max(std::abs(x[i]), std::abs(x0[i]));
-  //},
   auto static constexpr update_error_target_kernel(
       int i, ValueType* error_target, ValueType const* atol,
       ValueType const* rtol, ValueType const* x, ValueType const* x0) {

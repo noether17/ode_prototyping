@@ -113,7 +113,7 @@ class ThreadPoolExecutor {
                            thread_partial_results.end(), init_val, reduce);
   }
 
-  auto constexpr n_threads() const { return std::ssize(m_threads); }
+  constexpr auto n_threads() const { return std::ssize(m_threads); }
 
  private:
   std::stop_source m_stop_source{};

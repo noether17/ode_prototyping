@@ -43,9 +43,9 @@ TEST_F(CudaExecutorTest, ElementWiseAdd) {
   }
 }
 
-auto constexpr binary_add(double a, double b) { return a + b; }
+constexpr auto binary_add(double a, double b) { return a + b; }
 
-auto constexpr element_wise_multiply(int i, double const* a, double const* b) {
+constexpr auto element_wise_multiply(int i, double const* a, double const* b) {
   return a[i] * b[i];
 }
 

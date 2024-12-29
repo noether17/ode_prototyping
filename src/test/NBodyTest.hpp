@@ -28,7 +28,7 @@ struct NBodyTest {
   }();
   auto static inline const atol = StateType<double, n_var>{tol_array};
   auto static inline const rtol = atol;
-  auto constexpr operator()(auto& exe, auto const& x, auto* dxdt) {
+  constexpr auto operator()(auto& exe, auto const& x, auto* dxdt) {
     NBodyODE<n_var>{}(exe, x, dxdt);
   }
   RawOutput<HeapState<double, n_var>> output{};

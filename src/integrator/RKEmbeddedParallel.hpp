@@ -67,7 +67,7 @@ class RKEmbeddedParallel {
                        std::ssize(ButcherTableau::b)>{ButcherTableau::b};
     auto state_db =
         StateContainer<typename decltype(db)::value_type, std::ssize(db)>{db};
-    auto constexpr q = std::min(ButcherTableau::p, ButcherTableau::pt);
+    constexpr auto q = std::min(ButcherTableau::p, ButcherTableau::pt);
     auto static const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
     auto ks = StateContainer<ValueType, ButcherTableau::n_stages * NVAR>{};
 
@@ -188,7 +188,7 @@ class RKEmbeddedParallel {
     call_parallel_kernel<difference_kernel>(exe, n_var, df.data(), f0.data());
     auto d2 = rk_norm(exe, df, error_target) / dt0;
 
-    auto constexpr p = ButcherTableau::p;
+    constexpr auto p = ButcherTableau::p;
     auto dt1 = (std::max(d1, d2) <= 1.0e-15)
                    ? std::max(1.0e-6, dt0 * 1.0e-3)
                    : std::pow(0.01 / std::max(d1, d2), (1.0 / (1.0 + p)));

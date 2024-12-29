@@ -26,7 +26,7 @@ int main() {
                  0.439775,  0.169717,  0.0, 0.0,       -0.593786, 0.0,
                  1.822785,  0.128248,  0.0, 1.271564,  0.168645,  0.0,
                  -1.271564, 0.168645,  0.0, -1.822785, 0.128248,  0.0};
-  auto constexpr n_var = x0_data.size();
+  constexpr auto n_var = x0_data.size();
 
   auto thread_pool = ThreadPoolExecutor(8);
   auto integrator =

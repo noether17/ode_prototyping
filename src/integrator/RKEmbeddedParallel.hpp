@@ -12,7 +12,7 @@ template <template <typename, int> typename StateContainer, typename ValueType,
           typename ParallelExecutor>
 class RKEmbeddedParallel {
  public:
-  using OwnedState = StateContainer<ValueType, NVAR>;
+  using OwningState = StateContainer<ValueType, NVAR>;
 
   auto static constexpr rk_stage_kernel(
       int i, int stage, ValueType dt, ValueType* temp_state,
@@ -47,8 +47,8 @@ class RKEmbeddedParallel {
         atol[i] + rtol[i] * std::max(std::abs(x[i]), std::abs(x0[i]));
   }
 
-  void integrate(OwnedState x0, double t0, double tf, OwnedState atol,
-                 OwnedState rtol, ODE ode, Output& output,
+  void integrate(OwningState x0, double t0, double tf, OwningState atol,
+                 OwningState rtol, ODE ode, Output& output,
                  ParallelExecutor& exe) {
     auto static constexpr max_step_scale = 6.0;
     auto static constexpr min_step_scale = 0.33;
@@ -75,9 +75,9 @@ class RKEmbeddedParallel {
     auto t = t0;
     auto x = x0;
     auto n_var = std::ssize(x);
-    auto temp_state = OwnedState{};
-    auto error_estimate = OwnedState{};
-    auto error_target = OwnedState{};
+    auto temp_state = OwningState{};
+    auto error_estimate = OwningState{};
+    auto error_target = OwningState{};
     output.save_state(t, x);
     while (t < tf) {
       // evaluate stages
@@ -170,20 +170,20 @@ class RKEmbeddedParallel {
                                       ODE& ode) {
     auto const n_var = std::ssize(x0);
 
-    auto error_target = OwnedState{};
+    auto error_target = OwningState{};
     call_parallel_kernel<compute_error_target_kernel>(
         exe, n_var, error_target.data(), x0.data(), atol.data(), rtol.data());
 
-    auto f0 = OwnedState{};
+    auto f0 = OwningState{};
     ode(exe, x0, f0.data());
     auto d0 = rk_norm(exe, x0, error_target);
     auto d1 = rk_norm(exe, f0, error_target);
     auto dt0 = (d0 < 1.0e-5 or d1 < 1.0e-5) ? 1.0e-6 : 0.01 * (d0 / d1);
 
-    auto x1 = OwnedState{};
+    auto x1 = OwningState{};
     call_parallel_kernel<euler_step_kernel>(exe, n_var, x1.data(), x0.data(),
                                             f0.data(), dt0);
-    auto df = OwnedState{};
+    auto df = OwningState{};
     ode(exe, x1, df.data());
     call_parallel_kernel<difference_kernel>(exe, n_var, df.data(), f0.data());
     auto d2 = rk_norm(exe, df, error_target) / dt0;

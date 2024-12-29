@@ -16,7 +16,7 @@ struct ExponentialTest {
     std::iota(temp.begin(), temp.end(), 0.0);
     return temp;
   }();
-  auto static inline const x0 = StateType<double, n_var>(x0_data);
+  static inline auto const x0 = StateType<double, n_var>(x0_data);
   static constexpr auto t0 = 0.0;
   static constexpr auto tf = 10.0;
   static constexpr auto tol = 1.0e-6;
@@ -25,8 +25,8 @@ struct ExponentialTest {
     std::fill(temp.begin(), temp.end(), tol);
     return temp;
   }();
-  auto static inline const atol = StateType<double, n_var>{tol_array};
-  auto static inline const rtol = atol;
+  static inline auto const atol = StateType<double, n_var>{tol_array};
+  static inline auto const rtol = atol;
   constexpr auto operator()(auto& exe, auto const& x, auto* dxdt) {
     ExponentialODE<n_var>{}(exe, x, dxdt);
   }

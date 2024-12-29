@@ -68,7 +68,7 @@ class RKEmbeddedParallel {
     auto state_db =
         StateContainer<typename decltype(db)::value_type, std::ssize(db)>{db};
     constexpr auto q = std::min(ButcherTableau::p, ButcherTableau::pt);
-    auto static const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
+    static auto const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
     auto ks = StateContainer<ValueType, ButcherTableau::n_stages * NVAR>{};
 
     auto dt = estimate_initial_step(exe, x0, atol, rtol, ode);

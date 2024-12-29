@@ -17,7 +17,7 @@ struct NBodyTest {
                  -1.271564, 0.168645,  0.0, -1.822785, 0.128248,  0.0};
   static constexpr auto masses = std::array{1.0, 1.0, 1.0, 1.0, 1.0};
   static constexpr auto n_var = x0_data.size();
-  auto static inline const x0 = StateType<double, n_var>(x0_data);
+  static inline auto const x0 = StateType<double, n_var>(x0_data);
   static constexpr auto t0 = 0.0;
   static constexpr auto tf = 6.3;
   static constexpr auto tol = 1.0e-10;
@@ -26,8 +26,8 @@ struct NBodyTest {
     std::fill(temp.begin(), temp.end(), tol);
     return temp;
   }();
-  auto static inline const atol = StateType<double, n_var>{tol_array};
-  auto static inline const rtol = atol;
+  static inline auto const atol = StateType<double, n_var>{tol_array};
+  static inline auto const rtol = atol;
   constexpr auto operator()(auto& exe, auto const& x, auto* dxdt) {
     NBodyODE<n_var>{}(exe, x, dxdt);
   }

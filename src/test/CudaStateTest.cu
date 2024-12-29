@@ -9,9 +9,9 @@
 
 class CudaStateTest : public testing::Test {
  protected:
-  auto static constexpr N = 10;
-  auto static constexpr threads_per_block = 64;
-  auto static constexpr blocks_per_grid =
+  static constexpr auto N = 10;
+  static constexpr auto threads_per_block = 64;
+  static constexpr auto blocks_per_grid =
       (N + threads_per_block - 1) / threads_per_block;
 };
 

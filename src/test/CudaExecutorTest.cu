@@ -8,16 +8,16 @@
 
 class CudaExecutorTest : public ::testing::Test {
  protected:
-  auto static constexpr N = 10;
+  static constexpr auto N = 10;
   CudaExecutor cuda_exec{};
 
-  auto static constexpr host_state1 = [] {
+  static constexpr auto host_state1 = [] {
     auto a = std::array<double, N>{};
     std::iota(a.begin(), a.end(), 0.0);
     return a;
   }();
 
-  auto static constexpr host_state2 = [] {
+  static constexpr auto host_state2 = [] {
     auto a = std::array<double, N>{};
     std::iota(a.begin(), a.end(), 1.0);
     return a;

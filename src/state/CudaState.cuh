@@ -44,7 +44,7 @@ class CudaState {
   operator std::span<ValueType, N>() { return *m_state; }
   operator std::span<ValueType const, N>() const { return *m_state; }
 
-  auto static constexpr size() { return N; }
+  static constexpr auto size() { return N; }
 
  private:
   StateType* m_state{};

@@ -3,7 +3,7 @@
 #include <array>
 
 struct BTRKF78 {
-  auto static constexpr a = std::array{
+  static constexpr auto a = std::array{
       std::array{2.0 / 27.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
                  0.0},
       std::array{1.0 / 36.0, 1.0 / 12.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0,
@@ -31,15 +31,15 @@ struct BTRKF78 {
       std::array{-1777.0 / 4100.0, 0.0, 0.0, -341.0 / 164.0, 4496.0 / 1025.0,
                  -289.0 / 82.0, 2193.0 / 4100.0, 51.0 / 82.0, 33.0 / 164.0,
                  12.0 / 41.0, 0.0, 1.0}};
-  auto static constexpr b =
+  static constexpr auto b =
       std::array{41.0 / 840.0, 0.0,        0.0,        0.0,         0.0,
                  34.0 / 105.0, 9.0 / 35.0, 9.0 / 35.0, 9.0 / 280.0, 9.0 / 280.0,
                  41.0 / 840.0, 0.0,        0.0};
-  auto static constexpr bt = std::array{
+  static constexpr auto bt = std::array{
       0.0,          0.0,          0.0,         0.0,         0.0,
       34.0 / 105.0, 9.0 / 35.0,   9.0 / 35.0,  9.0 / 280.0, 9.0 / 280.0,
       0.0,          41.0 / 840.0, 41.0 / 840.0};
-  auto static constexpr p = 7;
-  auto static constexpr pt = 8;
-  auto static constexpr n_stages = static_cast<int>(b.size());
+  static constexpr auto p = 7;
+  static constexpr auto pt = 8;
+  static constexpr auto n_stages = static_cast<int>(b.size());
 };

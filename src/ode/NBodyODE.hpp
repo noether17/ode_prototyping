@@ -128,9 +128,9 @@ struct NBodyODE {
 //
 // template <int n_var>
 // struct CudaNBodyOdeWithMasses {
-//   auto static constexpr n_particles = n_var / 6;
-//   auto static constexpr n_pairs = n_particles * (n_particles - 1) / 2;
-//   auto static constexpr dim = 3;
+//   static constexpr auto n_particles = n_var / 6;
+//   static constexpr auto n_pairs = n_particles * (n_particles - 1) / 2;
+//   static constexpr auto dim = 3;
 //   std::array<double, n_particles> masses{};
 //   double softening_2{};
 //   void compute_rhs(double const* x, double* f) {
@@ -182,9 +182,9 @@ struct NBodyODE {
 //
 // template <int n_var>
 // struct CudaNBodyOde {
-//   auto static constexpr n_particles = n_var / 6;
-//   auto static constexpr n_pairs = n_particles * (n_particles - 1) / 2;
-//   auto static constexpr dim = 3;
+//   static constexpr auto n_particles = n_var / 6;
+//   static constexpr auto n_pairs = n_particles * (n_particles - 1) / 2;
+//   static constexpr auto dim = 3;
 //
 //   double softening_2{};
 //   void compute_rhs(double const* x, double* f) {
@@ -227,7 +227,7 @@ struct NBodyODE {
 //
 // template <int n_var>
 // struct CudaNBodyOdeSimple {
-//   auto static constexpr n_particles = n_var / 6;
+//   static constexpr auto n_particles = n_var / 6;
 //
 //   double softening_sq{};
 //   void compute_rhs(double const* x, double* f) {

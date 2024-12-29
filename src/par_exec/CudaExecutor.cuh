@@ -3,7 +3,7 @@
 #include "CudaErrorCheck.cuh"
 #include "KernelConcepts.hpp"
 
-auto static constexpr block_size = 256;
+static constexpr auto block_size = 256;
 
 template <auto kernel, typename... Args>
 __global__ void cuda_call_parallel_kernel(int n_items, Args... args)
@@ -76,8 +76,8 @@ __global__ void cuda_transform_reduce_final(T* result, T const* block_results,
 }
 
 class CudaExecutor {
-  auto static constexpr block_size = 256;
-  auto static constexpr n_blocks(int N) {
+  static constexpr auto block_size = 256;
+  static constexpr auto n_blocks(int N) {
     return (N + block_size - 1) / block_size;
   }
 

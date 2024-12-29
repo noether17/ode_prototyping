@@ -39,7 +39,7 @@ class HeapState {
   operator std::span<ValueType, N>() { return *state_; }
   operator std::span<ValueType const, N>() const { return *state_; }
 
-  auto static constexpr size() { return N; }
+  static constexpr auto size() { return N; }
 
  private:
   std::unique_ptr<StateType> state_{};

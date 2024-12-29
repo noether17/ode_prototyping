@@ -10,17 +10,17 @@
 // Defines parameters for Exponential test.
 template <template <typename, int> typename StateType>
 struct ExponentialTest {
-  auto static constexpr n_var = 10;
-  auto static constexpr x0_data = [] {
+  static constexpr auto n_var = 10;
+  static constexpr auto x0_data = [] {
     auto temp = std::array<double, n_var>{};
     std::iota(temp.begin(), temp.end(), 0.0);
     return temp;
   }();
   auto static inline const x0 = StateType<double, n_var>(x0_data);
-  auto static constexpr t0 = 0.0;
-  auto static constexpr tf = 10.0;
-  auto static constexpr tol = 1.0e-6;
-  auto static constexpr tol_array = [] {
+  static constexpr auto t0 = 0.0;
+  static constexpr auto tf = 10.0;
+  static constexpr auto tol = 1.0e-6;
+  static constexpr auto tol_array = [] {
     auto temp = std::array<double, n_var>{};
     std::fill(temp.begin(), temp.end(), tol);
     return temp;

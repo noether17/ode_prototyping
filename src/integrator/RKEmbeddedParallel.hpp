@@ -14,7 +14,7 @@ class RKEmbeddedParallel {
  public:
   using OwningState = StateContainer<ValueType, NVAR>;
 
-  auto static constexpr rk_stage_kernel(
+  static constexpr auto rk_stage_kernel(
       int i, int stage, ValueType dt, ValueType* temp_state,
       typename decltype(ButcherTableau::a)::value_type const* a, ValueType* ks,
       ValueType const* x0) {
@@ -25,7 +25,7 @@ class RKEmbeddedParallel {
     temp_state[i] = x0[i] + temp_state[i] * dt;
   }
 
-  auto static constexpr update_state_and_error_kernel(
+  static constexpr auto update_state_and_error_kernel(
       int i, ValueType dt, ValueType* x, ValueType* error_estimate,
       typename decltype(ButcherTableau::b)::value_type const* b,
       typename decltype(ButcherTableau::b)::value_type const* db, ValueType* ks,
@@ -40,7 +40,7 @@ class RKEmbeddedParallel {
     error_estimate[i] *= dt;
   }
 
-  auto static constexpr update_error_target_kernel(
+  static constexpr auto update_error_target_kernel(
       int i, ValueType* error_target, ValueType const* atol,
       ValueType const* rtol, ValueType const* x, ValueType const* x0) {
     error_target[i] =
@@ -50,9 +50,9 @@ class RKEmbeddedParallel {
   void integrate(OwningState x0, double t0, double tf, OwningState atol,
                  OwningState rtol, ODE ode, Output& output,
                  ParallelExecutor& exe) {
-    auto static constexpr max_step_scale = 6.0;
-    auto static constexpr min_step_scale = 0.33;
-    auto static constexpr db = [] {
+    static constexpr auto max_step_scale = 6.0;
+    static constexpr auto min_step_scale = 0.33;
+    static constexpr auto db = [] {
       auto db = ButcherTableau::b;
       for (auto i = 0; i < ButcherTableau::n_stages; ++i) {
         db[i] -= ButcherTableau::bt[i];
@@ -126,13 +126,13 @@ class RKEmbeddedParallel {
     }
   }
 
-  auto static constexpr scaled_value_squared_kernel(int i, ValueType const* v,
+  static constexpr auto scaled_value_squared_kernel(int i, ValueType const* v,
                                                     ValueType const* scale) {
     auto scaled_value = v[i] / scale[i];
     return scaled_value * scaled_value;
   }
 
-  auto static constexpr add(ValueType a, ValueType b) { return a + b; }
+  static constexpr auto add(ValueType a, ValueType b) { return a + b; }
 
   ValueType static rk_norm(ParallelExecutor& exe,
                            std::span<ValueType const, NVAR> v,
@@ -144,7 +144,7 @@ class RKEmbeddedParallel {
         n_var);
   }
 
-  auto static constexpr compute_error_target_kernel(int i,
+  static constexpr auto compute_error_target_kernel(int i,
                                                     ValueType* error_target,
                                                     ValueType const* x0,
                                                     ValueType const* atol,
@@ -152,13 +152,13 @@ class RKEmbeddedParallel {
     error_target[i] = std::abs(x0[i]) * rtol[i] + atol[i];
   }
 
-  auto static constexpr euler_step_kernel(int i, ValueType* x1,
+  static constexpr auto euler_step_kernel(int i, ValueType* x1,
                                           ValueType const* x0,
                                           ValueType const* f0, ValueType dt0) {
     x1[i] = x0[i] + f0[i] * dt0;
   }
 
-  auto static constexpr difference_kernel(int i, ValueType* df,
+  static constexpr auto difference_kernel(int i, ValueType* df,
                                           ValueType const* f0) {
     df[i] -= f0[i];
   }

@@ -28,8 +28,9 @@ struct NBodyTest {
   }();
   static inline auto const atol = StateType<double, n_var>{tol_array};
   static inline auto const rtol = atol;
-  constexpr auto operator()(auto& exe, auto const& x, auto* dxdt) {
-    NBodyODE<n_var>{}(exe, x, dxdt);
+  constexpr auto operator()(auto& exe, std::span<double const, n_var> x,
+                            std::span<double, n_var> dxdt) {
+    NBodyODE<double, n_var>{}(exe, x, dxdt);
   }
   RawOutput<HeapState<double, n_var>> output{};
 };

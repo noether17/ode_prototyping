@@ -17,8 +17,9 @@ struct VanDerPolTest {
   static inline auto const atol =
       StateType<double, n_var>(std::array{tol, tol});
   static inline auto const rtol = atol;
-  constexpr auto operator()(auto& exe, auto const& x, auto* dxdt) {
-    VanDerPolODE{}(exe, x, dxdt);
+  constexpr auto operator()(auto& exe, std::span<double const, n_var> x,
+                            std::span<double, n_var> dxdt) {
+    VanDerPolODE<double>{}(exe, x, dxdt);
   }
   RawOutput<HeapState<double, n_var>> output{};
 };

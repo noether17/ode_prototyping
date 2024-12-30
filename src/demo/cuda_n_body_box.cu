@@ -20,7 +20,8 @@ int main() {
 
   auto cuda_exe = CudaExecutor{};
   auto integrator =
-      RKEmbeddedParallel<CudaState, double, n_var, BTRKF78, NBodyODE<n_var>,
+      RKEmbeddedParallel<CudaState, double, n_var, BTRKF78,
+                         NBodyODE<double, n_var>,
                          RawOutput<HeapState<double, n_var>>, CudaExecutor>{};
   auto output = RawOutput<HeapState<double, n_var>>{};
 
@@ -28,8 +29,8 @@ int main() {
   auto tf = scenario.tf;
 
   integrator.integrate(scenario.initial_state, t0, tf, scenario.tolerance_array,
-                       scenario.tolerance_array, NBodyODE<n_var>{}, output,
-                       cuda_exe);
+                       scenario.tolerance_array, NBodyODE<double, n_var>{},
+                       output, cuda_exe);
 
   auto output_file = std::ofstream{"RKF78_cuda_n_body_box_output.txt"};
   for (std::size_t i = 0; i < output.times.size(); ++i) {

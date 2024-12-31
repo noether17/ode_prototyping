@@ -12,7 +12,7 @@ struct ParticlesInBox {
   static constexpr auto L = 1.0;
   static constexpr auto n_var = N * 6;
   static inline auto const tf = 10.0 * std::sqrt(L * L * L / N);
-  static constexpr auto softening = 1.0e-3;
+  static constexpr auto softening = L / (N * (N - 1));
   static constexpr auto tolerance_value = 1.0e-3;
 
   StateContainer<ValueType, n_var> initial_state;

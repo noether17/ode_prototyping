@@ -32,3 +32,15 @@ target_link_libraries(cuda_n_body_box
   RawOutput
   RKEmbeddedParallel
 )
+
+add_executable(n_body_benchmark_test n_body_benchmark_test.cu)
+target_link_libraries(n_body_benchmark_test
+  BTRKF78
+  CudaExecutor
+  CudaState
+  HeapState
+  NBodyODE
+  ParticlesInBox
+  RawOutput
+  RKEmbeddedParallel
+)

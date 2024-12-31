@@ -40,17 +40,17 @@ struct NBodyODE {
     auto j = pair_id - (n_particles - 1) * i + (i * (i + 1)) / 2 + 1;
 
     // read coordinates
-    auto ix = x[3 * i];
-    auto iy = x[3 * i + 1];
-    auto iz = x[3 * i + 2];
-    auto jx = x[3 * j];
-    auto jy = x[3 * j + 1];
-    auto jz = x[3 * j + 2];
+    auto xi = x[3 * i];
+    auto yi = x[3 * i + 1];
+    auto zi = x[3 * i + 2];
+    auto xj = x[3 * j];
+    auto yj = x[3 * j + 1];
+    auto zj = x[3 * j + 2];
 
     // compute acceleration per mass
-    auto dx = jx - ix;
-    auto dy = jy - iy;
-    auto dz = jz - iz;
+    auto dx = xj - xi;
+    auto dy = yj - yi;
+    auto dz = zj - zi;
     auto dist_sq = dx * dx + dy * dy + dz * dz;
     auto dist = std::sqrt(dist_sq);
     auto denominator = dist * (dist_sq + softening_sq);
@@ -59,38 +59,38 @@ struct NBodyODE {
     auto az = dz / denominator;
 
     // compute acceleration values
-    auto iax = ax;
-    auto iay = ay;
-    auto iaz = az;
+    auto axi = ax;
+    auto ayi = ay;
+    auto azi = az;
     // if constexpr (masses.size() == 1) {
-    //   iax *= masses[0];
-    //   iay *= masses[0];
-    //   iaz *= masses[0];
+    //   axi *= masses[0];
+    //   ayi *= masses[0];
+    //   azi *= masses[0];
     // } else if constexpr (masses.size() > 1) {
-    //   iax *= masses[j];
-    //   iay *= masses[j];
-    //   iaz *= masses[j];
+    //   axi *= masses[j];
+    //   ayi *= masses[j];
+    //   azi *= masses[j];
     // }
-    auto jax = -ax;
-    auto jay = -ay;
-    auto jaz = -az;
+    auto axj = -ax;
+    auto ayj = -ay;
+    auto azj = -az;
     // if constexpr (masses.size() == 1) {
-    //   jax *= masses[0];
-    //   jay *= masses[0];
-    //   jaz *= masses[0];
+    //   axj *= masses[0];
+    //   ayj *= masses[0];
+    //   azj *= masses[0];
     // } else if constexpr (masses.size() > 1) {
-    //   jax *= masses[i];
-    //   jay *= masses[i];
-    //   jaz *= masses[i];
+    //   axj *= masses[i];
+    //   ayj *= masses[i];
+    //   azj *= masses[i];
     // }
 
     // add contribution of pair to acceleration
     auto a_offset = 3 * n_particles;
-    au::atomic_add(&dxdt[a_offset + 3 * i], iax);
-    au::atomic_add(&dxdt[a_offset + 3 * i + 1], iay);
-    au::atomic_add(&dxdt[a_offset + 3 * i + 2], iaz);
-    au::atomic_add(&dxdt[a_offset + 3 * j], jax);
-    au::atomic_add(&dxdt[a_offset + 3 * j + 1], jay);
-    au::atomic_add(&dxdt[a_offset + 3 * j + 2], jaz);
+    au::atomic_add(&dxdt[a_offset + 3 * i], axi);
+    au::atomic_add(&dxdt[a_offset + 3 * i + 1], ayi);
+    au::atomic_add(&dxdt[a_offset + 3 * i + 2], azi);
+    au::atomic_add(&dxdt[a_offset + 3 * j], axj);
+    au::atomic_add(&dxdt[a_offset + 3 * j + 1], ayj);
+    au::atomic_add(&dxdt[a_offset + 3 * j + 2], azj);
   }
 };

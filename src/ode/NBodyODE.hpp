@@ -21,8 +21,18 @@ struct NBodyODE {
     call_parallel_kernel<nbody_acc_kernel>(exe, n_pairs, n_particles, x, dxdt);
   }
 
+  /* Whenever arbitrarily close approaches are possible, a softening parameter
+   * is required to prevent forces from becoming too large so that the step size
+   * remains reasonable. The softening parameter represents the length scale at
+   * which particles appear as diffuse objects. To minimize the physical impact
+   * of the softening parameter, choose it to be roughly the separation between
+   * two particles in orbit around each other with all other particles scattered
+   * to infinity with zero energy. This is a good approximation of the minimum
+   * distance of physical interest in the simulation. */
   static constexpr auto softening_sq = softening * softening;
 
+  /* Initializes the velocity portion of dxdt to the velocity portion of the
+   * state, x, and initializes the acceleration portion of dxdt to zero. */
   static constexpr void nbody_init_dxdt_kernel(
       int i, int vel_offset, std::span<ValueType const, n_var> x,
       std::span<ValueType, n_var> dxdt) {
@@ -30,6 +40,9 @@ struct NBodyODE {
     dxdt[i + vel_offset] = 0.0;
   }
 
+  /* Computes the acceleration values for a single pair of particles and
+   * atomically adds the contribution of the pair to the acceleration portion of
+   * dxdt. */
   static constexpr void nbody_acc_kernel(int pair_id, int n_particles,
                                          std::span<ValueType const, n_var> x,
                                          std::span<ValueType, n_var> dxdt) {

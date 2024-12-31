@@ -11,7 +11,6 @@
 #include "ParticlesInBox.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
-#include "n_body_scenarios/ParticlesInBox.hpp"
 
 int main() {
   constexpr auto N = 64;

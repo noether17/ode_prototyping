@@ -15,6 +15,7 @@
 #include "ParticlesInBox.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
+#include "SpinningParticlesInBox.hpp"
 
 template <typename IntegrationMethod, typename ParallelizationMethod>
 auto generate_filename(auto const& scenario) {
@@ -71,7 +72,7 @@ void output_to_file(std::string const& filename, auto const& output) {
 
 int main() {
   constexpr auto N = 64;
-  auto scenario = ParticlesInBox<N, CudaState, double>{};
+  auto scenario = SpinningParticlesInBox<N, CudaState, double>{};
   constexpr auto n_var = scenario.n_var;
 
   auto cuda_exe = CudaExecutor{};

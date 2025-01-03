@@ -18,17 +18,16 @@ def main():
     parser.add_argument("filename")
     args = parser.parse_args()
     filename = args.filename
-    method_str = filename.split('_')[-1].split('.')[0]
+    method_str = method_str_from_filename(filename)
 
     # load and parse data
-    if filename.split('.')[1] == 'bin':
+    if filename.split('.')[-1] == 'bin':
         with open(filename, mode='rb') as data_file:
-            n_rows = int.from_bytes(data_file.read(8), 'little')
-            n_cols = int.from_bytes(data_file.read(8), 'little')
+            n_times = int.from_bytes(data_file.read(8), 'little')
+            n_var = int.from_bytes(data_file.read(8), 'little')
             states = np.array([[struct.unpack('d', data_file.read(8))[0]
-                                for j in np.arange(n_cols)]
-                               for i in np.arange(math.ceil(n_rows / 20))])
-            print(states)
+                                for j in np.arange(n_var + 1)]
+                               for i in np.arange(n_times)])
     else:
         states = np.loadtxt(filename, delimiter=',', dtype=float)
     times = states[:, 0]
@@ -49,7 +48,7 @@ def main():
     ani = anim.FuncAnimation(fig, plot_frame, total_frames,
                              fargs=(interp_times, interp_positions, method_str, ax))
     writer = anim.PillowWriter(fps=max_fps)
-    ani.save(f"animation_{N}_particles_{method_str}.gif", writer=writer)
+    ani.save(f"animation_{filename}.gif", writer=writer)
     print() # newline after progress report
 
 def plot_frame(frame_idx, times, positions, method_str, ax):
@@ -70,6 +69,11 @@ def plot_frame(frame_idx, times, positions, method_str, ax):
     print(f"\rPlotted {progress_percent:.2f}% of frames.", end='')
 
     return ax
+
+def method_str_from_filename(filename: str):
+    if 'RKF78' in filename:
+        return 'RKF78'
+    return 'Unknown'
 
 if __name__ == "__main__":
     main()

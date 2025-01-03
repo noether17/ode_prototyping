@@ -47,19 +47,25 @@ auto generate_filename(auto const& scenario) {
               std::to_string(scenario.tolerance_value);
 
   // extension
-  filename += ".txt";
+  filename += ".bin";
 
   return filename;
 }
 
-void output_to_file(std::string const& filename, auto& output) {
-  auto output_file = std::ofstream{filename};
-  for (std::size_t i = 0; i < output.times.size(); ++i) {
-    output_file << output.times[i];
-    for (std::size_t j = 0; j < output.states[i].size(); ++j) {
-      output_file << ',' << output.states[i][j];
+void output_to_file(std::string const& filename, auto const& output) {
+  auto const n_times = static_cast<std::size_t>(output.times.size());
+  auto const n_var = static_cast<std::size_t>(output.states[0].size());
+
+  auto output_file = std::ofstream{filename, std::ios::out | std::ios::binary};
+  output_file.write(reinterpret_cast<char const*>(&n_times), sizeof(n_times));
+  output_file.write(reinterpret_cast<char const*>(&n_var), sizeof(n_var));
+  for (std::size_t i = 0; i < n_times; ++i) {
+    output_file.write(reinterpret_cast<char const*>(&output.times[i]),
+                      sizeof(output.times[i]));
+    for (std::size_t j = 0; j < n_var; ++j) {
+      output_file.write(reinterpret_cast<char const*>(&output.states[i][j]),
+                        sizeof(output.states[i][j]));
     }
-    output_file << '\n';
   }
 }
 
@@ -82,8 +88,6 @@ int main() {
                        scenario.tolerance_array, NBodyODE<double, n_var>{},
                        output, cuda_exe);
 
-  // auto filename = std::string{"n_body_benchmark_test_cuda_RKF78_"} +
-  //                 std::to_string(scenario.tolerance_value) + ".txt";
   auto filename = generate_filename<BTRKF78, CudaExecutor>(scenario);
   output_to_file(filename, output);
 

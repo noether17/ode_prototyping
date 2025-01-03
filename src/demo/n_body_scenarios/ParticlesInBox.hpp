@@ -5,11 +5,14 @@
 #include <cmath>
 #include <memory>
 #include <random>
+#include <string>
 
 template <int N, template <typename, int> typename StateContainer,
           typename ValueType>
 struct ParticlesInBox {
+  static inline auto const name = std::string{"ParticlesInBox"};
   static constexpr auto L = 1.0;
+  static constexpr auto n_particles = N;
   static constexpr auto n_var = N * 6;
   static inline auto const tf = 10.0 * std::sqrt(L * L * L / N);
   static constexpr auto softening = L / (N * (N - 1));

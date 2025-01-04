@@ -7,6 +7,7 @@ import scipy.interpolate as interp
 import struct
 
 dim = 3 # number of dimensions
+global softening
 
 def main():
     parser = argparse.ArgumentParser()
@@ -19,11 +20,16 @@ def main():
         print("Reading input file.")
         n_times = int.from_bytes(data_file.read(8), 'little')
         n_var = int.from_bytes(data_file.read(8), 'little')
-        data = np.array([[struct.unpack('d', data_file.read(8))[0]
-                          for j in np.arange(n_var + 1)]
-                         for i in np.arange(n_times)])
-    times = data[:, 0]
-    states = data[:, 1:-1]
+        global softening
+        softening = struct.unpack('d', data_file.read(8))[0]
+        print(softening)
+
+        times = np.empty(n_times, dtype=float)
+        states = np.empty([n_times, n_var], dtype=float)
+        for i in np.arange(n_times):
+            times[i] = struct.unpack('d', data_file.read(8))[0]
+            states[i] = [struct.unpack('d', data_file.read(8))[0]
+                         for j in np.arange(n_var)]
 
     energies = compute_energies(states)
 
@@ -52,8 +58,8 @@ def main():
 # calculate potential energy for a single state. assumes all masses are 1.
 @numba.njit()
 def potential_energy(state_positions):
+    global softening
     N = int(state_positions.size / dim)
-    softening = 0.01 / (N * (N - 1)) ###
     energy = 0.0
     for i in np.arange(N):
         for j in np.arange(i + 1, N):

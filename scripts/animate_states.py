@@ -25,6 +25,7 @@ def main():
         with open(filename, mode='rb') as data_file:
             n_times = int.from_bytes(data_file.read(8), 'little')
             n_var = int.from_bytes(data_file.read(8), 'little')
+            softening = struct.unpack('d', data_file.read(8))[0]
             states = np.array([[struct.unpack('d', data_file.read(8))[0]
                                 for j in np.arange(n_var + 1)]
                                for i in np.arange(n_times)])

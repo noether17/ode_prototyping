@@ -30,7 +30,8 @@ def main():
     # interpolate
     max_points = 1001
     if energies.size > max_points:
-        print(f"Number of points greater than maximum ({max_points}). Interpolating.")
+        print(f"Number of points ({energies.size}) is greater than maximum " +
+              f"({max_points}). Interpolating.")
         spline = interp.make_interp_spline(times, energies, bc_type='natural')
         interp_times = np.linspace(times[0], times[-1], num=max_points)
         interp_energies = spline(interp_times)
@@ -38,9 +39,11 @@ def main():
         interp_times = times
         interp_energies = energies
 
+    fractional_dE = np.abs((interp_energies[1:] - energies[0]) / energies[0])
+    print(f"Average fractional change in energy: {np.mean(fractional_dE)}")
+
     # plot
-    plt.semilogy(interp_times[1:],
-                 np.abs((interp_energies[1:] - energies[0]) / energies[0]))
+    plt.semilogy(interp_times[1:], fractional_dE)
     plt.xlabel(r"$t$")
     plt.ylabel(r"$\frac{E(t) - E_0}{E_0}$")
     plt.title("Fractional Change in Energy over Time")

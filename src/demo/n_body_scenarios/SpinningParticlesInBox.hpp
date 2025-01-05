@@ -36,12 +36,12 @@ struct SpinningParticlesInBox {
     for (auto i = 0; i < n_var / 2; ++i) {
       (*init_array_ptr)[i] = dist(gen);
     }
-    // add spin about z-axis
+    // add spin about vertical axis
     for (auto i = 0; i < n_particles; ++i) {
-      auto const x = (*init_array_ptr)[3 * i];
-      auto const y = (*init_array_ptr)[3 * i + 1];
-      (*init_array_ptr)[n_var / 2 + 3 * i] = -omega * (y - L / 2.0);
-      (*init_array_ptr)[n_var / 2 + 3 * i + 1] = omega * (x - L / 2.0);
+      auto const x = (*init_array_ptr)[3 * i] - L / 2.0;
+      auto const y = (*init_array_ptr)[3 * i + 1] - L / 2.0;
+      (*init_array_ptr)[n_var / 2 + 3 * i] = -omega * y;
+      (*init_array_ptr)[n_var / 2 + 3 * i + 1] = omega * x;
       (*init_array_ptr)[n_var / 2 + 3 * i + 2] = 0.0;
     }
     initial_state = StateContainer<ValueType, n_var>{*init_array_ptr};

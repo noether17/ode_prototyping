@@ -1,4 +1,5 @@
 #include <array>
+#include <charconv>
 #include <chrono>
 #include <fstream>
 #include <iomanip>
@@ -44,8 +45,17 @@ auto generate_filename(auto const& scenario) {
   filename += tss.str();
 
   // softening and tolerance
-  filename += "_sof_" + std::to_string(scenario.softening) + "_tol_" +
-              std::to_string(scenario.tolerance_value);
+  constexpr auto buffer_size = 8;
+  filename += "_sof_";
+  auto sof_str = std::array<char, buffer_size>{'\0'};
+  std::to_chars(sof_str.begin(), sof_str.end(), scenario.softening,
+                std::chars_format::scientific, 1);
+  filename += sof_str.data();
+  filename += "_tol_";
+  auto tol_str = std::array<char, buffer_size>{'\0'};
+  std::to_chars(tol_str.begin(), tol_str.end(), scenario.tolerance_value,
+                std::chars_format::scientific, 1);
+  filename += tol_str.data();
 
   // extension
   filename += ".bin";

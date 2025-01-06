@@ -5,6 +5,7 @@
 #include <iomanip>
 #include <span>
 #include <string>
+#include <thread>
 #include <type_traits>
 #include <vector>
 
@@ -107,6 +108,10 @@ void run_cuda_scenario() {
 
     auto filename = generate_filename<BTRKF78, CudaExecutor>(scenario);
     output_to_file(filename, output, scenario.softening);
+
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(
+        1s);  // crude solution to make sure filenames are distinct.
   }
 }
 

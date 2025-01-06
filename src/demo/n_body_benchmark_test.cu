@@ -95,7 +95,7 @@ void run_cuda_scenario() {
     auto cuda_exe = CudaExecutor{};
     auto integrator =
         RKEmbeddedParallel<CudaState, double, n_var, BTRKF78,
-                           NBodyODE<double, n_var>,
+                           NBodyODE<double, n_var, scenario.softening>,
                            RawOutput<HeapState<double, n_var>>, CudaExecutor>{};
     auto output = RawOutput<HeapState<double, n_var>>{};
 
@@ -104,7 +104,8 @@ void run_cuda_scenario() {
 
     integrator.integrate(scenario.initial_state, t0, tf,
                          scenario.tolerance_array, scenario.tolerance_array,
-                         NBodyODE<double, n_var>{}, output, cuda_exe);
+                         NBodyODE<double, n_var, scenario.softening>{}, output,
+                         cuda_exe);
 
     auto filename = generate_filename<BTRKF78, CudaExecutor>(scenario);
     output_to_file(filename, output, scenario.softening);

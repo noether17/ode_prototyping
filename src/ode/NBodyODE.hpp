@@ -64,9 +64,10 @@ struct NBodyODE {
     auto dx = xj - xi;
     auto dy = yj - yi;
     auto dz = zj - zi;
-    auto dist_sq = dx * dx + dy * dy + dz * dz;
+    auto dist_sq =
+        dx * dx + dy * dy + dz * dz + softening_sq;  // Plummer sphere model.
     auto dist = std::sqrt(dist_sq);
-    auto denominator = dist * (dist_sq + softening_sq);
+    auto denominator = dist * dist_sq;
     auto ax = dx / denominator;
     auto ay = dy / denominator;
     auto az = dz / denominator;

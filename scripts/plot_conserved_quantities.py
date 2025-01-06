@@ -47,6 +47,8 @@ def main():
 
     fractional_dE = np.abs((interp_energies[1:] - energies[0]) / energies[0])
     print(f"Average fractional change in energy: {np.mean(fractional_dE)}")
+    print(f"Initial energy: {energies[0]}")
+    print(f"Mean energy: {np.mean(energies)}")
 
     # plot
     plt.semilogy(interp_times[1:], fractional_dE)
@@ -65,8 +67,8 @@ def potential_energy(state_positions):
         for j in np.arange(i + 1, N):
             pos_i = state_positions[i*dim:(i+1)*dim]
             pos_j = state_positions[j*dim:(j+1)*dim]
-            dr = np.linalg.norm(pos_j - pos_i)
-            energy -= np.arctan(dr / softening) / softening
+            dr = pos_j - pos_i
+            energy -= 1.0 / np.sqrt(np.sum(dr*dr) + softening*softening)
     return energy
 
 # calculate kinetic energy for a single state. assumes all masses are 1.

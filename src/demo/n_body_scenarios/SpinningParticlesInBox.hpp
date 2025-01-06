@@ -8,7 +8,7 @@
 #include <string>
 
 template <int N, template <typename, int> typename StateContainer,
-          typename ValueType>
+          typename ValueType, ValueType sof_divisor, ValueType tol>
 struct SpinningParticlesInBox {
   static inline auto const name = std::string{"SpinningParticlesInBox"};
   static constexpr auto L = 1.0;
@@ -16,8 +16,8 @@ struct SpinningParticlesInBox {
   static constexpr auto n_var = N * 6;
   static inline auto const tf = 10.0 * std::sqrt(L * L * L / N);
   static inline auto const omega = 2.0 / std::sqrt(L * L * L / N);
-  static constexpr auto softening = L / (N * (N - 1)) / 100.0;
-  static constexpr auto tolerance_value = 1.0e-7;
+  static constexpr auto softening = L / (N * (N - 1)) / sof_divisor;
+  static constexpr auto tolerance_value = tol;
 
   StateContainer<ValueType, n_var> initial_state;
   StateContainer<ValueType, n_var> tolerance_array;

@@ -18,6 +18,7 @@
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
 #include "SpinningParticlesInBox.hpp"
+#include "ThreadPoolExecutor.hpp"
 
 template <typename IntegrationMethod, typename ParallelizationMethod>
 auto generate_filename(auto const& scenario) {
@@ -34,6 +35,9 @@ auto generate_filename(auto const& scenario) {
   // parallelization method
   if constexpr (std::is_same_v<ParallelizationMethod, CudaExecutor>) {
     filename += "_CUDA";
+  } else if constexpr (std::is_same_v<ParallelizationMethod,
+                                      ThreadPoolExecutor>) {
+    filename += "_ThreadPool";
   } else {
     throw "Unrecognized parallelization method!\n";
   }
@@ -84,18 +88,49 @@ void output_to_file(std::string const& filename, auto const& output,
   }
 }
 
-template <int N, double softening_divisor, double tolerance>
-void run_cuda_scenario() {
+template <int N>
+void run_threadpool_scenario(double softening_divisor, double tolerance) {
   constexpr auto n_repetitions = 3;
   for (auto i = 0; i < n_repetitions; ++i) {
-    auto scenario = SpinningParticlesInBox<N, CudaState, double,
-                                           softening_divisor, tolerance>{};
+    auto scenario = SpinningParticlesInBox<N, HeapState, double>{
+        softening_divisor, tolerance};
+    constexpr auto n_var = scenario.n_var;
+
+    auto tp_exe = ThreadPoolExecutor{12};
+    auto integrator = RKEmbeddedParallel<
+        HeapState, double, n_var, BTRKF78, NBodyODE<double, n_var>,
+        RawOutput<HeapState<double, n_var>>, ThreadPoolExecutor>{};
+    auto output = RawOutput<HeapState<double, n_var>>{};
+
+    auto t0 = 0.0;
+    auto tf = scenario.tf;
+
+    integrator.integrate(scenario.initial_state, t0, tf,
+                         scenario.tolerance_array, scenario.tolerance_array,
+                         NBodyODE<double, n_var>{scenario.softening}, output,
+                         tp_exe);
+
+    auto filename = generate_filename<BTRKF78, ThreadPoolExecutor>(scenario);
+    output_to_file(filename, output, scenario.softening);
+
+    using namespace std::chrono_literals;
+    std::this_thread::sleep_for(
+        1s);  // crude solution to make sure filenames are distinct.
+  }
+}
+
+template <int N>
+void run_cuda_scenario(double softening_divisor, double tolerance) {
+  constexpr auto n_repetitions = 3;
+  for (auto i = 0; i < n_repetitions; ++i) {
+    auto scenario = SpinningParticlesInBox<N, CudaState, double>{
+        softening_divisor, tolerance};
     constexpr auto n_var = scenario.n_var;
 
     auto cuda_exe = CudaExecutor{};
     auto integrator =
         RKEmbeddedParallel<CudaState, double, n_var, BTRKF78,
-                           NBodyODE<double, n_var, scenario.softening>,
+                           NBodyODE<double, n_var>,
                            RawOutput<HeapState<double, n_var>>, CudaExecutor>{};
     auto output = RawOutput<HeapState<double, n_var>>{};
 
@@ -104,7 +139,7 @@ void run_cuda_scenario() {
 
     integrator.integrate(scenario.initial_state, t0, tf,
                          scenario.tolerance_array, scenario.tolerance_array,
-                         NBodyODE<double, n_var, scenario.softening>{}, output,
+                         NBodyODE<double, n_var>{scenario.softening}, output,
                          cuda_exe);
 
     auto filename = generate_filename<BTRKF78, CudaExecutor>(scenario);
@@ -117,82 +152,16 @@ void run_cuda_scenario() {
 }
 
 int main() {
-  std::cout << "Starting with softening divisor 1.0\n";
-  run_cuda_scenario<64, 1.0, 1.0e-3>();
-  run_cuda_scenario<64, 1.0, 3.0e-4>();
-  run_cuda_scenario<64, 1.0, 1.0e-4>();
-  run_cuda_scenario<64, 1.0, 3.0e-5>();
-  run_cuda_scenario<64, 1.0, 1.0e-5>();
-  run_cuda_scenario<64, 1.0, 3.0e-6>();
-  run_cuda_scenario<64, 1.0, 1.0e-6>();
-  run_cuda_scenario<64, 1.0, 3.0e-7>();
-  run_cuda_scenario<64, 1.0, 1.0e-7>();
-
-  std::cout << "Starting with softening divisor 3.0\n";
-  run_cuda_scenario<64, 3.0, 1.0e-3>();
-  run_cuda_scenario<64, 3.0, 3.0e-4>();
-  run_cuda_scenario<64, 3.0, 1.0e-4>();
-  run_cuda_scenario<64, 3.0, 3.0e-5>();
-  run_cuda_scenario<64, 3.0, 1.0e-5>();
-  run_cuda_scenario<64, 3.0, 3.0e-6>();
-  run_cuda_scenario<64, 3.0, 1.0e-6>();
-  run_cuda_scenario<64, 3.0, 3.0e-7>();
-  run_cuda_scenario<64, 3.0, 1.0e-7>();
-
-  std::cout << "Starting with softening divisor 10.0\n";
-  run_cuda_scenario<64, 10.0, 1.0e-3>();
-  run_cuda_scenario<64, 10.0, 3.0e-4>();
-  run_cuda_scenario<64, 10.0, 1.0e-4>();
-  run_cuda_scenario<64, 10.0, 3.0e-5>();
-  run_cuda_scenario<64, 10.0, 1.0e-5>();
-  run_cuda_scenario<64, 10.0, 3.0e-6>();
-  run_cuda_scenario<64, 10.0, 1.0e-6>();
-  run_cuda_scenario<64, 10.0, 3.0e-7>();
-  run_cuda_scenario<64, 10.0, 1.0e-7>();
-
-  std::cout << "Starting with softening divisor 30.0\n";
-  run_cuda_scenario<64, 30.0, 1.0e-3>();
-  run_cuda_scenario<64, 30.0, 3.0e-4>();
-  run_cuda_scenario<64, 30.0, 1.0e-4>();
-  run_cuda_scenario<64, 30.0, 3.0e-5>();
-  run_cuda_scenario<64, 30.0, 1.0e-5>();
-  run_cuda_scenario<64, 30.0, 3.0e-6>();
-  run_cuda_scenario<64, 30.0, 1.0e-6>();
-  run_cuda_scenario<64, 30.0, 3.0e-7>();
-  run_cuda_scenario<64, 30.0, 1.0e-7>();
-
-  std::cout << "Starting with softening divisor 100.0\n";
-  run_cuda_scenario<64, 100.0, 1.0e-3>();
-  run_cuda_scenario<64, 100.0, 3.0e-4>();
-  run_cuda_scenario<64, 100.0, 1.0e-4>();
-  run_cuda_scenario<64, 100.0, 3.0e-5>();
-  run_cuda_scenario<64, 100.0, 1.0e-5>();
-  run_cuda_scenario<64, 100.0, 3.0e-6>();
-  run_cuda_scenario<64, 100.0, 1.0e-6>();
-  run_cuda_scenario<64, 100.0, 3.0e-7>();
-  run_cuda_scenario<64, 100.0, 1.0e-7>();
-
-  std::cout << "Starting with softening divisor 300.0\n";
-  run_cuda_scenario<64, 300.0, 1.0e-3>();
-  run_cuda_scenario<64, 300.0, 3.0e-4>();
-  run_cuda_scenario<64, 300.0, 1.0e-4>();
-  run_cuda_scenario<64, 300.0, 3.0e-5>();
-  run_cuda_scenario<64, 300.0, 1.0e-5>();
-  run_cuda_scenario<64, 300.0, 3.0e-6>();
-  run_cuda_scenario<64, 300.0, 1.0e-6>();
-  run_cuda_scenario<64, 300.0, 3.0e-7>();
-  run_cuda_scenario<64, 300.0, 1.0e-7>();
-
-  std::cout << "Starting with softening divisor 1000.0\n";
-  run_cuda_scenario<64, 1000.0, 1.0e-3>();
-  run_cuda_scenario<64, 1000.0, 3.0e-4>();
-  run_cuda_scenario<64, 1000.0, 1.0e-4>();
-  run_cuda_scenario<64, 1000.0, 3.0e-5>();
-  run_cuda_scenario<64, 1000.0, 1.0e-5>();
-  run_cuda_scenario<64, 1000.0, 3.0e-6>();
-  run_cuda_scenario<64, 1000.0, 1.0e-6>();
-  run_cuda_scenario<64, 1000.0, 3.0e-7>();
-  run_cuda_scenario<64, 1000.0, 1.0e-7>();
+  for (auto softening_divisor : {1.0, 3.0, 10.0, 30.0, 100.0, 300.0, 1000.0}) {
+    std::cout << "Starting with softening divisor " << softening_divisor
+              << '\n';
+    for (auto tolerance_value : {1.0e-3, 3.0e-4, 1.0e-4, 3.0e-5, 1.0e-5, 3.0e-6,
+                                 1.0e-6, 3.0e-7, 1.0e-7}) {
+      std::cout << "  Starting with tolerance value " << tolerance_value
+                << '\n';
+      run_threadpool_scenario<64>(softening_divisor, tolerance_value);
+    }
+  }
 
   return 0;
 }

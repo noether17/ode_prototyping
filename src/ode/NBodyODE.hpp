@@ -7,20 +7,9 @@
 #include "AtomicUtil.hpp"
 #include "ParallelExecutor.hpp"
 
-template <typename ValueType, int n_var,
-          /*auto masses,*/ double softening = 0.0>
+template <typename ValueType, int n_var
+          /*auto masses*/>
 struct NBodyODE {
-  constexpr void operator()(auto& exe, std::span<ValueType const, n_var> x,
-                            std::span<ValueType, n_var> dxdt) {
-    constexpr auto vel_offset = n_var / 2;
-    call_parallel_kernel<nbody_init_dxdt_kernel>(exe, vel_offset, vel_offset, x,
-                                                 dxdt);
-
-    constexpr auto n_particles = n_var / 6;
-    constexpr auto n_pairs = n_particles * (n_particles - 1) / 2;
-    call_parallel_kernel<nbody_acc_kernel>(exe, n_pairs, n_particles, x, dxdt);
-  }
-
   /* Whenever arbitrarily close approaches are possible, a softening parameter
    * is required to prevent forces from becoming too large so that the step size
    * remains reasonable. The softening parameter represents the length scale at
@@ -29,7 +18,19 @@ struct NBodyODE {
    * two particles in orbit around each other with all other particles scattered
    * to infinity with zero energy. This is a good approximation of the minimum
    * distance of physical interest in the simulation. */
-  static constexpr auto softening_sq = softening * softening;
+  double softening{};
+
+  constexpr void operator()(auto& exe, std::span<ValueType const, n_var> x,
+                            std::span<ValueType, n_var> dxdt) {
+    constexpr auto vel_offset = n_var / 2;
+    call_parallel_kernel<nbody_init_dxdt_kernel>(exe, vel_offset, vel_offset, x,
+                                                 dxdt);
+
+    constexpr auto n_particles = n_var / 6;
+    constexpr auto n_pairs = n_particles * (n_particles - 1) / 2;
+    call_parallel_kernel<nbody_acc_kernel>(exe, n_pairs, n_particles, x, dxdt,
+                                           softening * softening);
+  }
 
   /* Initializes the velocity portion of dxdt to the velocity portion of the
    * state, x, and initializes the acceleration portion of dxdt to zero. */
@@ -45,7 +46,8 @@ struct NBodyODE {
    * dxdt. */
   static constexpr void nbody_acc_kernel(int pair_id, int n_particles,
                                          std::span<ValueType const, n_var> x,
-                                         std::span<ValueType, n_var> dxdt) {
+                                         std::span<ValueType, n_var> dxdt,
+                                         double softening_sq) {
     // compute indices
     auto n_minus_half = n_particles - 0.5;
     auto i = static_cast<int>(

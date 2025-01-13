@@ -6,6 +6,8 @@ import numba as nb
 import numpy as np
 import struct
 
+from time import perf_counter
+
 dim = 3
 
 def main():
@@ -45,23 +47,35 @@ def main():
             # compute energies for this run
             energies = compute_energies(states)
 
-            fractional_dE = (energies - energies[0]) / energies[0]
+            fractional_dE = fractional_dE_vectorized(energies, energies[0])
+
             max_frac_dE = np.max(np.abs(fractional_dE))
             data_dict[N][softening][tol].append(max_frac_dE)
             print(f"N={N}, sof={softening}, tol={tol}, max dE/E={max_frac_dE}")
 
     print(data_dict)
-    for N in data_dict:
-        for softening in data_dict[N]:
+    n_plot_cols = int(np.sqrt(len(data_dict)))
+    n_plot_rows = int(np.ceil(len(data_dict) / n_plot_cols))
+    print(f"n_plot_rows={n_plot_rows}, n_plot_cols={n_plot_cols}")
+    fig, axs = plt.subplots(n_plot_rows, n_plot_cols, constrained_layout=True)
+    enlargement_factor = 1.5
+    fig.set_figheight(enlargement_factor * n_plot_rows * fig.get_figheight())
+    fig.set_figwidth(enlargement_factor * n_plot_cols * fig.get_figwidth())
+    for i, N in enumerate(sorted(data_dict)):
+        print(f"i={i}, N={N}")
+        if n_plot_cols > 1: plot_indices = int(i / n_plot_rows), i % n_plot_rows
+        else: plot_indices = i
+        print(f"plot_indices={plot_indices}")
+        for softening in sorted(data_dict[N]):
             tols = sorted(data_dict[N][softening].keys())
             mean_frac_dEs = [np.mean(data_dict[N][softening][tol]) for tol in tols]
-            plt.loglog(tols, mean_frac_dEs, label=f"{softening}")
-        plt.xlabel("Tolerance")
-        plt.ylabel(r"$\frac{E - E_0}{E_0}$")
-        plt.title(f"N={N}")
-        plt.legend()
-        #plt.show()
-        plt.savefig(f"FractionalChangeInEnergy_{N}_Particles.png")
+            axs[plot_indices].loglog(tols, mean_frac_dEs, label=f"{softening:.2e}")
+        axs[plot_indices].set_xlabel("Tolerance")
+        axs[plot_indices].set_ylabel(r"$\frac{E - E_0}{E_0}$")
+        axs[plot_indices].set_title(f"N={N}")
+        axs[plot_indices].legend()
+    plt.show()
+    plt.savefig(f"FractionalChangeInEnergyPlot.png")
 
 # calculate potential energy for a single state. assumes all masses are 1.
 @nb.njit()
@@ -93,6 +107,10 @@ def compute_energies(states):
         energies[i] = potential_energy(states[i, :offset]) + \
                 kinetic_energy(states[i, offset:])
     return energies
+
+@nb.vectorize([nb.float64(nb.float64, nb.float64)], nopython=True)
+def fractional_dE_vectorized(energies, energies_0):
+    return (energies - energies_0) / energies_0
 
 if __name__ == "__main__":
     main()

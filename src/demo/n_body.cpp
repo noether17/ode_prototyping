@@ -4,7 +4,7 @@
 
 #include "BTRKF78.hpp"
 #include "HeapState.hpp"
-#include "NBodyODE.hpp"
+#include "NBodySimpleODE.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
 #include "ThreadPoolExecutor.hpp"
@@ -30,7 +30,7 @@ int main() {
 
   auto thread_pool = ThreadPoolExecutor(8);
   auto integrator = RKEmbeddedParallel<
-      HeapState, double, n_var, BTRKF78, NBodyODE<double, n_var>,
+      HeapState, double, n_var, BTRKF78, NBodySimpleODE<double, n_var>,
       RawOutput<HeapState<double, n_var>>, ThreadPoolExecutor>{};
   auto output = RawOutput<HeapState<double, n_var>>{};
 
@@ -40,8 +40,8 @@ int main() {
   auto tol = HeapState<double, n_var>{};
   std::fill(tol.data(), tol.data() + n_var, 1.0e-10);
 
-  integrator.integrate(x0, t0, tf, tol, tol, NBodyODE<double, n_var>{}, output,
-                       thread_pool);
+  integrator.integrate(x0, t0, tf, tol, tol, NBodySimpleODE<double, n_var>{},
+                       output, thread_pool);
 
   auto output_file = std::ofstream{"RKF78_threadpool_n_body_output.txt"};
   for (std::size_t i = 0; i < output.times.size(); ++i) {

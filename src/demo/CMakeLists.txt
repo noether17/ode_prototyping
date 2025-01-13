@@ -39,7 +39,7 @@ target_link_libraries(n_body_benchmark_test
   CudaExecutor
   CudaState
   HeapState
-  NBodyODE
+  NBodySimpleODE
   ParticlesInBox
   RawOutput
   RKEmbeddedParallel

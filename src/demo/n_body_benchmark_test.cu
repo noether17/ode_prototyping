@@ -89,11 +89,12 @@ void output_to_file(std::string const& filename, auto const& output,
 }
 
 template <int N>
-void run_threadpool_scenario(double softening_divisor, double tolerance) {
+void run_threadpool_scenario(double softening_divisor,
+                             double tolerance_factor) {
   constexpr auto n_repetitions = 3;
   for (auto i = 0; i < n_repetitions; ++i) {
     auto scenario = SpinningParticlesInBox<N, HeapState, double>{
-        softening_divisor, tolerance};
+        softening_divisor, tolerance_factor};
     constexpr auto n_var = scenario.n_var;
 
     auto tp_exe = ThreadPoolExecutor{12};
@@ -120,11 +121,11 @@ void run_threadpool_scenario(double softening_divisor, double tolerance) {
 }
 
 template <int N>
-void run_cuda_scenario(double softening_divisor, double tolerance) {
+void run_cuda_scenario(double softening_divisor, double tolerance_factor) {
   constexpr auto n_repetitions = 1;
   for (auto i = 0; i < n_repetitions; ++i) {
     auto scenario = SpinningParticlesInBox<N, CudaState, double>{
-        softening_divisor, tolerance};
+        softening_divisor, tolerance_factor};
     constexpr auto n_var = scenario.n_var;
 
     auto cuda_exe = CudaExecutor{};
@@ -152,14 +153,47 @@ void run_cuda_scenario(double softening_divisor, double tolerance) {
 }
 
 int main() {
-  for (auto softening_divisor : {1.0, 3.0, 10.0, 30.0, 100.0, 300.0, 1000.0}) {
+  std::cout << "Starting with N = 64\n";
+  for (auto softening_divisor : {0.5, 1.0, 2.0, 4.0, 8.0, 16.0}) {
     std::cout << "Starting with softening divisor " << softening_divisor
               << '\n';
-    for (auto tolerance_value : {1.0e-3, 3.0e-4, 1.0e-4, 3.0e-5, 1.0e-5, 3.0e-6,
-                                 1.0e-6, 3.0e-7, 1.0e-7}) {
-      std::cout << "  Starting with tolerance value " << tolerance_value
+    for (auto tolerance_factor : {2.0, 1.0, 0.5, 0.25, 0.125, 0.0625}) {
+      std::cout << "  Starting with tolerance factor " << tolerance_factor
                 << '\n';
-      run_cuda_scenario<64>(softening_divisor, tolerance_value);
+      run_cuda_scenario<64>(softening_divisor, tolerance_factor);
+    }
+  }
+
+  std::cout << "Starting with N = 256\n";
+  for (auto softening_divisor : {0.5, 1.0, 2.0, 4.0, 8.0, 16.0}) {
+    std::cout << "Starting with softening divisor " << softening_divisor
+              << '\n';
+    for (auto tolerance_factor : {2.0, 1.0, 0.5, 0.25, 0.125, 0.0625}) {
+      std::cout << "  Starting with tolerance factor " << tolerance_factor
+                << '\n';
+      run_cuda_scenario<256>(softening_divisor, tolerance_factor);
+    }
+  }
+
+  std::cout << "Starting with N = 1024\n";
+  for (auto softening_divisor : {0.5, 1.0, 2.0, 4.0, 8.0, 16.0}) {
+    std::cout << "Starting with softening divisor " << softening_divisor
+              << '\n';
+    for (auto tolerance_factor : {2.0, 1.0, 0.5, 0.25, 0.125, 0.0625}) {
+      std::cout << "  Starting with tolerance factor " << tolerance_factor
+                << '\n';
+      run_cuda_scenario<1024>(softening_divisor, tolerance_factor);
+    }
+  }
+
+  std::cout << "Starting with N = 4096\n";
+  for (auto softening_divisor : {0.5, 1.0, 2.0, 4.0, 8.0, 16.0}) {
+    std::cout << "Starting with softening divisor " << softening_divisor
+              << '\n';
+    for (auto tolerance_factor : {2.0, 1.0, 0.5, 0.25, 0.125, 0.0625}) {
+      std::cout << "  Starting with tolerance factor " << tolerance_factor
+                << '\n';
+      run_cuda_scenario<4096>(softening_divisor, tolerance_factor);
     }
   }
 

@@ -74,8 +74,8 @@ def main():
         axs[plot_indices].set_ylabel(r"$\frac{E - E_0}{E_0}$")
         axs[plot_indices].set_title(f"N={N}")
         axs[plot_indices].legend()
-    plt.show()
     plt.savefig(f"FractionalChangeInEnergyPlot.png")
+    plt.show()
 
 # calculate potential energy for a single state. assumes all masses are 1.
 @nb.njit()

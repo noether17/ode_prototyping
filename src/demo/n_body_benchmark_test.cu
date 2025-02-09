@@ -13,7 +13,7 @@
 #include "CudaExecutor.cuh"
 #include "CudaState.cuh"
 #include "HeapState.hpp"
-#include "NBodySimpleODE.hpp"
+#include "NBodyODE.hpp"
 #include "ParticlesInBox.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
@@ -99,7 +99,7 @@ void run_threadpool_scenario(double softening_divisor,
 
     auto tp_exe = ThreadPoolExecutor{12};
     auto integrator = RKEmbeddedParallel<
-        HeapState, double, n_var, BTRKF78, NBodySimpleODE<double, n_var>,
+        HeapState, double, n_var, BTRKF78, NBodyODE<double, n_var>,
         RawOutput<HeapState<double, n_var>>, ThreadPoolExecutor>{};
     auto output = RawOutput<HeapState<double, n_var>>{};
 
@@ -108,8 +108,8 @@ void run_threadpool_scenario(double softening_divisor,
 
     integrator.integrate(scenario.initial_state, t0, tf,
                          scenario.tolerance_array, scenario.tolerance_array,
-                         NBodySimpleODE<double, n_var>{scenario.softening},
-                         output, tp_exe);
+                         NBodyODE<double, n_var>{scenario.softening}, output,
+                         tp_exe);
 
     auto filename = generate_filename<BTRKF78, ThreadPoolExecutor>(scenario);
     output_to_file(filename, output, scenario.softening);
@@ -131,7 +131,7 @@ void run_cuda_scenario(double softening_divisor, double tolerance_factor) {
     auto cuda_exe = CudaExecutor{};
     auto integrator =
         RKEmbeddedParallel<CudaState, double, n_var, BTRKF78,
-                           NBodySimpleODE<double, n_var>,
+                           NBodyODE<double, n_var>,
                            RawOutput<HeapState<double, n_var>>, CudaExecutor>{};
     auto output = RawOutput<HeapState<double, n_var>>{};
 
@@ -140,8 +140,8 @@ void run_cuda_scenario(double softening_divisor, double tolerance_factor) {
 
     integrator.integrate(scenario.initial_state, t0, tf,
                          scenario.tolerance_array, scenario.tolerance_array,
-                         NBodySimpleODE<double, n_var>{scenario.softening},
-                         output, cuda_exe);
+                         NBodyODE<double, n_var>{scenario.softening}, output,
+                         cuda_exe);
 
     auto filename = generate_filename<BTRKF78, CudaExecutor>(scenario);
     output_to_file(filename, output, scenario.softening);

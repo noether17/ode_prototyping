@@ -35,6 +35,7 @@ target_link_libraries(cuda_n_body_box
 
 add_executable(n_body_benchmark_test n_body_benchmark_test.cu)
 target_link_libraries(n_body_benchmark_test
+  AtomicUtil
   BTRKF78
   CudaExecutor
   CudaState

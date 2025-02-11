@@ -152,50 +152,23 @@ void run_cuda_scenario(double softening_divisor, double tolerance_factor) {
   }
 }
 
+template <int N>
+void do_multiple_scenario_run() {
+  std::cout << "Starting scenarios with N = " << N << '\n';
+  for (auto softening_divisor : {0.5, 1.0, 2.0, 4.0, 8.0, 16.0}) {
+    std::cout << "Starting scenarios with softening divisor "
+              << softening_divisor << '\n';
+    for (auto tolerance_factor : {2.0, 1.0, 0.5, 0.25, 0.125, 0.0625}) {
+      std::cout << "  Starting scenario with tolerance factor "
+                << tolerance_factor << '\n';
+      run_cuda_scenario<N>(softening_divisor, tolerance_factor);
+    }
+  }
+}
+
 int main() {
-  std::cout << "Starting with N = 64\n";
-  for (auto softening_divisor : {0.5, 1.0, 2.0, 4.0, 8.0, 16.0}) {
-    std::cout << "Starting with softening divisor " << softening_divisor
-              << '\n';
-    for (auto tolerance_factor : {2.0, 1.0, 0.5, 0.25, 0.125, 0.0625}) {
-      std::cout << "  Starting with tolerance factor " << tolerance_factor
-                << '\n';
-      run_cuda_scenario<64>(softening_divisor, tolerance_factor);
-    }
-  }
-
-  std::cout << "Starting with N = 256\n";
-  for (auto softening_divisor : {0.5, 1.0, 2.0, 4.0, 8.0, 16.0}) {
-    std::cout << "Starting with softening divisor " << softening_divisor
-              << '\n';
-    for (auto tolerance_factor : {2.0, 1.0, 0.5, 0.25, 0.125, 0.0625}) {
-      std::cout << "  Starting with tolerance factor " << tolerance_factor
-                << '\n';
-      run_cuda_scenario<256>(softening_divisor, tolerance_factor);
-    }
-  }
-
-  std::cout << "Starting with N = 1024\n";
-  for (auto softening_divisor : {0.5, 1.0, 2.0, 4.0, 8.0, 16.0}) {
-    std::cout << "Starting with softening divisor " << softening_divisor
-              << '\n';
-    for (auto tolerance_factor : {2.0, 1.0, 0.5, 0.25, 0.125, 0.0625}) {
-      std::cout << "  Starting with tolerance factor " << tolerance_factor
-                << '\n';
-      run_cuda_scenario<1024>(softening_divisor, tolerance_factor);
-    }
-  }
-
-  std::cout << "Starting with N = 4096\n";
-  for (auto softening_divisor : {0.5, 1.0, 2.0, 4.0, 8.0, 16.0}) {
-    std::cout << "Starting with softening divisor " << softening_divisor
-              << '\n';
-    for (auto tolerance_factor : {2.0, 1.0, 0.5, 0.25, 0.125, 0.0625}) {
-      std::cout << "  Starting with tolerance factor " << tolerance_factor
-                << '\n';
-      run_cuda_scenario<4096>(softening_divisor, tolerance_factor);
-    }
-  }
-
-  return 0;
+  do_multiple_scenario_run<64>();
+  do_multiple_scenario_run<256>();
+  do_multiple_scenario_run<1024>();
+  do_multiple_scenario_run<4096>();
 }

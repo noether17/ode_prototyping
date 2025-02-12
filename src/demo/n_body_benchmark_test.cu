@@ -155,15 +155,20 @@ void run_cuda_scenario(double softening_divisor, double tolerance_factor) {
 template <int N>
 void do_multiple_scenario_run() {
   std::cout << "Starting scenarios with N = " << N << '\n';
+  auto start = std::chrono::high_resolution_clock::now();
   for (auto softening_divisor : {0.5, 1.0, 2.0, 4.0, 8.0, 16.0}) {
-    std::cout << "Starting scenarios with softening divisor "
+    std::cout << "  Starting scenarios with softening divisor "
               << softening_divisor << '\n';
     for (auto tolerance_factor : {2.0, 1.0, 0.5, 0.25, 0.125, 0.0625}) {
-      std::cout << "  Starting scenario with tolerance factor "
+      std::cout << "    Starting scenario with tolerance factor "
                 << tolerance_factor << '\n';
       run_cuda_scenario<N>(softening_divisor, tolerance_factor);
     }
   }
+  auto duration = std::chrono::duration<double>(
+      std::chrono::high_resolution_clock::now() - start);
+  std::cout << "Completed scenarios with N = " << N
+            << ". Scenarios completed in " << duration.count() << "s\n";
 }
 
 int main() {

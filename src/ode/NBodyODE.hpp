@@ -7,7 +7,7 @@
 #include "AtomicUtil.hpp"
 #include "ParallelExecutor.hpp"
 
-template <typename ValueType, int n_var
+template <typename ValueType, std::size_t n_var
           /*auto masses*/>
 struct NBodyODE {
   /* Whenever arbitrarily close approaches are possible, a softening parameter
@@ -35,8 +35,8 @@ struct NBodyODE {
   /* Initializes the velocity portion of dxdt to the velocity portion of the
    * state, x, and initializes the acceleration portion of dxdt to zero. */
   static constexpr void nbody_init_dxdt_kernel(
-      int i, int vel_offset, std::span<ValueType const, n_var> x,
-      std::span<ValueType, n_var> dxdt) {
+      std::size_t i, std::size_t vel_offset,
+      std::span<ValueType const, n_var> x, std::span<ValueType, n_var> dxdt) {
     dxdt[i] = x[i + vel_offset];
     dxdt[i + vel_offset] = 0.0;
   }
@@ -44,13 +44,14 @@ struct NBodyODE {
   /* Computes the acceleration values for a single pair of particles and
    * atomically adds the contribution of the pair to the acceleration portion of
    * dxdt. */
-  static constexpr void nbody_acc_kernel(int pair_id, int n_particles,
+  static constexpr void nbody_acc_kernel(std::size_t pair_id,
+                                         std::size_t n_particles,
                                          std::span<ValueType const, n_var> x,
                                          std::span<ValueType, n_var> dxdt,
                                          double softening_sq) {
     // compute indices
     auto n_minus_half = n_particles - 0.5;
-    auto i = static_cast<int>(
+    auto i = static_cast<std::size_t>(
         n_minus_half - std::sqrt(n_minus_half * n_minus_half - 2.0 * pair_id));
     auto j = pair_id - (n_particles - 1) * i + (i * (i + 1)) / 2 + 1;
 

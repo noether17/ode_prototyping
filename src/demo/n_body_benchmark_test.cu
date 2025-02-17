@@ -176,4 +176,6 @@ int main() {
   do_multiple_scenario_run<256>();
   do_multiple_scenario_run<1024>();
   do_multiple_scenario_run<4096>();
+  do_multiple_scenario_run<16384>();
+  do_multiple_scenario_run<65536>();
 }

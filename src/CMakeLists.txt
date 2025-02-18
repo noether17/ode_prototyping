@@ -1,4 +1,3 @@
-add_subdirectory(butcher_tableaus)
 add_subdirectory(cuda_util)
 add_subdirectory(demo)
 add_subdirectory(integrator)

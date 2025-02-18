@@ -1,3 +1,1 @@
-add_library(RKEmbeddedParallel INTERFACE RKEmbeddedParallel.hpp)
-target_include_directories(RKEmbeddedParallel INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
-target_link_libraries(RKEmbeddedParallel INTERFACE ParallelExecutor)
+add_subdirectory(RKEmbeddedParallel)

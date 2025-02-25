@@ -1,3 +1,4 @@
 build/
 .cache
+scripts/__pycache__
 .vscode

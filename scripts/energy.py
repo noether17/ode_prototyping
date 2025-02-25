@@ -29,22 +29,22 @@ def compute_potential_energies(positions):
     n_pairs = int(n_particles * (n_particles - 1) / 2)
     print(f"Computing PE for {n_pairs} pairs of particles.")
     blocks_per_grid = int(math.ceil(n_pairs / threads_per_block))
-    if False and nb.cuda.is_available() and blocks_per_grid >= min_blocks_per_grid:
+    if nb.cuda.is_available() and blocks_per_grid >= min_blocks_per_grid:
         print(f"Using CUDA for PE calculation.")
         n_states = positions.shape[0]
         print(f"n_states == {n_states}")
         PEs = np.empty(n_states)
         dev_positions = nb.cuda.to_device(positions)
-        dev_pair_potential_energies = nb.cuda.device_array([n_states, n_pairs])
+        max_pair_threads = int(2**16) # Limit max size of device PE array.
+        pair_threads = min(n_pairs, max_pair_threads)
+        blocks_per_grid = int(math.ceil(pair_threads / threads_per_block))
+        dev_pair_potential_energies = nb.cuda.device_array([n_states, pair_threads])
         state_potential_energy_cuda[blocks_per_grid, threads_per_block] \
-                (dev_pair_potential_energies, dev_positions)
+                (dev_pair_potential_energies, dev_positions, n_pairs)
         pair_potential_energies = dev_pair_potential_energies.copy_to_host()
         for i in np.arange(n_states):
             PEs[i] = np.sum(pair_potential_energies[i, :])
             print(f"PEs[{i}] == {PEs[i]}")
-        #for i in np.arange(n_states):
-        #    PEs[i] = nb.cuda.reduce(lambda a, b: a + b)(dev_pair_potential_energies[i, :])
-        #    print(f"PEs[{i}] == {PEs[i]}")
         return PEs
     else:
         print(f"Using CPU for PE calculation.")
@@ -65,23 +65,27 @@ def compute_potential_energies_parallel(positions):
     return PEs
 
 @nb.cuda.jit()
-def state_potential_energy_cuda(pair_potential_energies, positions):
-    pair_id = nb.cuda.threadIdx.x + nb.cuda.blockIdx.x * nb.cuda.blockDim.x
-    if pair_id < pair_potential_energies.shape[1]:
-        n_particles = int(positions.shape[1] / dim)
-        n_minus_half = n_particles - 0.5
-        i = int(n_minus_half - math.sqrt(n_minus_half * n_minus_half - 2.0 * pair_id))
-        j = int(pair_id - (n_particles - 1) * i + (i * (i + 1)) / 2 + 1)
-        state_id = 0
-        while state_id < positions.shape[0]:
+def state_potential_energy_cuda(pair_potential_energies, positions, n_pairs):
+    thread_id = nb.cuda.threadIdx.x + nb.cuda.blockIdx.x * nb.cuda.blockDim.x
+    state_id = 0
+    n_particles = int(positions.shape[1] / dim)
+    n_minus_half = n_particles - 0.5
+    while state_id < positions.shape[0]:
+        pair_id = thread_id
+        while pair_id < n_pairs:
+            i = int(n_minus_half - math.sqrt(n_minus_half * n_minus_half - 2.0 * pair_id))
+            j = int(pair_id - (n_particles - 1) * i + (i * (i + 1)) / 2 + 1)
             pos_i = positions[state_id, i*dim:(i+1)*dim]
             pos_j = positions[state_id, j*dim:(j+1)*dim]
             dx = pos_j[0] - pos_i[0]
             dy = pos_j[1] - pos_i[1]
             dz = pos_j[2] - pos_i[2]
-            pair_potential_energies[state_id, pair_id] = \
-                    -1.0 / math.sqrt(dx*dx + dy*dy + dz*dz)
-            state_id += 1
+            pair_potential_energies[state_id, thread_id] -= \
+                    1.0 / math.sqrt(dx*dx + dy*dy + dz*dz)
+
+            pair_id += nb.cuda.blockDim.x * nb.cuda.gridDim.x
+
+        state_id += 1
 
 def compute_kinetic_energies(velocities):
     KEs = np.empty(velocities.shape[0])

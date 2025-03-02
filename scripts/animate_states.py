@@ -46,19 +46,23 @@ def main():
     # animate
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
+    marker_size = (72.0 / fig.dpi)**2
+    print(f"marker_size = {marker_size}")
     ani = anim.FuncAnimation(fig, plot_frame, total_frames,
-                             fargs=(interp_times, interp_positions, method_str, ax))
+                             fargs=(interp_times, interp_positions, method_str,
+                                    ax, marker_size))
     writer = anim.PillowWriter(fps=max_fps)
     ani.save(f"animation_{filename}.gif", writer=writer)
     print() # newline after progress report
 
-def plot_frame(frame_idx, times, positions, method_str, ax):
+def plot_frame(frame_idx, times, positions, method_str, ax, marker_size):
     t = times[frame_idx]
     current_frame = positions[frame_idx]
     N = int(current_frame.size / dim)
     ax.clear()
     ax.scatter(current_frame[::dim], current_frame[1::dim],
-               current_frame[2::dim], marker=',', color='k', alpha=0.2)
+               current_frame[2::dim], marker=',', color='k', alpha=1.0,
+               s=marker_size)
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.set_zlim(0, 1)

@@ -57,9 +57,8 @@ def plot_frame(frame_idx, times, positions, method_str, ax):
     current_frame = positions[frame_idx]
     N = int(current_frame.size / dim)
     ax.clear()
-    for i in np.arange(N):
-        ax.scatter(current_frame[i * dim], current_frame[i * dim + 1],
-                   current_frame[i * dim + 2], marker=',', color='k', alpha=0.2)
+    ax.scatter(current_frame[::dim], current_frame[1::dim],
+               current_frame[2::dim], marker=',', color='k', alpha=0.2)
     ax.set_xlim(0, 1)
     ax.set_ylim(0, 1)
     ax.set_zlim(0, 1)

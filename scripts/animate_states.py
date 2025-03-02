@@ -6,7 +6,7 @@ import numpy as np
 import scipy.interpolate as interp
 import struct
 
-animation_time = 10.0 # seconds to run animation
+animation_time = 30.0 # seconds to run animation
 max_fps = 30 # maximum frames per second
 dim = 3 # number of dimensions
 
@@ -39,7 +39,7 @@ def main():
     #interpolate
     spline = interp.make_interp_spline(times, positions, bc_type='natural')
     global total_frames
-    total_frames = int(max_fps * animation_time)
+    total_frames = int(max_fps * animation_time) + 1
     interp_times = np.linspace(times[0], times[-1], num=total_frames)
     interp_positions = spline(interp_times)
 
@@ -47,7 +47,6 @@ def main():
     fig = plt.figure()
     ax = fig.add_subplot(projection='3d')
     marker_size = (72.0 / fig.dpi)**2
-    print(f"marker_size = {marker_size}")
     ani = anim.FuncAnimation(fig, plot_frame, total_frames,
                              fargs=(interp_times, interp_positions, method_str,
                                     ax, marker_size))

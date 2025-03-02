@@ -10,9 +10,9 @@ min_blocks_per_grid = 1#28 # Numba gives a performance warning below this number
 max_cuda_threads = int(2**16) # Prevent device arrays from getting too large.
 
 #'''
-def compute_energies(positions, velocities):
+def compute_energies(positions, velocities, override=None):
     start = time.time()
-    PEs = compute_potential_energies(positions)
+    PEs = compute_potential_energies(positions, override)
     print(f"Time to compute potential energies: {time.time() - start}s")
 
     start = time.time()
@@ -25,13 +25,13 @@ def compute_energies(positions, velocities):
     return energies
 #'''
 
-def compute_potential_energies(positions):
-    if nb.cuda.is_available():
+def compute_potential_energies(positions, override=None):
+    if nb.cuda.is_available() and override != 'CPU':
         n_particles = int(positions.shape[1] / dim)
         n_pairs = int(n_particles * (n_particles - 1) / 2)
         n_threads = min(n_pairs, max_cuda_threads)
         blocks_per_grid = int(math.ceil(n_threads / threads_per_block))
-        if blocks_per_grid >= min_blocks_per_grid:
+        if blocks_per_grid >= min_blocks_per_grid or override == 'CUDA':
             return compute_potential_energies_cuda(positions)
     return compute_potential_energies_parallel(positions)
 

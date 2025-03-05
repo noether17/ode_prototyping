@@ -5,7 +5,7 @@ import numpy as np
 import time
 
 dim = 3
-threads_per_block = 256
+threads_per_block = 64
 min_blocks_per_grid = 1#28 # Numba gives a performance warning below this number.
 max_cuda_threads = int(2**16) # Prevent device arrays from getting too large.
 

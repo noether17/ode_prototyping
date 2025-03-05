@@ -32,12 +32,12 @@ def compute_potential_energies(positions, override=None):
         n_threads = min(n_pairs, max_cuda_threads)
         blocks_per_grid = int(math.ceil(n_threads / threads_per_block))
         if blocks_per_grid >= min_blocks_per_grid or override == 'CUDA':
+            print(f"Computing potential energies using CUDA.")
             return compute_potential_energies_cuda(positions)
+    print(f"Computing potential energies using CPU.")
     return compute_potential_energies_parallel(positions)
 
 def compute_potential_energies_cuda(positions):
-    print(f"Computing potential energies using CUDA.")
-
     dev_positions = nb.cuda.to_device(positions)
 
     n_particles = int(positions.shape[1] / dim)

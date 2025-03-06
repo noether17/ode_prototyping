@@ -6,7 +6,8 @@ import numba as nb
 import numpy as np
 import struct
 
-from time import perf_counter
+import caching
+import energy
 
 dim = 3
 
@@ -19,39 +20,67 @@ def main():
 
     data_dict = {}
 
-    for file_path in glob.glob(file_pattern):
-        with open(file_path, 'rb') as input_file:
-            n_times = int.from_bytes(input_file.read(8), 'little')
-            n_var = int.from_bytes(input_file.read(8), 'little')
-            N = int(n_var / 6)
-            softening = struct.unpack('d', input_file.read(8))[0]
-            tol = float(file_path.split('_tol_')[1].split('.bin')[0])
+    for filename in glob.glob(file_pattern):
+        N = int(filename.split('_')[1])
+        print(f"N = {N}")
+        softening = float(filename.split('_sof_')[1].split('_')[0])
+        print(f"softening = {softening}")
+        tolerance = float(filename.split('_tol_')[1].split('.bin')[0])
+        print(f"tolerance = {tolerance}")
 
-            if N not in data_dict:
-                data_dict[N] = {}
+        if N not in data_dict:
+            data_dict[N] = {}
 
-            if softening not in data_dict[N]:
-                data_dict[N][softening] = {}
+        if softening not in data_dict[N]:
+            data_dict[N][softening] = {}
 
-            if tol not in data_dict[N][softening]:
-                data_dict[N][softening][tol] = []
+        if tolerance not in data_dict[N][softening]:
+            data_dict[N][softening][tolerance] = []
 
-            # read the file into arrays
-            times = np.empty(n_times, dtype=float)
-            states = np.empty([n_times, n_var], dtype=float)
-            for i in np.arange(n_times):
-                times[i] = struct.unpack('d', input_file.read(8))[0]
-                states[i] = [struct.unpack('d', input_file.read(8))[0]
-                             for j in np.arange(n_var)]
+        results = caching.compute_from_file(energy.compute_energies, "energy",
+                                            filename)
+        times = results[:, 0]
+        energies = results[:, 1]
+        print(f"times.shape = {times.shape}")
+        print(f"energies.shape = {energies.shape}")
+        fractional_dE = fractional_dE_vectorized(energies, energies[0])
 
-            # compute energies for this run
-            energies = compute_energies(states)
+        max_frac_dE = np.max(np.abs(fractional_dE))
+        data_dict[N][softening][tolerance].append(max_frac_dE)
+        print(f"N={N}, sof={softening}, tol={tolerance}, max dE/E={max_frac_dE}")
 
-            fractional_dE = fractional_dE_vectorized(energies, energies[0])
+        #with open(file_path, 'rb') as input_file:
+        #    n_times = int.from_bytes(input_file.read(8), 'little')
+        #    n_var = int.from_bytes(input_file.read(8), 'little')
+        #    N = int(n_var / 6)
+        #    softening = struct.unpack('d', input_file.read(8))[0]
+        #    tol = float(file_path.split('_tol_')[1].split('.bin')[0])
 
-            max_frac_dE = np.max(np.abs(fractional_dE))
-            data_dict[N][softening][tol].append(max_frac_dE)
-            print(f"N={N}, sof={softening}, tol={tol}, max dE/E={max_frac_dE}")
+        #    if N not in data_dict:
+        #        data_dict[N] = {}
+
+        #    if softening not in data_dict[N]:
+        #        data_dict[N][softening] = {}
+
+        #    if tol not in data_dict[N][softening]:
+        #        data_dict[N][softening][tol] = []
+
+        #    # read the file into arrays
+        #    times = np.empty(n_times, dtype=float)
+        #    states = np.empty([n_times, n_var], dtype=float)
+        #    for i in np.arange(n_times):
+        #        times[i] = struct.unpack('d', input_file.read(8))[0]
+        #        states[i] = [struct.unpack('d', input_file.read(8))[0]
+        #                     for j in np.arange(n_var)]
+
+        #    # compute energies for this run
+        #    #energies = compute_energies(states)
+
+        #    fractional_dE = fractional_dE_vectorized(energies, energies[0])
+
+        #    max_frac_dE = np.max(np.abs(fractional_dE))
+        #    data_dict[N][softening][tol].append(max_frac_dE)
+        #    print(f"N={N}, sof={softening}, tol={tol}, max dE/E={max_frac_dE}")
 
     print(data_dict)
     n_plot_cols = int(np.sqrt(len(data_dict)))
@@ -63,7 +92,7 @@ def main():
     fig.set_figwidth(enlargement_factor * n_plot_cols * fig.get_figwidth())
     for i, N in enumerate(sorted(data_dict)):
         print(f"i={i}, N={N}")
-        if n_plot_cols > 1: plot_indices = int(i / n_plot_rows), i % n_plot_rows
+        if n_plot_cols > 1: plot_indices = int(i / n_plot_cols), i % n_plot_cols
         else: plot_indices = i
         print(f"plot_indices={plot_indices}")
         for softening in sorted(data_dict[N]):

@@ -3,6 +3,8 @@ import os
 import os.path
 import struct
 
+dim = 3
+
 def compute_from_file(compute_function, result_name, state_filename):
     cache_filename = f"{result_name}_cache_{state_filename.split('.bin')[0]}.npy"
     if os.path.isfile(cache_filename) and \

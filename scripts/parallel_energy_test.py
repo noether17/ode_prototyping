@@ -40,10 +40,10 @@ def main():
 
 def compute_from_file(compute_function, result_name, state_filename):
     cache_filename = f"{result_name}_cache_{state_filename.split('.bin')[0]}.npy"
-    #if os.path.isfile(cache_filename) and \
-    #        os.path.getmtime(cache_filename) > os.path.getmtime(state_filename):
-    #            print(f"Reading cached {result_name} values for {state_filename}")
-    #            return np.load(cache_filename)
+    if os.path.isfile(cache_filename) and \
+            os.path.getmtime(cache_filename) > os.path.getmtime(state_filename):
+                print(f"Reading cached {result_name} values for {state_filename}")
+                return np.load(cache_filename)
     with open(state_filename, 'rb') as state_file:
         n_times = int.from_bytes(state_file.read(8), 'little')
         n_var = int.from_bytes(state_file.read(8), 'little')

@@ -36,21 +36,10 @@ def main():
         if tol not in data_dict[N][softening]:
             data_dict[N][softening][tol] = []
 
-        print(f"Throwaway tests for warming up")
-        energies = compute_from_file(energy.compute_energies, "energy", filename, 'CPU')
-        energies = compute_from_file(energy.compute_energies, "energy", filename, 'CUDA')
+        energies = compute_from_file(energy.compute_energies, "energy", filename)
 
-        print(f"\nCPU test")
-        energies = compute_from_file(energy.compute_energies, "energy", filename, 'CPU')
-
-        print(f"\nCUDA test")
-        energies = compute_from_file(energy.compute_energies, "energy", filename, 'CUDA')
-
-# TODO: Forward function arguments as parameter pack
-def compute_from_file(compute_function, result_name, state_filename, override=None):
+def compute_from_file(compute_function, result_name, state_filename):
     cache_filename = f"{result_name}_cache_{state_filename.split('.bin')[0]}.npy"
-    if override is not None:
-        cache_filename = f"{override}_{cache_filename}"
     #if os.path.isfile(cache_filename) and \
     #        os.path.getmtime(cache_filename) > os.path.getmtime(state_filename):
     #            print(f"Reading cached {result_name} values for {state_filename}")
@@ -74,7 +63,7 @@ def compute_from_file(compute_function, result_name, state_filename, override=No
                              for j in np.arange(dof)]
 
         # compute energies for this run
-        results = compute_function(positions, velocities, override)
+        results = compute_function(positions, velocities)
         results = np.vstack([times, results])
         results = results.transpose()
         np.save(cache_filename, results)

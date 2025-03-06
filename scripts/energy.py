@@ -18,9 +18,9 @@ max_cuda_threads = int(2**16) # Prevent device arrays from getting too large.
                               # back to the CPU and less work being done on the
                               # GPU.
 
-def compute_energies(positions, velocities, override=None):
+def compute_energies(positions, velocities):
     start = time.time()
-    PEs = compute_potential_energies(positions, override)
+    PEs = compute_potential_energies(positions)
     print(f"Time to compute potential energies: {time.time() - start}s")
 
     start = time.time()
@@ -32,13 +32,13 @@ def compute_energies(positions, velocities, override=None):
     print(f"Time to combine energies: {time.time() - start}s")
     return energies
 
-def compute_potential_energies(positions, override=None):
-    if nb.cuda.is_available() and override != 'CPU':
+def compute_potential_energies(positions):
+    if nb.cuda.is_available():
         n_particles = int(positions.shape[1] / dim)
         n_pairs = int(n_particles * (n_particles - 1) / 2)
         n_threads = min(n_pairs, max_cuda_threads)
         blocks_per_grid = int(math.ceil(n_threads / threads_per_block))
-        if blocks_per_grid >= min_blocks_per_grid or override == 'CUDA':
+        if blocks_per_grid >= min_blocks_per_grid:
             print(f"Computing potential energies using CUDA.")
             return compute_potential_energies_cuda(positions)
     print(f"Computing potential energies using CPU.")

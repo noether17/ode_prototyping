@@ -22,11 +22,8 @@ def main():
 
     for filename in glob.glob(file_pattern):
         N = int(filename.split('_')[1])
-        print(f"N = {N}")
         softening = float(filename.split('_sof_')[1].split('_')[0])
-        print(f"softening = {softening}")
         tolerance = float(filename.split('_tol_')[1].split('.bin')[0])
-        print(f"tolerance = {tolerance}")
 
         if N not in data_dict:
             data_dict[N] = {}
@@ -41,60 +38,21 @@ def main():
                                             filename)
         times = results[:, 0]
         energies = results[:, 1]
-        print(f"times.shape = {times.shape}")
-        print(f"energies.shape = {energies.shape}")
         fractional_dE = fractional_dE_vectorized(energies, energies[0])
 
         max_frac_dE = np.max(np.abs(fractional_dE))
         data_dict[N][softening][tolerance].append(max_frac_dE)
         print(f"N={N}, sof={softening}, tol={tolerance}, max dE/E={max_frac_dE}")
 
-        #with open(file_path, 'rb') as input_file:
-        #    n_times = int.from_bytes(input_file.read(8), 'little')
-        #    n_var = int.from_bytes(input_file.read(8), 'little')
-        #    N = int(n_var / 6)
-        #    softening = struct.unpack('d', input_file.read(8))[0]
-        #    tol = float(file_path.split('_tol_')[1].split('.bin')[0])
-
-        #    if N not in data_dict:
-        #        data_dict[N] = {}
-
-        #    if softening not in data_dict[N]:
-        #        data_dict[N][softening] = {}
-
-        #    if tol not in data_dict[N][softening]:
-        #        data_dict[N][softening][tol] = []
-
-        #    # read the file into arrays
-        #    times = np.empty(n_times, dtype=float)
-        #    states = np.empty([n_times, n_var], dtype=float)
-        #    for i in np.arange(n_times):
-        #        times[i] = struct.unpack('d', input_file.read(8))[0]
-        #        states[i] = [struct.unpack('d', input_file.read(8))[0]
-        #                     for j in np.arange(n_var)]
-
-        #    # compute energies for this run
-        #    #energies = compute_energies(states)
-
-        #    fractional_dE = fractional_dE_vectorized(energies, energies[0])
-
-        #    max_frac_dE = np.max(np.abs(fractional_dE))
-        #    data_dict[N][softening][tol].append(max_frac_dE)
-        #    print(f"N={N}, sof={softening}, tol={tol}, max dE/E={max_frac_dE}")
-
-    print(data_dict)
     n_plot_cols = int(np.sqrt(len(data_dict)))
     n_plot_rows = int(np.ceil(len(data_dict) / n_plot_cols))
-    print(f"n_plot_rows={n_plot_rows}, n_plot_cols={n_plot_cols}")
     fig, axs = plt.subplots(n_plot_rows, n_plot_cols, constrained_layout=True)
     enlargement_factor = 1.5
     fig.set_figheight(enlargement_factor * n_plot_rows * fig.get_figheight())
     fig.set_figwidth(enlargement_factor * n_plot_cols * fig.get_figwidth())
     for i, N in enumerate(sorted(data_dict)):
-        print(f"i={i}, N={N}")
         if n_plot_cols > 1: plot_indices = int(i / n_plot_cols), i % n_plot_cols
         else: plot_indices = i
-        print(f"plot_indices={plot_indices}")
         for softening in sorted(data_dict[N]):
             tols = sorted(data_dict[N][softening].keys())
             mean_frac_dEs = [np.mean(data_dict[N][softening][tol]) for tol in tols]
@@ -105,37 +63,6 @@ def main():
         axs[plot_indices].legend()
     plt.savefig(f"FractionalChangeInEnergyPlot.png")
     plt.show()
-
-# calculate potential energy for a single state. assumes all masses are 1.
-@nb.njit()
-def potential_energy(state_positions):
-    N = int(state_positions.size / dim)
-    energy = 0.0
-    for i in np.arange(N):
-        for j in np.arange(i + 1, N):
-            pos_i = state_positions[i*dim:(i+1)*dim]
-            pos_j = state_positions[j*dim:(j+1)*dim]
-            dr = pos_j - pos_i
-            energy -= 1.0 / np.sqrt(np.sum(dr*dr))
-    return energy
-
-# calculate kinetic energy for a single state. assumes all masses are 1.
-@nb.njit()
-def kinetic_energy(state_velocities):
-    N = int(state_velocities.size / dim)
-    energy = np.sum(state_velocities*state_velocities) / 2.0
-    return energy
-
-@nb.njit(parallel=True)
-def compute_energies(states):
-    print("Computing energies.")
-    n_states = states.shape[0]
-    offset = int(states.shape[1] / 2)
-    energies = np.zeros(n_states)
-    for i in nb.prange(n_states):
-        energies[i] = potential_energy(states[i, :offset]) + \
-                kinetic_energy(states[i, offset:])
-    return energies
 
 @nb.vectorize([nb.float64(nb.float64, nb.float64)], nopython=True)
 def fractional_dE_vectorized(energies, energies_0):

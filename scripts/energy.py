@@ -5,11 +5,19 @@ import numpy as np
 import time
 
 dim = 3
-threads_per_block = 64
-min_blocks_per_grid = 1#28 # Numba gives a performance warning below this number.
-max_cuda_threads = int(2**16) # Prevent device arrays from getting too large.
 
-#'''
+# These parameters have been tuned for optimal performance on an RTX 4070 Mobile
+# GPU. Incidentally, the min and max correspond to the same number of blocks.
+threads_per_block = 64
+min_blocks_per_grid = 1024 # Numba gives a performance warning below 128, but
+                           # testing suggests the minimum should be higher.
+max_cuda_threads = int(2**16) # Prevent device arrays from getting too large.
+                              # Numba's reduce function seems to be inefficient,
+                              # so reduction is performed on the CPU. Larger
+                              # device arrays mean more data being transferred
+                              # back to the CPU and less work being done on the
+                              # GPU.
+
 def compute_energies(positions, velocities, override=None):
     start = time.time()
     PEs = compute_potential_energies(positions, override)
@@ -23,7 +31,6 @@ def compute_energies(positions, velocities, override=None):
     energies = PEs + KEs
     print(f"Time to combine energies: {time.time() - start}s")
     return energies
-#'''
 
 def compute_potential_energies(positions, override=None):
     if nb.cuda.is_available() and override != 'CPU':
@@ -50,7 +57,8 @@ def compute_potential_energies_cuda(positions):
     pair_potential_energy_kernel[blocks_per_grid, threads_per_block] \
             (dev_pair_potential_energies, dev_positions, n_pairs)
     pair_potential_energies = dev_pair_potential_energies.copy_to_host()
-    return np.array([np.sum(pair_potential_energies[i, :]) for i in np.arange(n_states)])
+    return np.array([np.sum(pair_potential_energies[i, :])
+                     for i in np.arange(n_states)])
 
 @nb.cuda.jit()
 def pair_potential_energy_kernel(pair_potential_energies, positions, n_pairs):
@@ -60,21 +68,22 @@ def pair_potential_energy_kernel(pair_potential_energies, positions, n_pairs):
     n_minus_half = n_particles - 0.5
     while state_id < positions.shape[0]:
         pair_id = thread_id
-        thread_potential_energy = 0.0
+        thread_pe = 0.0
         while pair_id < n_pairs:
-            i = int(n_minus_half - math.sqrt(n_minus_half * n_minus_half - 2.0 * pair_id))
+            i = int(n_minus_half -
+                    math.sqrt(n_minus_half * n_minus_half - 2.0 * pair_id))
             j = int(pair_id - (n_particles - 1) * i + (i * (i + 1)) / 2 + 1)
             pos_i = positions[state_id, i*dim:(i+1)*dim]
             pos_j = positions[state_id, j*dim:(j+1)*dim]
             dx = pos_j[0] - pos_i[0]
             dy = pos_j[1] - pos_i[1]
             dz = pos_j[2] - pos_i[2]
-            thread_potential_energy -= 1.0 / math.sqrt(dx*dx + dy*dy + dz*dz)
+            thread_pe -= 1.0 / math.sqrt(dx*dx + dy*dy + dz*dz)
 
             pair_id += nb.cuda.blockDim.x * nb.cuda.gridDim.x
 
         if thread_id < pair_potential_energies.shape[1]:
-            pair_potential_energies[state_id, thread_id] = thread_potential_energy
+            pair_potential_energies[state_id, thread_id] = thread_pe
 
         state_id += 1
 
@@ -93,5 +102,5 @@ def compute_potential_energies_parallel(positions):
     return PEs
 
 def compute_kinetic_energies(velocities):
-    return np.array([np.sum(state_velocities*state_velocities) / 2.0 \
+    return np.array([np.sum(state_velocities*state_velocities) / 2.0
                      for state_velocities in velocities])

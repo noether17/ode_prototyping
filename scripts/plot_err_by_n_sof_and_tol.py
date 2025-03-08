@@ -34,8 +34,13 @@ def main():
         if tolerance not in data_dict[N][softening]:
             data_dict[N][softening][tolerance] = []
 
-        results = caching.compute_from_file(energy.compute_energies, "energy",
-                                            filename)
+        print(f"Getting results for N={N}, sof={softening}, tol={tolerance}")
+        #results = caching.compute_from_file(energy.compute_energies, "energy",
+        #                                    filename)
+        results = caching.compute_from_file(lambda positions, velocities:
+                                            energy.compute_softened_energies(
+                                                positions, velocities, softening),
+                                            "softened_energy", filename)
         times = results[:, 0]
         energies = results[:, 1]
         fractional_dE = fractional_dE_vectorized(energies, energies[0])

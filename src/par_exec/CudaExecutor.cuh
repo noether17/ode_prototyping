@@ -118,6 +118,6 @@ class CudaExecutor {
     CUDA_ERROR_CHECK(cudaFree(dev_block_results));
     CUDA_ERROR_CHECK(cudaFree(dev_result));
 
-    return result;
+    return reduce(init_val, result);
   }
 };

@@ -19,6 +19,7 @@ if(CMAKE_CUDA_COMPILER)
 
   set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} \
     -Xcompiler -Wall \
+    -Xcompiler -Wextra \
     -Xcompiler -Werror \
     --expt-relaxed-constexpr \
     --extended-lambda")

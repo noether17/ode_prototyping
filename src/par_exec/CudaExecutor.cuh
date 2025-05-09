@@ -6,7 +6,7 @@
 static constexpr auto block_size = 256;
 
 template <auto kernel, typename... Args>
-__global__ void cuda_call_parallel_kernel(int n_items, Args... args)
+__global__ void cuda_call_parallel_kernel(std::size_t n_items, Args... args)
   requires ParallelKernel<kernel, Args...>
 {
   auto i = blockIdx.x * blockDim.x + threadIdx.x;
@@ -17,7 +17,7 @@ __global__ void cuda_call_parallel_kernel(int n_items, Args... args)
 }
 
 template <typename T, auto reduce, auto transform, typename... TransformArgs>
-__global__ void cuda_transform_reduce(T* block_results, int n_items,
+__global__ void cuda_transform_reduce(T* block_results, std::size_t n_items,
                                       TransformArgs... transform_args)
   requires(TransformKernel<transform, T, TransformArgs...> and
            ReductionOp<reduce, T>)
@@ -49,7 +49,7 @@ __global__ void cuda_transform_reduce(T* block_results, int n_items,
 
 template <typename T, auto reduce>
 __global__ void cuda_transform_reduce_final(T* result, T const* block_results,
-                                            int n_block_results)
+                                            std::size_t n_block_results)
   requires ReductionOp<reduce, T>
 {
   __shared__ T cache[block_size];
@@ -76,14 +76,14 @@ __global__ void cuda_transform_reduce_final(T* result, T const* block_results,
 }
 
 class CudaExecutor {
-  static constexpr auto block_size = 256;
-  static constexpr auto n_blocks(int N) {
+  static constexpr auto block_size = static_cast<std::size_t>(256);
+  static constexpr auto n_blocks(std::size_t N) {
     return (N + block_size - 1) / block_size;
   }
 
  public:
   template <auto kernel, typename... Args>
-  void call_parallel_kernel(int n_items, Args... args)
+  void call_parallel_kernel(std::size_t n_items, Args... args)
     requires ParallelKernel<kernel, Args...>
   {
     cuda_call_parallel_kernel<kernel, Args...>
@@ -92,7 +92,7 @@ class CudaExecutor {
   }
 
   template <typename T, auto reduce, auto transform, typename... TransformArgs>
-  auto transform_reduce(T init_val, int n_items,
+  auto transform_reduce(T init_val, std::size_t n_items,
                         TransformArgs... transform_args)
     requires(TransformKernel<transform, T, TransformArgs...> and
              ReductionOp<reduce, T>)

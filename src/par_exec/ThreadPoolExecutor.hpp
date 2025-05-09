@@ -60,7 +60,7 @@ class ThreadPoolExecutor {
   ~ThreadPoolExecutor() { m_stop_source.request_stop(); }
 
   template <auto kernel, typename... Args>
-  void call_parallel_kernel(int n_items, Args... args)
+  void call_parallel_kernel(std::size_t n_items, Args... args)
     requires ParallelKernel<kernel, Args...>
   {
     auto latch = std::latch{std::ssize(m_threads)};
@@ -79,10 +79,10 @@ class ThreadPoolExecutor {
   }
 
   template <typename T, auto reduce, auto transform, typename... TransformArgs>
-  void static constexpr transform_reduce_kernel(int thread_id,
+  static constexpr void transform_reduce_kernel(int thread_id,
                                                 T* thread_partial_results,
-                                                int n_items,
-                                                int n_items_per_thread,
+                                                std::size_t n_items,
+                                                std::size_t n_items_per_thread,
                                                 TransformArgs... transform_args)
     requires(ReductionOp<reduce, T> and
              TransformKernel<transform, T, TransformArgs...>)
@@ -97,7 +97,7 @@ class ThreadPoolExecutor {
   }
 
   template <typename T, auto reduce, auto transform, typename... TransformArgs>
-  auto transform_reduce(T init_val, int n_items,
+  auto transform_reduce(T init_val, std::size_t n_items,
                         TransformArgs... transform_args)
     requires(ReductionOp<reduce, T> and
              TransformKernel<transform, T, TransformArgs...>)

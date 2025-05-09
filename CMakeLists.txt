@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.29.5)
 project(ODEPrototyping)
 include(CheckLanguage)
+
+set_property(GLOBAL PROPERTY RULE_MESSAGES OFF)
+
 check_language(CUDA)
 if(CMAKE_CUDA_COMPILER)
   message(STATUS "CUDA enabled")
@@ -14,13 +17,17 @@ if(CMAKE_CUDA_COMPILER)
   set(CMAKE_CUDA_USE_RESPONSE_FILE_FOR_LIBRARIES 0)
   set(CMAKE_CUDA_USE_RESPONSE_FILE_FOR_OBJECTS 0)
 
-  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} --expt-relaxed-constexpr --extended-lambda")
+  set(CMAKE_CUDA_FLAGS "${CMAKE_CUDA_FLAGS} \
+    -Xcompiler -Wall \
+    -Xcompiler -Werror \
+    --expt-relaxed-constexpr \
+    --extended-lambda")
 endif()
 
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_CXX_FLAGS "-Wall -Wextra -Wpedantic -Werror")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Wpedantic -Werror")
 
 enable_testing()
 find_package(GTest 1.14.0 REQUIRED)

@@ -9,7 +9,7 @@
  * device code from receiving a host address). Any array parameter should be
  * passed using either a raw pointer or a view type such as std::span. */
 template <auto parallel_kernel, typename... Args>
-concept ParallelKernel = requires(int index, Args... args) {
+concept ParallelKernel = requires(std::size_t index, Args... args) {
   { parallel_kernel(index, args...) } -> std::same_as<void>;
 };
 
@@ -23,7 +23,7 @@ concept ParallelKernel = requires(int index, Args... args) {
  * receiving a host address). Any array parameter should be passed using either
  * a raw pointer or a view type such as std::span. */
 template <auto transform_kernel, typename T, typename... Args>
-concept TransformKernel = requires(int index, Args... args) {
+concept TransformKernel = requires(std::size_t index, Args... args) {
   { transform_kernel(index, args...) } -> std::same_as<T>;
 };
 

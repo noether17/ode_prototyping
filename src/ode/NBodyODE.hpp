@@ -21,7 +21,7 @@ struct NBodyODE {
   double softening{};
 
   constexpr void operator()(auto& exe, std::span<ValueType const, n_var> x,
-                            std::span<ValueType, n_var> dxdt) {
+                            std::span<ValueType, n_var> dxdt) const {
     constexpr auto vel_offset = n_var / 2;
     call_parallel_kernel<nbody_init_dxdt_kernel>(exe, vel_offset, vel_offset, x,
                                                  dxdt);

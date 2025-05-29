@@ -14,6 +14,7 @@
 #include "NBodyTest.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
+#include "SpinningCubeNBodyTest.hpp"
 #include "ThreadPoolExecutor.hpp"
 #include "VanDerPolTest.hpp"
 
@@ -352,4 +353,53 @@ TEST_F(ThreadPoolRKEmbeddedTest, RKF78NBodyTest) {
   EXPECT_NEAR(-1.2481480178176445, test.output.states.back()[6], test.tol);
   EXPECT_NEAR(-1.2883624086182086, test.output.states.back()[9], test.tol);
   EXPECT_NEAR(0.41116306451711232, test.output.states.back()[12], test.tol);
+}
+
+TEST_F(ThreadPoolRKEmbeddedTest, RKF78SpinningCubeNBodyTest) {
+  constexpr auto n_particles = 1024;
+  auto test = SpinningCubeNBodyTest<n_particles, HeapState>{};
+  auto integrator =
+      Integrator<BTRKF78, SpinningCubeNBodyTest<n_particles, HeapState>>{};
+
+  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
+                       test.output, executor);
+
+  auto const rounding_error = 10.0 * std::numeric_limits<double>::epsilon();
+  EXPECT_EQ(4, test.output.times.size());
+  EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
+  EXPECT_NEAR(0.0099564200160493655,
+              test.output.times[test.output.times.size() / 2], rounding_error);
+  EXPECT_DOUBLE_EQ(0.03125, test.output.times.back());
+
+  EXPECT_EQ(4, test.output.states.size());
+  EXPECT_DOUBLE_EQ(0.59284461651668263, test.output.states.front()[0]);
+  EXPECT_DOUBLE_EQ(0.73169375852499918,
+                   test.output.states.front()[n_particles / 4]);
+  EXPECT_DOUBLE_EQ(0.38682715123055911,
+                   test.output.states.front()[n_particles / 2]);
+  EXPECT_DOUBLE_EQ(0.065082479958922468,
+                   test.output.states.front()[3 * n_particles / 4]);
+  EXPECT_NEAR(0.36755281580363885,
+              test.output.states[test.output.states.size() / 2][0],
+              rounding_error);
+  EXPECT_NEAR(
+      0.85638183296447723,
+      test.output.states[test.output.states.size() / 2][n_particles / 4],
+      rounding_error);
+  EXPECT_NEAR(
+      0.41417946857300797,
+      test.output.states[test.output.states.size() / 2][n_particles / 2],
+      rounding_error);
+  EXPECT_NEAR(
+      0.028148414608021005,
+      test.output.states[test.output.states.size() / 2][3 * n_particles / 4],
+      rounding_error);
+  EXPECT_NEAR(0.16121502269618729, test.output.states.back()[0],
+              rounding_error);
+  EXPECT_NEAR(0.71404096847054921, test.output.states.back()[n_particles / 4],
+              rounding_error);
+  EXPECT_NEAR(0.59500181799963803, test.output.states.back()[n_particles / 2],
+              rounding_error);
+  EXPECT_NEAR(0.42875743462583493,
+              test.output.states.back()[3 * n_particles / 4], rounding_error);
 }

@@ -1,12 +1,13 @@
 #pragma once
 
 #include <array>
+#include <span>
 
 #include "HeapState.hpp"
 #include "NBodyODE.hpp"
 #include "RawOutput.hpp"
 
-// Defines parameters for Exponential test.
+// Defines parameters for NBody test.
 template <template <typename, int> typename StateType>
 struct NBodyTest {
   static constexpr auto x0_data =

@@ -12,10 +12,10 @@ template <template <typename, int> typename StateContainer, typename ValueType,
           typename ParallelExecutor>
 class RKEmbeddedParallel {
  public:
-  static constexpr auto rk_stage_kernel(
-      int i, int stage, ValueType dt, ValueType* temp_state,
-      typename decltype(ButcherTableau::a)::value_type const* a, ValueType* ks,
-      ValueType const* x0) {
+  static constexpr auto rk_stage_kernel(int i, int stage, ValueType dt,
+                                        ValueType* temp_state, ValueType* ks,
+                                        ValueType const* x0) {
+    constexpr auto a = ButcherTableau::a;
     temp_state[i] = 0.0;
     for (auto j = 0; j < stage; ++j) {
       temp_state[i] += a[stage - 1][j] * ks[j * NVAR + i];
@@ -23,11 +23,19 @@ class RKEmbeddedParallel {
     temp_state[i] = x0[i] + temp_state[i] * dt;
   }
 
-  static constexpr auto update_state_and_error_kernel(
-      int i, ValueType dt, ValueType* x, ValueType* error_estimate,
-      typename decltype(ButcherTableau::b)::value_type const* b,
-      typename decltype(ButcherTableau::b)::value_type const* db, ValueType* ks,
-      ValueType const* x0) {
+  static constexpr auto update_state_and_error_kernel(int i, ValueType dt,
+                                                      ValueType* x,
+                                                      ValueType* error_estimate,
+                                                      ValueType* ks,
+                                                      ValueType const* x0) {
+    constexpr auto b = ButcherTableau::b;
+    constexpr auto db = [] {
+      auto db = ButcherTableau::b;
+      for (auto i = 0; i < ButcherTableau::n_stages; ++i) {
+        db[i] -= ButcherTableau::bt[i];
+      }
+      return db;
+    }();
     x[i] = 0.0;
     error_estimate[i] = 0.0;
     for (auto j = 0; j < ButcherTableau::n_stages; ++j) {
@@ -51,22 +59,7 @@ class RKEmbeddedParallel {
                  ParallelExecutor& exe) {
     static constexpr auto max_step_scale = 6.0;
     static constexpr auto min_step_scale = 0.33;
-    static constexpr auto db = [] {
-      auto db = ButcherTableau::b;
-      for (auto i = 0; i < ButcherTableau::n_stages; ++i) {
-        db[i] -= ButcherTableau::bt[i];
-      }
-      return db;
-    }();
-    auto state_a =
-        StateContainer<typename decltype(ButcherTableau::a)::value_type,
-                       std::ssize(ButcherTableau::a)>{ButcherTableau::a};
-    auto state_b =
-        StateContainer<typename decltype(ButcherTableau::b)::value_type,
-                       std::ssize(ButcherTableau::b)>{ButcherTableau::b};
-    auto state_db =
-        StateContainer<typename decltype(db)::value_type, std::ssize(db)>{db};
-    constexpr auto q = std::min(ButcherTableau::p, ButcherTableau::pt);
+    static constexpr auto q = std::min(ButcherTableau::p, ButcherTableau::pt);
     static auto const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
     auto ks = StateContainer<ValueType, ButcherTableau::n_stages * NVAR>{};
 
@@ -84,17 +77,16 @@ class RKEmbeddedParallel {
           std::span<ValueType, ButcherTableau::n_stages * NVAR>{ks}
               .template subspan<0, NVAR>());
       for (auto stage = 1; stage < ButcherTableau::n_stages; ++stage) {
-        call_parallel_kernel<rk_stage_kernel>(exe, n_var, stage, dt,
-                                              temp_state.data(), state_a.data(),
-                                              ks.data(), x0.data());
+        call_parallel_kernel<rk_stage_kernel>(
+            exe, n_var, stage, dt, temp_state.data(), ks.data(), x0.data());
         ode(exe, temp_state,
             std::span<ValueType, NVAR>(ks.data() + stage * NVAR, NVAR));
       }
 
       // advance the state and compute the error estimate
       call_parallel_kernel<update_state_and_error_kernel>(
-          exe, n_var, dt, x.data(), error_estimate.data(), state_b.data(),
-          state_db.data(), ks.data(), x0.data());
+          exe, n_var, dt, x.data(), error_estimate.data(), ks.data(),
+          x0.data());
 
       // estimate error
       call_parallel_kernel<update_error_target_kernel>(

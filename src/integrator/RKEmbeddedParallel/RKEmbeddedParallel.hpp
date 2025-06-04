@@ -10,8 +10,7 @@
 template <template <typename, int> typename StateContainer, typename ValueType,
           int NVAR, typename ButcherTableau, typename ODE, typename Output,
           typename ParallelExecutor>
-class RKEmbeddedParallel {
- public:
+struct RKEmbeddedParallel {
   static constexpr auto rk_stage_kernel(int i, int stage, ValueType dt,
                                         ValueType* temp_state, ValueType* ks,
                                         ValueType const* x0) {

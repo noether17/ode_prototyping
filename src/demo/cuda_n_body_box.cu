@@ -14,15 +14,14 @@
 
 int main() {
   constexpr auto N = 64;
-  auto scenario = ParticlesInBox<N, CudaState, double>{};
+  auto scenario = ParticlesInBox<N, CudaState, std::array, double>{};
   constexpr auto n_var = scenario.n_var;
 
   auto cuda_exe = CudaExecutor{};
-  auto integrator =
-      RKEmbeddedParallel<CudaState, double, n_var, BTRKF78,
-                         NBodyODE<double, n_var>,
-                         RawOutput<HeapState<double, n_var>>, CudaExecutor>{};
-  auto output = RawOutput<HeapState<double, n_var>>{};
+  auto integrator = RKEmbeddedParallel<
+      CudaState, std::array, double, n_var, BTRKF78, NBodyODE<double, n_var>,
+      RawOutput<HeapState<std::array, double, n_var>>, CudaExecutor>{};
+  auto output = RawOutput<HeapState<std::array, double, n_var>>{};
 
   auto t0 = 0.0;
   auto tf = scenario.tf;

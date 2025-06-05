@@ -7,7 +7,10 @@
 #include <random>
 #include <string>
 
-template <int N, template <typename, int> typename StateContainer,
+template <int N,
+          template <template <typename, std::size_t> typename, typename,
+                    std::size_t> typename StateAllocator,
+          template <typename, std::size_t> typename StateContainer,
           typename ValueType>
 struct ParticlesInBox {
   static inline auto const name = std::string{"ParticlesInBox"};
@@ -18,15 +21,15 @@ struct ParticlesInBox {
   static constexpr auto softening = L / (N * (N - 1));
   static constexpr auto tolerance_value = 1.0e-3;
 
-  StateContainer<ValueType, n_var> initial_state;
-  StateContainer<ValueType, n_var> tolerance_array;
+  StateAllocator<StateContainer, ValueType, n_var> initial_state;
+  StateAllocator<StateContainer, ValueType, n_var> tolerance_array;
 
   ParticlesInBox() {
     auto gen = std::mt19937{0};
     auto dist = std::uniform_real_distribution<ValueType>(0.0, L);
 
     // Current interface requires placing random values in std::array before
-    // copying to StateContainer. std::unique_ptr is used to prevent stack
+    // copying to StateAllocator. std::unique_ptr is used to prevent stack
     // overflow for large arrays. Note: cuRAND should not be used if it produces
     // different values from the host library.
     // TODO: make this simpler.
@@ -35,11 +38,13 @@ struct ParticlesInBox {
       (*init_array_ptr)[i] = dist(gen);
       (*init_array_ptr)[i + n_var / 2] = 0.0;
     }
-    initial_state = StateContainer<ValueType, n_var>{*init_array_ptr};
+    initial_state =
+        StateAllocator<StateContainer, ValueType, n_var>{*init_array_ptr};
 
     auto tol_array_ptr = std::make_unique<std::array<ValueType, n_var>>();
     std::fill((*tol_array_ptr).begin(), (*tol_array_ptr).end(),
               tolerance_value);
-    tolerance_array = StateContainer<ValueType, n_var>{*tol_array_ptr};
+    tolerance_array =
+        StateAllocator<StateContainer, ValueType, n_var>{*tol_array_ptr};
   }
 };

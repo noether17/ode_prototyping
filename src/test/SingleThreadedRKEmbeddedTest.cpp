@@ -22,8 +22,9 @@ class SingleThreadedRKEmbeddedTest : public testing::Test {
  protected:
   template <typename ButcherTableau, typename ODE>
   using Integrator =
-      RKEmbeddedParallel<HeapState, double, ODE::n_var, ButcherTableau, ODE,
-                         RawOutput<HeapState<double, ODE::n_var>>,
+      RKEmbeddedParallel<HeapState, std::array, double, ODE::n_var,
+                         ButcherTableau, ODE,
+                         RawOutput<HeapState<std::array, double, ODE::n_var>>,
                          SingleThreadedExecutor>;
   SingleThreadedExecutor executor{};
 };

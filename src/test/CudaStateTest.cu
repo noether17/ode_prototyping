@@ -16,7 +16,7 @@ class CudaStateTest : public testing::Test {
 };
 
 TEST_F(CudaStateTest, CudaStateCanBeDefaultConstructed) {
-  auto cuda_state = CudaState<double, N>{};
+  auto cuda_state = CudaState<std::array, double, N>{};
 
   auto host_copy = std::array<double, N>{};
   cuda_state.copy_to(host_copy);
@@ -29,7 +29,7 @@ TEST_F(CudaStateTest, CudaStateCanBeConstructedFromHostState) {
   auto host_state = std::array<double, N>{};
   std::iota(host_state.begin(), host_state.end(), 0.0);
 
-  auto cuda_state = CudaState<double, N>{host_state};
+  auto cuda_state = CudaState<std::array, double, N>{host_state};
 
   auto host_copy = std::array<double, N>{};
   cuda_state.copy_to(host_copy);
@@ -39,7 +39,7 @@ TEST_F(CudaStateTest, CudaStateCanBeConstructedFromHostState) {
 TEST_F(CudaStateTest, CudaStateCanBeCopied) {
   auto host_state = std::array<double, N>{};
   std::iota(host_state.begin(), host_state.end(), 0.0);
-  auto cuda_state1 = CudaState<double, N>{host_state};
+  auto cuda_state1 = CudaState<std::array, double, N>{host_state};
 
   auto cuda_state2 = cuda_state1;
 
@@ -59,7 +59,7 @@ __global__ void cuda_iota(double* array, double value, int N) {
 }
 
 TEST_F(CudaStateTest, CudaStateCopyIsIndependent) {
-  auto cuda_state1 = CudaState<double, N>{};
+  auto cuda_state1 = CudaState<std::array, double, N>{};
 
   // Modifying cuda_state2 should not affect cuda_state1.
   auto cuda_state2 = cuda_state1;
@@ -79,7 +79,7 @@ TEST_F(CudaStateTest, CudaStateCopyIsIndependent) {
 }
 
 TEST_F(CudaStateTest, CudaStateCanBeFilledWithValue) {
-  auto cuda_state = CudaState<double, N>{};
+  auto cuda_state = CudaState<std::array, double, N>{};
   auto cuda_exe = CudaExecutor{};
 
   fill(cuda_exe, cuda_state, 3.0);

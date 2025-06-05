@@ -12,7 +12,8 @@
 #include "RawOutput.hpp"
 
 // Defines parameters for NBody test.
-template <int N, template <typename, int> typename StateType>
+template <int N, template <template <typename, std::size_t> typename, typename,
+                           std::size_t> typename StateType>
 struct SpinningCubeNBodyTest {
   static constexpr auto n_particles = N;
   static constexpr auto n_var = N * 6;
@@ -53,7 +54,7 @@ struct SpinningCubeNBodyTest {
       (*x0_data_ptr)[n_var / 2 + 3 * i + 2] = 0.0;
     }
 
-    return StateType<double, n_var>{*x0_data_ptr};
+    return StateType{*x0_data_ptr};
   }();
 
   // tolerance
@@ -61,7 +62,7 @@ struct SpinningCubeNBodyTest {
   static inline auto const atol = [] {
     auto tol_array_ptr = std::make_unique<std::array<double, n_var>>();
     std::ranges::fill(*tol_array_ptr, softening);
-    return StateType<double, n_var>{*tol_array_ptr};
+    return StateType{*tol_array_ptr};
   }();
   static inline auto const rtol = atol;
 
@@ -72,5 +73,5 @@ struct SpinningCubeNBodyTest {
     softened_nbody_ode(exe, x, dxdt);
   }
 
-  RawOutput<HeapState<double, n_var>> output{};
+  RawOutput<HeapState<std::array, double, n_var>> output{};
 };

@@ -3,18 +3,15 @@
 #include <chrono>
 #include <fstream>
 #include <iomanip>
-#include <span>
 #include <string>
 #include <thread>
 #include <type_traits>
-#include <vector>
 
 #include "BTRKF78.hpp"
 #include "CudaExecutor.cuh"
 #include "CudaState.cuh"
 #include "HeapState.hpp"
 #include "NBodyODE.hpp"
-#include "ParticlesInBox.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
 #include "SpinningParticlesInBox.hpp"
@@ -93,15 +90,15 @@ void run_threadpool_scenario(double softening_divisor,
                              double tolerance_factor) {
   constexpr auto n_repetitions = 3;
   for (auto i = 0; i < n_repetitions; ++i) {
-    auto scenario = SpinningParticlesInBox<N, HeapState, double>{
+    auto scenario = SpinningParticlesInBox<N, HeapState, std::array, double>{
         softening_divisor, tolerance_factor};
     constexpr auto n_var = scenario.n_var;
 
     auto tp_exe = ThreadPoolExecutor{12};
     auto integrator = RKEmbeddedParallel<
-        HeapState, double, n_var, BTRKF78, NBodyODE<double, n_var>,
-        RawOutput<HeapState<double, n_var>>, ThreadPoolExecutor>{};
-    auto output = RawOutput<HeapState<double, n_var>>{};
+        HeapState, std::array, double, n_var, BTRKF78, NBodyODE<double, n_var>,
+        RawOutput<HeapState<std::array, double, n_var>>, ThreadPoolExecutor>{};
+    auto output = RawOutput<HeapState<std::array, double, n_var>>{};
 
     auto t0 = 0.0;
     auto tf = scenario.tf;
@@ -124,16 +121,15 @@ template <int N>
 void run_cuda_scenario(double softening_divisor, double tolerance_factor) {
   constexpr auto n_repetitions = 1;
   for (auto i = 0; i < n_repetitions; ++i) {
-    auto scenario = SpinningParticlesInBox<N, CudaState, double>{
+    auto scenario = SpinningParticlesInBox<N, CudaState, std::array, double>{
         softening_divisor, tolerance_factor};
     constexpr auto n_var = scenario.n_var;
 
     auto cuda_exe = CudaExecutor{};
-    auto integrator =
-        RKEmbeddedParallel<CudaState, double, n_var, BTRKF78,
-                           NBodyODE<double, n_var>,
-                           RawOutput<HeapState<double, n_var>>, CudaExecutor>{};
-    auto output = RawOutput<HeapState<double, n_var>>{};
+    auto integrator = RKEmbeddedParallel<
+        CudaState, std::array, double, n_var, BTRKF78, NBodyODE<double, n_var>,
+        RawOutput<HeapState<std::array, double, n_var>>, CudaExecutor>{};
+    auto output = RawOutput<HeapState<std::array, double, n_var>>{};
 
     auto t0 = 0.0;
     auto tf = scenario.tf;

@@ -1,6 +1,5 @@
 #include <array>
 #include <fstream>
-#include <span>
 #include <vector>
 
 #include "BTRKF78.hpp"
@@ -31,18 +30,17 @@ int main() {
   constexpr auto n_var = x0_data.size();
 
   auto cuda_exe = CudaExecutor{};
-  auto integrator =
-      RKEmbeddedParallel<CudaState, double, n_var, BTRKF78,
-                         NBodyODE<double, n_var>,
-                         RawOutput<HeapState<double, n_var>>, CudaExecutor>{};
-  auto output = RawOutput<HeapState<double, n_var>>{};
+  auto integrator = RKEmbeddedParallel<
+      CudaState, std::array, double, n_var, BTRKF78, NBodyODE<double, n_var>,
+      RawOutput<HeapState<std::array, double, n_var>>, CudaExecutor>{};
+  auto output = RawOutput<HeapState<std::array, double, n_var>>{};
 
-  auto x0 = CudaState<double, n_var>{x0_data};
+  auto x0 = CudaState{x0_data};
   auto t0 = 0.0;
   auto tf = 6.3;
   auto host_tol = std::array<double, n_var>{};
   std::fill(host_tol.begin(), host_tol.end(), 1.0e-10);
-  auto tol = CudaState<double, n_var>{host_tol};
+  auto tol = CudaState{host_tol};
 
   integrator.integrate(x0, t0, tf, tol, tol, NBodyODE<double, n_var>{}, output,
                        cuda_exe);

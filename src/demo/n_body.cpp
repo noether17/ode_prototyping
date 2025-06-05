@@ -26,18 +26,20 @@ int main() {
                  0.439775,  0.169717,  0.0, 0.0,       -0.593786, 0.0,
                  1.822785,  0.128248,  0.0, 1.271564,  0.168645,  0.0,
                  -1.271564, 0.168645,  0.0, -1.822785, 0.128248,  0.0};
+  auto x0 = HeapState{x0_data};
   constexpr auto n_var = x0_data.size();
 
   auto thread_pool = ThreadPoolExecutor(8);
-  auto integrator = RKEmbeddedParallel<
-      HeapState, double, n_var, BTRKF78, NBodySimpleODE<double, n_var>,
-      RawOutput<HeapState<double, n_var>>, ThreadPoolExecutor>{};
-  auto output = RawOutput<HeapState<double, n_var>>{};
+  auto integrator =
+      RKEmbeddedParallel<HeapState, std::array, double, n_var, BTRKF78,
+                         NBodySimpleODE<double, n_var>,
+                         RawOutput<HeapState<std::array, double, n_var>>,
+                         ThreadPoolExecutor>{};
+  auto output = RawOutput<HeapState<std::array, double, n_var>>{};
 
-  auto x0 = HeapState<double, n_var>{x0_data};
   auto t0 = 0.0;
   auto tf = 6.3;
-  auto tol = HeapState<double, n_var>{};
+  auto tol = decltype(x0){};
   std::fill(tol.data(), tol.data() + n_var, 1.0e-10);
 
   integrator.integrate(x0, t0, tf, tol, tol, NBodySimpleODE<double, n_var>{},

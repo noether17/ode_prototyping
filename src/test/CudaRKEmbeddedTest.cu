@@ -22,10 +22,9 @@
 class CudaRKEmbeddedTest : public testing::Test {
  protected:
   template <typename ButcherTableau, typename ODE>
-  using Integrator =
-      RKEmbeddedParallel<CudaState, double, ODE::n_var, ButcherTableau, ODE,
-                         RawOutput<HeapState<double, ODE::n_var>>,
-                         CudaExecutor>;
+  using Integrator = RKEmbeddedParallel<
+      CudaState, std::array, double, ODE::n_var, ButcherTableau, ODE,
+      RawOutput<HeapState<std::array, double, ODE::n_var>>, CudaExecutor>;
   CudaExecutor executor{};
 };
 

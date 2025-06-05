@@ -29,9 +29,9 @@ void constexpr add_kernel(int i, double* c, double const* a, double const* b) {
 }
 
 TEST_F(CudaExecutorTest, ElementWiseAdd) {
-  auto cuda_state1 = CudaState<double, N>{host_state1};
-  auto cuda_state2 = CudaState<double, N>{host_state2};
-  auto cuda_result = CudaState<double, N>{};
+  auto cuda_state1 = CudaState{host_state1};
+  auto cuda_state2 = CudaState{host_state2};
+  auto cuda_result = decltype(cuda_state1){};
 
   cuda_exec.call_parallel_kernel<add_kernel>(
       N, cuda_result.data(), cuda_state1.data(), cuda_state2.data());
@@ -50,8 +50,8 @@ constexpr auto element_wise_multiply(int i, double const* a, double const* b) {
 }
 
 TEST_F(CudaExecutorTest, InnerProduct) {
-  auto cuda_state1 = CudaState<double, N>{host_state1};
-  auto cuda_state2 = CudaState<double, N>{host_state2};
+  auto cuda_state1 = CudaState{host_state1};
+  auto cuda_state2 = CudaState{host_state2};
 
   auto result =
       cuda_exec.transform_reduce<double, binary_add, element_wise_multiply>(

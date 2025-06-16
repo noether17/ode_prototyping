@@ -12,8 +12,7 @@
 #include "RawOutput.hpp"
 
 // Defines parameters for NBody test.
-template <int N, template <template <typename, std::size_t> typename, typename,
-                           std::size_t> typename StateType>
+template <int N, template <typename, std::size_t> typename StateType>
 struct SpinningCubeNBodyTest {
   static constexpr auto n_particles = N;
   static constexpr auto n_var = N * 6;
@@ -73,5 +72,5 @@ struct SpinningCubeNBodyTest {
     softened_nbody_ode(exe, x, dxdt);
   }
 
-  RawOutput<HeapState<std::array, double, n_var>> output{};
+  RawOutput<HeapState<double, n_var>> output{};
 };

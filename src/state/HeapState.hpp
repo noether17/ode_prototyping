@@ -1,51 +1,109 @@
 #pragma once
 
+#include <algorithm>
+#include <concepts>
 #include <memory>
 #include <span>
-#include <utility>
+#include <tuple>
+#include <type_traits>
 
-template <template <typename, std::size_t> typename ContainerType, typename T,
-          std::size_t N>
+template <std::floating_point T, std::size_t N>
 class HeapState {
  public:
-  template <typename ValueType, std::size_t Size>
-  using container_type = ContainerType<ValueType, Size>;
-  using state_type = container_type<T, N>;
   using value_type = T;
+  static constexpr auto size() { return N; }
 
-  HeapState() : state_{std::make_unique<state_type>()} {}
-  explicit HeapState(state_type const& state)
-      : state_{std::make_unique<state_type>(state)} {}
-  explicit HeapState(std::span<value_type const, N> state)
-      : state_{std::make_unique<state_type>()} {
-    std::copy(state.begin(), state.end(), state_->begin());
+  HeapState() : state_array_{std::make_unique<T[]>(N)} {}
+  explicit HeapState(std::span<T const, N> state_span)
+      : state_array_{std::make_unique_for_overwrite<T[]>(N)} {
+    std::ranges::copy(state_span, state_array_.get());
   }
-  HeapState(HeapState const& state)
-      : state_{std::make_unique<state_type>(*state.state_)} {}
-  HeapState(HeapState&& state) = default;
-  auto& operator=(HeapState const& state) {
-    if (this != &state) {
-      state_ = std::make_unique<state_type>(*state.state_);
+  HeapState(HeapState const& other)
+      : state_array_{std::make_unique_for_overwrite<T[]>(N)} {
+    std::copy(other.state_array_.get(), other.state_array_.get() + N,
+              state_array_.get());
+  }
+  HeapState(HeapState&& other) noexcept
+      : state_array_{std::move(other.state_array_)} {
+    // Need to preserve class invariant of representing fixed-size array, but no
+    // guarantee of default initialization.
+    other.state_array_ = std::make_unique_for_overwrite<T[]>(N);
+  }
+  HeapState& operator=(HeapState const& other) {
+    if (this != &other) {
+      std::copy(other.state_array_.get(), other.state_array_.get() + N,
+                state_array_.get());
     }
     return *this;
   }
-  auto& operator=(HeapState&& state) {
-    state_ = std::move(state.state_);
+  HeapState& operator=(HeapState&& other) noexcept {
+    std::swap(state_array_, other.state_array_);
     return *this;
   }
   ~HeapState() = default;
 
-  auto& operator[](int i) { return (*state_)[i]; }
-  auto const& operator[](int i) const { return (*state_)[i]; }
+  auto* data() { return state_array_.get(); }
+  auto const* data() const { return state_array_.get(); }
 
-  auto* data() { return state_->data(); }
-  auto const* data() const { return state_->data(); }
+  operator std::span<T, N>() { return std::span<T, N>{data(), size()}; }
+  operator std::span<T const, N>() const {
+    return std::span<T const, N>{data(), size()};
+  }
 
-  operator std::span<value_type, N>() { return *state_; }
-  operator std::span<value_type const, N>() const { return *state_; }
-
-  static constexpr auto size() { return N; }
+  auto& operator[](std::size_t i) { return state_array_[i]; }
+  auto const& operator[](std::size_t i) const { return state_array_[i]; }
 
  private:
-  std::unique_ptr<state_type> state_{};
+  std::unique_ptr<T[]> state_array_{};
 };
+
+template <typename R>
+HeapState(R&&) -> HeapState<typename std::remove_reference_t<R>::value_type,
+                            std::tuple_size_v<std::remove_reference_t<R>>>;
+
+// template <template <typename, std::size_t> typename ContainerType, typename
+// T,
+//           std::size_t N>
+// class HeapState {
+//  public:
+//   template <typename ValueType, std::size_t Size>
+//   using container_type = ContainerType<ValueType, Size>;
+//   using state_type = container_type<T, N>;
+//   using value_type = T;
+//
+//   HeapState() : state_{std::make_unique<state_type>()} {}
+//   explicit HeapState(state_type const& state)
+//       : state_{std::make_unique<state_type>(state)} {}
+//   explicit HeapState(std::span<value_type const, N> state)
+//       : state_{std::make_unique<state_type>()} {
+//     std::copy(state.begin(), state.end(), state_->begin());
+//   }
+//   HeapState(HeapState const& state)
+//       : state_{std::make_unique<state_type>(*state.state_)} {}
+//   HeapState(HeapState&& state) = default;
+//   auto& operator=(HeapState const& state) {
+//     if (this != &state) {
+//       state_ = std::make_unique<state_type>(*state.state_);
+//     }
+//     return *this;
+//   }
+//   auto& operator=(HeapState&& state) {
+//     state_ = std::move(state.state_);
+//     return *this;
+//   }
+//   ~HeapState() = default;
+//
+//   auto& operator[](int i) { return (*state_)[i]; }
+//   auto const& operator[](int i) const { return (*state_)[i]; }
+//
+//   auto* data() { return state_->data(); }
+//   auto const* data() const { return state_->data(); }
+//
+//   operator std::span<value_type, N>() { return *state_; }
+//   operator std::span<value_type const, N>() const { return *state_; }
+//
+//   static constexpr auto size() { return N; }
+//
+//  private:
+//   std::unique_ptr<state_type> state_{};
+// };

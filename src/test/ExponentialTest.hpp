@@ -9,8 +9,7 @@
 #include "RawOutput.hpp"
 
 // Defines parameters for Exponential test.
-template <template <template <typename, std::size_t> typename, typename,
-                    std::size_t> typename StateType>
+template <template <typename, std::size_t> typename StateType>
 struct ExponentialTest {
   static constexpr auto n_var = 10;
   static constexpr auto x0_data = [] {
@@ -33,5 +32,5 @@ struct ExponentialTest {
                             std::span<double, n_var> dxdt) {
     ExponentialODE<double, n_var>{}(exe, x, dxdt);
   }
-  RawOutput<HeapState<std::array, double, n_var>> output{};
+  RawOutput<HeapState<double, n_var>> output{};
 };

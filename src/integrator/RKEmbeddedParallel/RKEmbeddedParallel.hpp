@@ -7,13 +7,11 @@
 
 #include "ParallelExecutor.hpp"
 
-template <template <template <typename, std::size_t> typename, typename,
-                    std::size_t> typename StateAllocator,
-          template <typename, std::size_t> typename StateContainer,
+template <template <typename, std::size_t> typename StateAllocator,
           typename ValueType, std::size_t NVAR, typename ButcherTableau,
           typename ODE, typename Output, typename ParallelExecutor>
 struct RKEmbeddedParallel {
-  using AllocatedState = StateAllocator<StateContainer, ValueType, NVAR>;
+  using AllocatedState = StateAllocator<ValueType, NVAR>;
 
   void integrate(AllocatedState x0, ValueType t0, ValueType tf,
                  AllocatedState atol, AllocatedState rtol, ODE ode,
@@ -22,16 +20,15 @@ struct RKEmbeddedParallel {
     static constexpr auto min_step_scale = 0.33;
     static constexpr auto q = std::min(ButcherTableau::p, ButcherTableau::pt);
     static auto const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
-    auto ks = StateAllocator<StateContainer, ValueType,
-                             ButcherTableau::n_stages * NVAR>{};
+    auto ks = StateAllocator<ValueType, ButcherTableau::n_stages * NVAR>{};
 
     auto dt = detail::estimate_initial_step(exe, x0, atol, rtol, ode);
     auto t = t0;
     auto x = x0;
     auto n_var = std::ssize(x);
-    auto temp_state = StateAllocator<StateContainer, ValueType, NVAR>{};
-    auto error_estimate = StateAllocator<StateContainer, ValueType, NVAR>{};
-    auto error_target = StateAllocator<StateContainer, ValueType, NVAR>{};
+    auto temp_state = StateAllocator<ValueType, NVAR>{};
+    auto error_estimate = StateAllocator<ValueType, NVAR>{};
+    auto error_target = StateAllocator<ValueType, NVAR>{};
     output.save_state(t, x);
     while (t < tf) {
       // evaluate stages

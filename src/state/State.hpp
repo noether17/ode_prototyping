@@ -3,6 +3,18 @@
 #include <concepts>
 #include <ranges>
 #include <span>
+#include <type_traits>
+#include <utility>
+
+template <typename T>
+concept ODEState = requires {
+  typename T::value_type;
+} && std::floating_point<typename T::value_type> && requires(T t) {
+  { t.size() } -> std::same_as<std::size_t>;
+  std::integral_constant<std::size_t, T{}.size()>{};
+  { t.data() } -> std::same_as<typename T::value_type*>;
+  { std::as_const(t).data() } -> std::same_as<typename T::value_type const*>;
+};
 
 template <typename T>
 concept StateArray = requires {

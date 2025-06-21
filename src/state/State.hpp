@@ -17,11 +17,23 @@ concept ODEState = requires {
 template <typename T>
 struct state_traits;
 
-template <template <typename, std::size_t> typename StateType, typename T,
+template <template <typename, std::size_t> typename StateManager, typename T,
           std::size_t N>
-  requires ODEState<StateType<T, N>>
-struct state_traits<StateType<T, N>> {
+  requires ODEState<StateManager<T, N>>
+struct state_traits<StateManager<T, N>> {
+  using value_type = T;
   static constexpr auto size = N;
-  template <std::size_t M>
-  using resized_state_type = StateType<T, M>;
 };
+
+template <typename T, std::size_t M>
+struct resized_ode_state;
+
+template <template <typename, std::size_t> typename StateManager, typename T,
+          std::size_t N, std::size_t M>
+  requires ODEState<StateManager<T, N>>
+struct resized_ode_state<StateManager<T, N>, M> {
+  using type = StateManager<T, M>;
+};
+
+template <ODEState StateType, std::size_t M>
+using ResizedODEState = resized_ode_state<StateType, M>::type;

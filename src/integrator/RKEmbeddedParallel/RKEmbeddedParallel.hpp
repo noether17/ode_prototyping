@@ -12,8 +12,6 @@ template <ODEState StateType, typename ButcherTableau, typename ODE,
           typename Output, typename ParallelExecutor>
 struct RKEmbeddedParallel {
   using StateTraits = state_traits<StateType>;
-  template <std::size_t M>
-  using ResizedStateType = StateTraits::template resized_state_type<M>;
   using ValueType = typename StateType::value_type;
   static constexpr auto NVAR = StateTraits::size;
 
@@ -24,7 +22,7 @@ struct RKEmbeddedParallel {
     static constexpr auto min_step_scale = 0.33;
     static constexpr auto q = std::min(ButcherTableau::p, ButcherTableau::pt);
     static auto const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
-    auto ks = ResizedStateType<ButcherTableau::n_stages * NVAR>{};
+    auto ks = ResizedODEState<StateType, ButcherTableau::n_stages * NVAR>{};
 
     auto dt = detail::estimate_initial_step(exe, x0, atol, rtol, ode);
     auto t = t0;

@@ -30,9 +30,10 @@ int main() {
   constexpr auto n_var = x0_data.size();
 
   auto thread_pool = ThreadPoolExecutor(8);
-  auto integrator = RKEmbeddedParallel<
-      HeapState, double, n_var, BTRKF78, NBodySimpleODE<double, n_var>,
-      RawOutput<HeapState<double, n_var>>, ThreadPoolExecutor>{};
+  auto integrator =
+      RKEmbeddedParallel<decltype(x0), BTRKF78, NBodySimpleODE<double, n_var>,
+                         RawOutput<HeapState<double, n_var>>,
+                         ThreadPoolExecutor>{};
   auto output = RawOutput<HeapState<double, n_var>>{};
 
   auto t0 = 0.0;

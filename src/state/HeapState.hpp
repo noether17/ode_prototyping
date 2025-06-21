@@ -11,10 +11,12 @@ template <std::floating_point T, std::size_t N>
 class HeapState {
  public:
   using value_type = T;
+  using span_type = std::span<T, N>;
+  using const_span_type = std::span<T const, N>;
   static constexpr auto size() { return N; }
 
   HeapState() : state_array_{std::make_unique<T[]>(N)} {}
-  explicit HeapState(std::span<T const, N> state_span)
+  explicit HeapState(const_span_type state_span)
       : state_array_{std::make_unique_for_overwrite<T[]>(N)} {
     std::ranges::copy(state_span, state_array_.get());
   }
@@ -45,10 +47,8 @@ class HeapState {
   auto* data() { return state_array_.get(); }
   auto const* data() const { return state_array_.get(); }
 
-  operator std::span<T, N>() { return std::span<T, N>{data(), size()}; }
-  operator std::span<T const, N>() const {
-    return std::span<T const, N>{data(), size()};
-  }
+  operator span_type() { return span_type{data(), size()}; }
+  operator const_span_type() const { return const_span_type{data(), size()}; }
 
   auto& operator[](std::size_t i) { return state_array_[i]; }
   auto const& operator[](std::size_t i) const { return state_array_[i]; }

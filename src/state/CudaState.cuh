@@ -11,6 +11,8 @@ template <std::floating_point T, std::size_t N>
 class CudaState {
  public:
   using value_type = T;
+  using span_type = std::span<T, N>;
+  using const_span_type = std::span<T const, N>;
   static constexpr auto size() { return N; }
 
   CudaState() {
@@ -46,10 +48,8 @@ class CudaState {
   auto* data() { return device_ptr_; }
   auto const* data() const { return device_ptr_; }
 
-  operator std::span<T, N>() { return std::span<T, N>{data(), size()}; }
-  operator std::span<T const, N>() const {
-    return std::span<T const, N>{data(), size()};
-  }
+  operator span_type() { return span_type{data(), size()}; }
+  operator const_span_type() const { return const_span_type{data(), size()}; }
   void copy_to(std::span<value_type, N> copy) {
     cudaMemcpy(copy.data(), device_ptr_, N * sizeof(T), cudaMemcpyDeviceToHost);
   }

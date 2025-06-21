@@ -6,29 +6,33 @@
 #include <vector>
 
 #include "ParallelExecutor.hpp"
+#include "State.hpp"
 
-template <template <typename, std::size_t> typename StateAllocator,
-          typename ValueType, std::size_t NVAR, typename ButcherTableau,
-          typename ODE, typename Output, typename ParallelExecutor>
+template <ODEState StateType, typename ButcherTableau, typename ODE,
+          typename Output, typename ParallelExecutor>
 struct RKEmbeddedParallel {
-  using AllocatedState = StateAllocator<ValueType, NVAR>;
+  using StateTraits = state_traits<StateType>;
+  template <std::size_t M>
+  using ResizedStateType = StateTraits::template resized_state_type<M>;
+  using ValueType = typename StateType::value_type;
+  static constexpr auto NVAR = StateTraits::size;
 
-  void integrate(AllocatedState x0, ValueType t0, ValueType tf,
-                 AllocatedState atol, AllocatedState rtol, ODE ode,
-                 Output& output, ParallelExecutor& exe) {
+  void integrate(StateType x0, ValueType t0, ValueType tf, StateType atol,
+                 StateType rtol, ODE ode, Output& output,
+                 ParallelExecutor& exe) {
     static constexpr auto max_step_scale = 6.0;
     static constexpr auto min_step_scale = 0.33;
     static constexpr auto q = std::min(ButcherTableau::p, ButcherTableau::pt);
     static auto const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
-    auto ks = StateAllocator<ValueType, ButcherTableau::n_stages * NVAR>{};
+    auto ks = ResizedStateType<ButcherTableau::n_stages * NVAR>{};
 
     auto dt = detail::estimate_initial_step(exe, x0, atol, rtol, ode);
     auto t = t0;
     auto x = x0;
     auto n_var = std::ssize(x);
-    auto temp_state = StateAllocator<ValueType, NVAR>{};
-    auto error_estimate = StateAllocator<ValueType, NVAR>{};
-    auto error_target = StateAllocator<ValueType, NVAR>{};
+    auto temp_state = StateType{};
+    auto error_estimate = StateType{};
+    auto error_target = StateType{};
     output.save_state(t, x);
     while (t < tf) {
       // evaluate stages
@@ -164,20 +168,20 @@ struct RKEmbeddedParallel {
                                         ODE& ode) {
       auto const n_var = std::ssize(x0);
 
-      auto error_target = AllocatedState{};
+      auto error_target = StateType{};
       call_parallel_kernel<compute_error_target_kernel>(
           exe, n_var, error_target.data(), x0.data(), atol.data(), rtol.data());
 
-      auto f0 = AllocatedState{};
+      auto f0 = StateType{};
       ode(exe, x0, f0);
       auto d0 = rk_norm(exe, x0, error_target);
       auto d1 = rk_norm(exe, f0, error_target);
       auto dt0 = (d0 < 1.0e-5 or d1 < 1.0e-5) ? 1.0e-6 : 0.01 * (d0 / d1);
 
-      auto x1 = AllocatedState{};
+      auto x1 = StateType{};
       call_parallel_kernel<euler_step_kernel>(exe, n_var, x1.data(), x0.data(),
                                               f0.data(), dt0);
-      auto df = AllocatedState{};
+      auto df = StateType{};
       ode(exe, x1, df);
       call_parallel_kernel<difference_kernel>(exe, n_var, df.data(), f0.data());
       auto d2 = rk_norm(exe, df, error_target) / dt0;

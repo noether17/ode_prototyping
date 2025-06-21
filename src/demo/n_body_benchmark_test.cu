@@ -96,7 +96,7 @@ void run_threadpool_scenario(double softening_divisor,
 
     auto tp_exe = ThreadPoolExecutor{12};
     auto integrator = RKEmbeddedParallel<
-        HeapState, double, n_var, BTRKF78, NBodyODE<double, n_var>,
+        decltype(scenario.initial_state), BTRKF78, NBodyODE<double, n_var>,
         RawOutput<HeapState<double, n_var>>, ThreadPoolExecutor>{};
     auto output = RawOutput<HeapState<double, n_var>>{};
 
@@ -127,7 +127,7 @@ void run_cuda_scenario(double softening_divisor, double tolerance_factor) {
 
     auto cuda_exe = CudaExecutor{};
     auto integrator =
-        RKEmbeddedParallel<CudaState, double, n_var, BTRKF78,
+        RKEmbeddedParallel<decltype(scenario.initial_state), BTRKF78,
                            NBodyODE<double, n_var>,
                            RawOutput<HeapState<double, n_var>>, CudaExecutor>{};
     auto output = RawOutput<HeapState<double, n_var>>{};

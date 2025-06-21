@@ -19,7 +19,7 @@ int main() {
 
   auto cuda_exe = CudaExecutor{};
   auto integrator =
-      RKEmbeddedParallel<CudaState, double, n_var, BTRKF78,
+      RKEmbeddedParallel<decltype(scenario.initial_state), BTRKF78,
                          NBodyODE<double, n_var>,
                          RawOutput<HeapState<double, n_var>>, CudaExecutor>{};
   auto output = RawOutput<HeapState<double, n_var>>{};

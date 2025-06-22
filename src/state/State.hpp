@@ -12,7 +12,14 @@ concept ODEState = requires {
   { t.data() } -> std::same_as<typename T::value_type*>;
   { std::as_const(t).data() } -> std::same_as<typename T::value_type const*>;
 } && (requires { std::integral_constant<std::size_t, T{}.size()>{}; } ||
-      requires { std::integral_constant<std::size_t, T::size()>{}; });
+      requires { std::integral_constant<std::size_t, T::size()>{}; }) &&
+requires {
+  typename T::span_type;
+  typename T::const_span_type;
+} && requires(T t) {
+  { span(t) } -> std::same_as<typename T::span_type>;
+  { span(std::as_const(t)) } -> std::same_as<typename T::const_span_type>;
+};
 
 template <typename T>
 struct state_traits;

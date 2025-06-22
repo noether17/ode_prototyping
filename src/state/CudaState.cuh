@@ -54,6 +54,9 @@ class CudaState {
     cudaMemcpy(copy.data(), device_ptr_, N * sizeof(T), cudaMemcpyDeviceToHost);
   }
 
+  friend auto span(CudaState& state) { return span_type{state}; }
+  friend auto span(CudaState const& state) { return const_span_type{state}; }
+
  private:
   T* device_ptr_{};
 };

@@ -34,12 +34,10 @@ struct RKEmbeddedParallel {
     output.save_state(t, x);
     while (t < tf) {
       // evaluate stages
-      ode(exe, x0,
-          std::span<ValueType, ButcherTableau::n_stages * NVAR>{ks}
-              .template subspan<0, NVAR>());
+      ode(exe, x0, span(ks).template subspan<0, NVAR>());
       for (auto stage = 1; stage < ButcherTableau::n_stages; ++stage) {
         call_parallel_kernel<detail::rk_stage_kernel>(
-            exe, n_var, stage, dt, temp_state.data(), ks.data(), x0.data());
+            exe, n_var, stage, dt, span(temp_state), span(ks), span(x0));
         ode(exe, temp_state,
             std::span<ValueType, NVAR>(ks.data() + stage * NVAR, NVAR));
       }
@@ -82,9 +80,10 @@ struct RKEmbeddedParallel {
   }
 
   struct detail {
-    static constexpr auto rk_stage_kernel(int i, int stage, ValueType dt,
-                                          ValueType* temp_state, ValueType* ks,
-                                          ValueType const* x0) {
+    static constexpr auto rk_stage_kernel(
+        int i, int stage, ValueType dt, std::span<ValueType, NVAR> temp_state,
+        std::span<ValueType const, ButcherTableau::n_stages * NVAR> ks,
+        std::span<ValueType const, NVAR> x0) {
       constexpr auto a = ButcherTableau::a;
       temp_state[i] = 0.0;
       for (auto j = 0; j < stage; ++j) {

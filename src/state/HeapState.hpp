@@ -50,6 +50,9 @@ class HeapState {
   operator span_type() { return span_type{data(), size()}; }
   operator const_span_type() const { return const_span_type{data(), size()}; }
 
+  friend auto span(HeapState& state) { return span_type{state}; }
+  friend auto span(HeapState const& state) { return const_span_type{state}; }
+
   auto& operator[](std::size_t i) { return state_array_[i]; }
   auto const& operator[](std::size_t i) const { return state_array_[i]; }
 

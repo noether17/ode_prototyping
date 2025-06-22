@@ -1,73 +1,75 @@
 #pragma once
 
+#include <concepts>
 #include <span>
 #include <type_traits>
 #include <utility>
 
-// RAII class template for managing CUDA arrays.
-template <template <typename, std::size_t> typename ContainerType, typename T,
-          std::size_t N>
+#include "CudaErrorCheck.cuh"
+
+template <std::floating_point T, std::size_t N>
 class CudaState {
  public:
-  template <typename ValueType, std::size_t Size>
-  using container_type = ContainerType<ValueType, Size>;
-  using state_type = container_type<T, N>;
   using value_type = T;
+  using span_type = std::span<T, N>;
+  using const_span_type = std::span<T const, N>;
+  static constexpr auto size() { return N; }
 
-  CudaState() { cudaMalloc(&m_state, sizeof(state_type)); }
-  explicit CudaState(state_type const& state) {
-    cudaMalloc(&m_state, sizeof(state_type));
-    cudaMemcpy(m_state, state.data(), sizeof(state_type),
-               cudaMemcpyHostToDevice);
+  CudaState() {
+    CUDA_ERROR_CHECK(cudaMalloc(&device_ptr_, N * sizeof(T)));
+    CUDA_ERROR_CHECK(cudaMemset(device_ptr_, 0, N * sizeof(T)));
   }
-  explicit CudaState(std::span<value_type const, N> state) {
-    cudaMalloc(&m_state, sizeof(state_type));
-    cudaMemcpy(m_state, state.data(), sizeof(state_type),
-               cudaMemcpyHostToDevice);
+  explicit CudaState(std::span<const T, N> state_span) {
+    CUDA_ERROR_CHECK(cudaMalloc(&device_ptr_, N * sizeof(T)));
+    CUDA_ERROR_CHECK(cudaMemcpy(device_ptr_, state_span.data(), N * sizeof(T),
+                                cudaMemcpyHostToDevice));
   }
-  CudaState(CudaState const& v) {
-    cudaMalloc(&m_state, sizeof(state_type));
-    cudaMemcpy(m_state, v.m_state, sizeof(state_type),
-               cudaMemcpyDeviceToDevice);
+  CudaState(CudaState const& other) {
+    CUDA_ERROR_CHECK(cudaMalloc(&device_ptr_, N * sizeof(T)));
+    CUDA_ERROR_CHECK(cudaMemcpy(device_ptr_, other.device_ptr_, N * sizeof(T),
+                                cudaMemcpyDeviceToDevice));
   }
-  CudaState(CudaState&& v) = default;
-  auto& operator=(CudaState const& v) {
-    if (this != &v) {
-      cudaMemcpy(m_state, v.m_state, sizeof(state_type),
-                 cudaMemcpyDeviceToDevice);
+  CudaState(CudaState&& other) noexcept : device_ptr_{other.device_ptr_} {
+    CUDA_ERROR_CHECK(cudaMalloc(&other.device_ptr_, N * sizeof(T)));
+  }
+  CudaState& operator=(CudaState const& other) {
+    if (this != &other) {
+      CUDA_ERROR_CHECK(cudaMemcpy(device_ptr_, other.device_ptr_, N * sizeof(T),
+                                  cudaMemcpyDeviceToDevice));
     }
     return *this;
   }
-  auto& operator=(CudaState&& v) {
-    std::swap(m_state, v.m_state);
+  CudaState& operator=(CudaState&& other) noexcept {
+    std::swap(device_ptr_, other.device_ptr_);
     return *this;
   }
-  ~CudaState() { cudaFree(m_state); }
+  ~CudaState() { cudaFree(device_ptr_); }
 
+  auto* data() { return device_ptr_; }
+  auto const* data() const { return device_ptr_; }
+
+  operator span_type() { return span_type{data(), size()}; }
+  operator const_span_type() const { return const_span_type{data(), size()}; }
   void copy_to(std::span<value_type, N> copy) {
-    cudaMemcpy(copy.data(), m_state, sizeof(state_type),
-               cudaMemcpyDeviceToHost);
+    cudaMemcpy(copy.data(), device_ptr_, N * sizeof(T), cudaMemcpyDeviceToHost);
   }
 
-  auto* data() { return m_state->data(); }
-  auto const* data() const { return m_state->data(); }
-
-  operator std::span<value_type, N>() { return *m_state; }
-  operator std::span<value_type const, N>() const { return *m_state; }
-
-  static constexpr auto size() { return N; }
+  friend auto span(CudaState& state) { return span_type{state}; }
+  friend auto span(CudaState const& state) { return const_span_type{state}; }
 
  private:
-  state_type* m_state{};
+  T* device_ptr_{};
 };
+
+template <typename R>
+CudaState(R&&) -> CudaState<typename std::remove_reference_t<R>::value_type,
+                            std::tuple_size_v<std::remove_reference_t<R>>>;
 
 template <typename T>
 inline constexpr bool IsCudaState = std::false_type{};
 
-template <template <typename, std::size_t> typename ContainerType, typename T,
-          std::size_t N>
-inline constexpr bool IsCudaState<CudaState<ContainerType, T, N>> =
-    std::true_type{};
+template <typename T, std::size_t N>
+inline constexpr bool IsCudaState<CudaState<T, N>> = std::true_type{};
 
 template <typename OutputStateType, typename InputStateType>
   requires(IsCudaState<InputStateType>)

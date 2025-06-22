@@ -7,10 +7,7 @@
 #include <random>
 #include <string>
 
-template <int N,
-          template <template <typename, std::size_t> typename, typename,
-                    std::size_t> typename StateAllocator,
-          template <typename, std::size_t> typename StateContainer,
+template <int N, template <typename, std::size_t> typename StateAllocator,
           typename ValueType>
 struct SpinningParticlesInBox {
   static inline auto const name = std::string{"SpinningParticlesInBox"};
@@ -33,8 +30,8 @@ struct SpinningParticlesInBox {
 
   double softening{};
   double tolerance_value{};
-  StateAllocator<StateContainer, ValueType, n_var> initial_state;
-  StateAllocator<StateContainer, ValueType, n_var> tolerance_array;
+  StateAllocator<ValueType, n_var> initial_state;
+  StateAllocator<ValueType, n_var> tolerance_array;
 
   SpinningParticlesInBox(ValueType sof_divisor, ValueType tolerance_factor)
       : softening{4.0 * L / std::sqrt(N) / sof_divisor},
@@ -60,13 +57,11 @@ struct SpinningParticlesInBox {
       (*init_array_ptr)[n_var / 2 + 3 * i + 1] = omega * x;
       (*init_array_ptr)[n_var / 2 + 3 * i + 2] = 0.0;
     }
-    initial_state =
-        StateAllocator<StateContainer, ValueType, n_var>{*init_array_ptr};
+    initial_state = StateAllocator<ValueType, n_var>{*init_array_ptr};
 
     auto tol_array_ptr = std::make_unique<std::array<ValueType, n_var>>();
     std::fill((*tol_array_ptr).begin(), (*tol_array_ptr).end(),
               tolerance_value);
-    tolerance_array =
-        StateAllocator<StateContainer, ValueType, n_var>{*tol_array_ptr};
+    tolerance_array = StateAllocator<ValueType, n_var>{*tol_array_ptr};
   }
 };

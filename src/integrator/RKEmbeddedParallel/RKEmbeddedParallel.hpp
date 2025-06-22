@@ -6,54 +6,50 @@
 #include <vector>
 
 #include "ParallelExecutor.hpp"
+#include "State.hpp"
 
-template <template <template <typename, std::size_t> typename, typename,
-                    std::size_t> typename StateAllocator,
-          template <typename, std::size_t> typename StateContainer,
-          typename ValueType, std::size_t NVAR, typename ButcherTableau,
-          typename ODE, typename Output, typename ParallelExecutor>
+template <ODEState StateType, typename ButcherTableau, typename ODE,
+          typename Output, typename ParallelExecutor>
 struct RKEmbeddedParallel {
-  using AllocatedState = StateAllocator<StateContainer, ValueType, NVAR>;
+  using StateTraits = state_traits<StateType>;
+  using ValueType = typename StateType::value_type;
+  static constexpr auto NVAR = StateTraits::size;
 
-  void integrate(AllocatedState x0, ValueType t0, ValueType tf,
-                 AllocatedState atol, AllocatedState rtol, ODE ode,
-                 Output& output, ParallelExecutor& exe) {
+  void integrate(StateType x0, ValueType t0, ValueType tf, StateType atol,
+                 StateType rtol, ODE ode, Output& output,
+                 ParallelExecutor& exe) {
     static constexpr auto max_step_scale = 6.0;
     static constexpr auto min_step_scale = 0.33;
     static constexpr auto q = std::min(ButcherTableau::p, ButcherTableau::pt);
     static auto const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
-    auto ks = StateAllocator<StateContainer, ValueType,
-                             ButcherTableau::n_stages * NVAR>{};
+    auto ks = ResizedODEState<StateType, ButcherTableau::n_stages * NVAR>{};
 
     auto dt = detail::estimate_initial_step(exe, x0, atol, rtol, ode);
     auto t = t0;
     auto x = x0;
     auto n_var = std::ssize(x);
-    auto temp_state = StateAllocator<StateContainer, ValueType, NVAR>{};
-    auto error_estimate = StateAllocator<StateContainer, ValueType, NVAR>{};
-    auto error_target = StateAllocator<StateContainer, ValueType, NVAR>{};
+    auto temp_state = StateType{};
+    auto error_estimate = StateType{};
+    auto error_target = StateType{};
     output.save_state(t, x);
     while (t < tf) {
       // evaluate stages
-      ode(exe, x0,
-          std::span<ValueType, ButcherTableau::n_stages * NVAR>{ks}
-              .template subspan<0, NVAR>());
+      ode(exe, x0, span(ks).template subspan<0, NVAR>());
       for (auto stage = 1; stage < ButcherTableau::n_stages; ++stage) {
         call_parallel_kernel<detail::rk_stage_kernel>(
-            exe, n_var, stage, dt, temp_state.data(), ks.data(), x0.data());
+            exe, n_var, stage, dt, span(temp_state), span(ks), span(x0));
         ode(exe, temp_state,
             std::span<ValueType, NVAR>(ks.data() + stage * NVAR, NVAR));
       }
 
       // advance the state and compute the error estimate
       call_parallel_kernel<detail::update_state_and_error_kernel>(
-          exe, n_var, dt, x.data(), error_estimate.data(), ks.data(),
-          x0.data());
+          exe, n_var, dt, span(x), span(error_estimate), span(ks), span(x0));
 
       // estimate error
       call_parallel_kernel<detail::update_error_target_kernel>(
-          exe, n_var, error_target.data(), atol.data(), rtol.data(), x.data(),
-          x0.data());
+          exe, n_var, span(error_target), span(atol), span(rtol), span(x),
+          span(x0));
       auto scaled_error = detail::rk_norm(exe, error_estimate, error_target);
 
       // accept or reject the step
@@ -83,9 +79,10 @@ struct RKEmbeddedParallel {
   }
 
   struct detail {
-    static constexpr auto rk_stage_kernel(int i, int stage, ValueType dt,
-                                          ValueType* temp_state, ValueType* ks,
-                                          ValueType const* x0) {
+    static constexpr auto rk_stage_kernel(
+        int i, int stage, ValueType dt, std::span<ValueType, NVAR> temp_state,
+        std::span<ValueType const, ButcherTableau::n_stages * NVAR> ks,
+        std::span<ValueType const, NVAR> x0) {
       constexpr auto a = ButcherTableau::a;
       temp_state[i] = 0.0;
       for (auto j = 0; j < stage; ++j) {
@@ -95,8 +92,10 @@ struct RKEmbeddedParallel {
     }
 
     static constexpr auto update_state_and_error_kernel(
-        int i, ValueType dt, ValueType* x, ValueType* error_estimate,
-        ValueType* ks, ValueType const* x0) {
+        int i, ValueType dt, std::span<ValueType, NVAR> x,
+        std::span<ValueType, NVAR> error_estimate,
+        std::span<ValueType, ButcherTableau::n_stages * NVAR> ks,
+        std::span<ValueType const, NVAR> x0) {
       constexpr auto b = ButcherTableau::b;
       constexpr auto db = [] {
         auto db = ButcherTableau::b;
@@ -116,73 +115,77 @@ struct RKEmbeddedParallel {
     }
 
     static constexpr auto update_error_target_kernel(
-        int i, ValueType* error_target, ValueType const* atol,
-        ValueType const* rtol, ValueType const* x, ValueType const* x0) {
+        int i, std::span<ValueType, NVAR> error_target,
+        std::span<ValueType const, NVAR> atol,
+        std::span<ValueType const, NVAR> rtol,
+        std::span<ValueType const, NVAR> x,
+        std::span<ValueType const, NVAR> x0) {
       error_target[i] =
           atol[i] + rtol[i] * std::max(std::abs(x[i]), std::abs(x0[i]));
     }
 
-    static constexpr auto scaled_value_squared_kernel(int i, ValueType const* v,
-                                                      ValueType const* scale) {
+    static constexpr auto scaled_value_squared_kernel(
+        int i, std::span<ValueType const, NVAR> v,
+        std::span<ValueType const, NVAR> scale) {
       auto scaled_value = v[i] / scale[i];
       return scaled_value * scaled_value;
     }
 
     static constexpr auto add(ValueType a, ValueType b) { return a + b; }
 
-    ValueType static rk_norm(ParallelExecutor& exe,
-                             std::span<ValueType const, NVAR> v,
-                             std::span<ValueType const, NVAR> scale) {
+    ValueType static rk_norm(ParallelExecutor& exe, StateType const& v,
+                             StateType const& scale) {
       auto n_var = std::ssize(v);
       return std::sqrt(
           transform_reduce<ValueType, add, scaled_value_squared_kernel>(
-              exe, 0.0, n_var, v.data(), scale.data()) /
+              exe, 0.0, n_var, span(v), span(scale)) /
           n_var);
     }
 
-    static constexpr auto compute_error_target_kernel(int i,
-                                                      ValueType* error_target,
-                                                      ValueType const* x0,
-                                                      ValueType const* atol,
-                                                      ValueType const* rtol) {
+    static constexpr auto compute_error_target_kernel(
+        int i, std::span<ValueType, NVAR> error_target,
+        std::span<ValueType const, NVAR> x0,
+        std::span<ValueType const, NVAR> atol,
+        std::span<ValueType const, NVAR> rtol) {
       error_target[i] = std::abs(x0[i]) * rtol[i] + atol[i];
     }
 
-    static constexpr auto euler_step_kernel(int i, ValueType* x1,
-                                            ValueType const* x0,
-                                            ValueType const* f0,
+    static constexpr auto euler_step_kernel(int i,
+                                            std::span<ValueType, NVAR> x1,
+                                            std::span<ValueType const, NVAR> x0,
+                                            std::span<ValueType const, NVAR> f0,
                                             ValueType dt0) {
       x1[i] = x0[i] + f0[i] * dt0;
     }
 
-    static constexpr auto difference_kernel(int i, ValueType* df,
-                                            ValueType const* f0) {
+    static constexpr auto difference_kernel(
+        int i, std::span<ValueType, NVAR> df,
+        std::span<ValueType const, NVAR> f0) {
       df[i] -= f0[i];
     }
 
     double static estimate_initial_step(ParallelExecutor& exe,
-                                        std::span<ValueType const, NVAR> x0,
-                                        std::span<ValueType const, NVAR> atol,
-                                        std::span<ValueType const, NVAR> rtol,
-                                        ODE& ode) {
+                                        StateType const& x0,
+                                        StateType const& atol,
+                                        StateType const& rtol, ODE& ode) {
       auto const n_var = std::ssize(x0);
 
-      auto error_target = AllocatedState{};
+      auto error_target = StateType{};
       call_parallel_kernel<compute_error_target_kernel>(
-          exe, n_var, error_target.data(), x0.data(), atol.data(), rtol.data());
+          exe, n_var, span(error_target), span(x0), span(atol), span(rtol));
 
-      auto f0 = AllocatedState{};
+      auto f0 = StateType{};
       ode(exe, x0, f0);
       auto d0 = rk_norm(exe, x0, error_target);
       auto d1 = rk_norm(exe, f0, error_target);
       auto dt0 = (d0 < 1.0e-5 or d1 < 1.0e-5) ? 1.0e-6 : 0.01 * (d0 / d1);
 
-      auto x1 = AllocatedState{};
-      call_parallel_kernel<euler_step_kernel>(exe, n_var, x1.data(), x0.data(),
-                                              f0.data(), dt0);
-      auto df = AllocatedState{};
+      auto x1 = StateType{};
+      call_parallel_kernel<euler_step_kernel>(exe, n_var, span(x1), span(x0),
+                                              span(f0), dt0);
+      auto df = StateType{};
       ode(exe, x1, df);
-      call_parallel_kernel<difference_kernel>(exe, n_var, df.data(), f0.data());
+      call_parallel_kernel<difference_kernel>(exe, n_var, span(df), span(f0));
       auto d2 = rk_norm(exe, df, error_target) / dt0;
 
       constexpr auto p = ButcherTableau::p;

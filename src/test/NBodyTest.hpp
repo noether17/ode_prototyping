@@ -8,8 +8,7 @@
 #include "RawOutput.hpp"
 
 // Defines parameters for NBody test.
-template <template <template <typename, std::size_t> typename, typename,
-                    std::size_t> typename StateType>
+template <template <typename, std::size_t> typename StateType>
 struct NBodyTest {
   static constexpr auto x0_data =
       std::array{1.657666,  0.0,       0.0, 0.439775,  -0.169717, 0.0,
@@ -34,5 +33,5 @@ struct NBodyTest {
                             std::span<double, n_var> dxdt) {
     NBodyODE<double, n_var>{}(exe, x, dxdt);
   }
-  RawOutput<HeapState<std::array, double, n_var>> output{};
+  RawOutput<HeapState<double, n_var>> output{};
 };

@@ -7,8 +7,7 @@
 #include "VanDerPolODE.hpp"
 
 // Defines test parameters for Van Der Pol test.
-template <template <template <typename, std::size_t> typename, typename,
-                    std::size_t> typename StateType>
+template <template <typename, std::size_t> typename StateType>
 struct VanDerPolTest {
   static constexpr auto n_var = 2;
   static inline auto const x0 = StateType{std::array{2.0, 0.0}};
@@ -21,5 +20,5 @@ struct VanDerPolTest {
                             std::span<double, n_var> dxdt) {
     VanDerPolODE<double>{}(exe, x, dxdt);
   }
-  RawOutput<HeapState<std::array, double, n_var>> output{};
+  RawOutput<HeapState<double, n_var>> output{};
 };

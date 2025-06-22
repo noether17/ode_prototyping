@@ -90,15 +90,15 @@ void run_threadpool_scenario(double softening_divisor,
                              double tolerance_factor) {
   constexpr auto n_repetitions = 3;
   for (auto i = 0; i < n_repetitions; ++i) {
-    auto scenario = SpinningParticlesInBox<N, HeapState, std::array, double>{
+    auto scenario = SpinningParticlesInBox<N, HeapState, double>{
         softening_divisor, tolerance_factor};
     constexpr auto n_var = scenario.n_var;
 
     auto tp_exe = ThreadPoolExecutor{12};
     auto integrator = RKEmbeddedParallel<
-        HeapState, std::array, double, n_var, BTRKF78, NBodyODE<double, n_var>,
-        RawOutput<HeapState<std::array, double, n_var>>, ThreadPoolExecutor>{};
-    auto output = RawOutput<HeapState<std::array, double, n_var>>{};
+        decltype(scenario.initial_state), BTRKF78, NBodyODE<double, n_var>,
+        RawOutput<HeapState<double, n_var>>, ThreadPoolExecutor>{};
+    auto output = RawOutput<HeapState<double, n_var>>{};
 
     auto t0 = 0.0;
     auto tf = scenario.tf;
@@ -121,15 +121,16 @@ template <int N>
 void run_cuda_scenario(double softening_divisor, double tolerance_factor) {
   constexpr auto n_repetitions = 1;
   for (auto i = 0; i < n_repetitions; ++i) {
-    auto scenario = SpinningParticlesInBox<N, CudaState, std::array, double>{
+    auto scenario = SpinningParticlesInBox<N, CudaState, double>{
         softening_divisor, tolerance_factor};
     constexpr auto n_var = scenario.n_var;
 
     auto cuda_exe = CudaExecutor{};
-    auto integrator = RKEmbeddedParallel<
-        CudaState, std::array, double, n_var, BTRKF78, NBodyODE<double, n_var>,
-        RawOutput<HeapState<std::array, double, n_var>>, CudaExecutor>{};
-    auto output = RawOutput<HeapState<std::array, double, n_var>>{};
+    auto integrator =
+        RKEmbeddedParallel<decltype(scenario.initial_state), BTRKF78,
+                           NBodyODE<double, n_var>,
+                           RawOutput<HeapState<double, n_var>>, CudaExecutor>{};
+    auto output = RawOutput<HeapState<double, n_var>>{};
 
     auto t0 = 0.0;
     auto tf = scenario.tf;

@@ -27,15 +27,15 @@ int main() {
                  0.439775,  0.169717,  0.0, 0.0,       -0.593786, 0.0,
                  1.822785,  0.128248,  0.0, 1.271564,  0.168645,  0.0,
                  -1.271564, 0.168645,  0.0, -1.822785, 0.128248,  0.0};
+  auto x0 = CudaState{x0_data};
   constexpr auto n_var = x0_data.size();
 
   auto cuda_exe = CudaExecutor{};
-  auto integrator = RKEmbeddedParallel<
-      CudaState, std::array, double, n_var, BTRKF78, NBodyODE<double, n_var>,
-      RawOutput<HeapState<std::array, double, n_var>>, CudaExecutor>{};
-  auto output = RawOutput<HeapState<std::array, double, n_var>>{};
+  auto integrator =
+      RKEmbeddedParallel<decltype(x0), BTRKF78, NBodyODE<double, n_var>,
+                         RawOutput<HeapState<double, n_var>>, CudaExecutor>{};
+  auto output = RawOutput<HeapState<double, n_var>>{};
 
-  auto x0 = CudaState{x0_data};
   auto t0 = 0.0;
   auto tf = 6.3;
   auto host_tol = std::array<double, n_var>{};

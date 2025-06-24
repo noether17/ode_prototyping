@@ -6,13 +6,11 @@
 #include <utility>
 
 #include "CudaErrorCheck.cuh"
+#include "State.hpp"
 
 template <std::floating_point T, std::size_t N>
 class CudaState {
  public:
-  using value_type = T;
-  using span_type = std::span<T, N>;
-  using const_span_type = std::span<T const, N>;
   static constexpr auto size() { return N; }
 
   CudaState() {
@@ -48,14 +46,18 @@ class CudaState {
   auto* data() { return device_ptr_; }
   auto const* data() const { return device_ptr_; }
 
-  operator span_type() { return span_type{data(), size()}; }
-  operator const_span_type() const { return const_span_type{data(), size()}; }
-  void copy_to(std::span<value_type, N> copy) {
+  operator std::span<T, N>() { return std::span<T, N>{data(), size()}; }
+  operator std::span<T const, N>() const {
+    return std::span<T const, N>{data(), size()};
+  }
+  void copy_to(std::span<T, N> copy) {
     cudaMemcpy(copy.data(), device_ptr_, N * sizeof(T), cudaMemcpyDeviceToHost);
   }
 
-  friend auto span(CudaState& state) { return span_type{state}; }
-  friend auto span(CudaState const& state) { return const_span_type{state}; }
+  friend auto span(CudaState& state) { return std::span<T, N>{state}; }
+  friend auto span(CudaState const& state) {
+    return std::span<T const, N>{state};
+  }
 
  private:
   T* device_ptr_{};
@@ -75,8 +77,9 @@ template <typename OutputStateType, typename InputStateType>
   requires(IsCudaState<InputStateType>)
 auto copy_out(InputStateType const& x) {
   auto output_state = OutputStateType{};
-  cudaMemcpy(output_state.data(), x.data(),
-             std::size(x) * sizeof(typename InputStateType::value_type),
-             cudaMemcpyDeviceToHost);
+  cudaMemcpy(
+      output_state.data(), x.data(),
+      std::size(x) * sizeof(typename state_traits<InputStateType>::value_type),
+      cudaMemcpyDeviceToHost);
   return output_state;
 }

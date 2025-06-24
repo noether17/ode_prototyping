@@ -5,31 +5,41 @@
 #include <utility>
 
 template <typename T>
-concept ODEState = requires {
-  typename T::value_type;
-} && std::floating_point<typename T::value_type> && requires(T t) {
-  { t.size() } -> std::same_as<std::size_t>;
-  { t.data() } -> std::same_as<typename T::value_type*>;
-  { std::as_const(t).data() } -> std::same_as<typename T::value_type const*>;
-} && (requires { std::integral_constant<std::size_t, T{}.size()>{}; } ||
-      requires { std::integral_constant<std::size_t, T::size()>{}; }) &&
-requires {
-  typename T::span_type;
-  typename T::const_span_type;
-} && requires(T t) {
-  { span(t) } -> std::same_as<typename T::span_type>;
-  { span(std::as_const(t)) } -> std::same_as<typename T::const_span_type>;
-};
-
-template <typename T>
-struct state_traits;
+class state_traits;
 
 template <template <typename, std::size_t> typename StateManager, typename T,
           std::size_t N>
-  requires ODEState<StateManager<T, N>>
-struct state_traits<StateManager<T, N>> {
+class state_traits<StateManager<T, N>> {
+  template <typename U>
+  static auto deduce_span(U&& u) -> decltype(span(std::forward<U>(u)));
+
+ public:
+  using type = StateManager<T, N>;
   using value_type = T;
   static constexpr auto size = N;
+
+  using span_type = decltype(deduce_span(std::declval<type&>()));
+  using const_span_type = decltype(deduce_span(std::declval<const type&>()));
+};
+
+template <typename T>
+concept ODEState = requires {
+  typename state_traits<T>;
+} && std::floating_point<typename state_traits<T>::value_type> &&
+requires(T t) {
+  { t.size() } -> std::same_as<std::size_t>;
+  { t.data() } -> std::same_as<typename state_traits<T>::value_type*>;
+  { std::as_const(t).data() } ->
+    std::same_as<typename state_traits<T>::value_type const*>;
+} && (requires { std::integral_constant<std::size_t, T{}.size()>{}; } ||
+      requires { std::integral_constant<std::size_t, T::size()>{}; }) &&
+requires {
+  typename state_traits<T>::span_type;
+  typename state_traits<T>::const_span_type;
+} && requires(T t) {
+  { span(t) } -> std::same_as<typename state_traits<T>::span_type>;
+  { span(std::as_const(t)) } ->
+    std::same_as<typename state_traits<T>::const_span_type>;
 };
 
 template <typename T, std::size_t M>

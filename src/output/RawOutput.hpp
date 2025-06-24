@@ -3,11 +3,14 @@
 #include <cstring>
 #include <vector>
 
+#include "State.hpp"
+
 template <typename OutputStateType, typename InputStateType>
 auto copy_out(InputStateType const& x) {
   auto output_state = OutputStateType{};
-  std::memcpy(output_state.data(), x.data(),
-              std::size(x) * sizeof(typename InputStateType::value_type));
+  std::memcpy(
+      output_state.data(), x.data(),
+      std::size(x) * sizeof(typename state_traits<InputStateType>::value_type));
   return output_state;
 }
 

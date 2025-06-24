@@ -12,7 +12,7 @@ template <ODEState StateType, typename ButcherTableau, typename ODE,
           typename Output, typename ParallelExecutor>
 struct RKEmbeddedParallel {
   using StateTraits = state_traits<StateType>;
-  using ValueType = typename StateType::value_type;
+  using ValueType = typename StateTraits::value_type;
   static constexpr auto NVAR = StateTraits::size;
 
   void integrate(StateType x0, ValueType t0, ValueType tf, StateType atol,

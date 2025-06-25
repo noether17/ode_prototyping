@@ -6,7 +6,7 @@
 #include <utility>
 
 #include "CudaErrorCheck.cuh"
-#include "State.hpp"
+#include "ODEState.hpp"
 
 template <std::floating_point T, std::size_t N>
 class CudaState {
@@ -77,9 +77,9 @@ template <typename OutputStateType, typename InputStateType>
   requires(IsCudaState<InputStateType>)
 auto copy_out(InputStateType const& x) {
   auto output_state = OutputStateType{};
-  cudaMemcpy(
-      output_state.data(), x.data(),
-      std::size(x) * sizeof(typename state_traits<InputStateType>::value_type),
-      cudaMemcpyDeviceToHost);
+  cudaMemcpy(output_state.data(), x.data(),
+             std::size(x) *
+                 sizeof(typename ode_state_traits<InputStateType>::value_type),
+             cudaMemcpyDeviceToHost);
   return output_state;
 }

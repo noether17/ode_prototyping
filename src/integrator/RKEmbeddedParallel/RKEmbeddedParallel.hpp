@@ -5,15 +5,15 @@
 #include <span>
 #include <vector>
 
+#include "ODEState.hpp"
 #include "ParallelExecutor.hpp"
-#include "State.hpp"
 
 template <ODEState StateType, typename ButcherTableau, typename ODE,
           typename Output, typename ParallelExecutor>
 struct RKEmbeddedParallel {
-  using StateTraits = state_traits<StateType>;
-  using ValueType = typename StateTraits::value_type;
-  static constexpr auto NVAR = StateTraits::size;
+  using ODEStateTraits = ode_state_traits<StateType>;
+  using ValueType = typename ODEStateTraits::value_type;
+  static constexpr auto NVAR = ODEStateTraits::size;
 
   void integrate(StateType x0, ValueType t0, ValueType tf, StateType atol,
                  StateType rtol, ODE ode, Output& output,

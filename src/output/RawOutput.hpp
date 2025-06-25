@@ -3,7 +3,9 @@
 #include <cstring>
 #include <vector>
 
-template <typename OutputStateType>
+#include "ODEState.hpp"
+
+template <ODEState OutputStateType>
 class RawOutput {
  public:
   std::vector<double> times{};
@@ -12,7 +14,7 @@ class RawOutput {
   // StateType used in computation and OutputStateType may differ, e.g.
   // OutputStateType must store data in system memory, but StateType may store
   // data in video memory.
-  template <typename StateType>
+  template <ODEState StateType>
   auto save_state(double t, StateType const& x) {
     times.push_back(t);
     states.push_back({});

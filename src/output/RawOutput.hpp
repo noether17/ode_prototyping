@@ -27,6 +27,7 @@ class RawOutput {
   template <typename StateType>
   auto save_state(double t, StateType const& x) {
     times.push_back(t);
-    states.push_back(copy_out<OutputStateType>(x));
+    states.push_back({});
+    x.copy_to_span(span(states.back()));
   }
 };

@@ -46,10 +46,9 @@ class CudaState {
   auto* data() { return device_ptr_; }
   auto const* data() const { return device_ptr_; }
 
-  void copy_to(std::span<T, N> copy) {
-    cudaMemcpy(copy.data(), device_ptr_, N * sizeof(T), cudaMemcpyDeviceToHost);
+  void copy_to_span(std::span<T, N> dest) const {
+    cudaMemcpy(dest.data(), device_ptr_, N * sizeof(T), cudaMemcpyDeviceToHost);
   }
-
   friend auto span(CudaState& state) {
     return std::span<T, N>{state.data(), state.size()};
   }

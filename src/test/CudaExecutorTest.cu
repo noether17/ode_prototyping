@@ -37,7 +37,7 @@ TEST_F(CudaExecutorTest, ElementWiseAdd) {
       N, cuda_result.data(), cuda_state1.data(), cuda_state2.data());
 
   auto host_result = std::array<double, N>{};
-  cuda_result.copy_to(host_result);
+  cuda_result.copy_to_span(host_result);
   for (auto i = 0; auto const& x : host_result) {
     EXPECT_DOUBLE_EQ(2 * (i++) + 1, x);
   }

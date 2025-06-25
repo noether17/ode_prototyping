@@ -44,6 +44,9 @@ class HeapState {
   auto* data() { return state_array_.get(); }
   auto const* data() const { return state_array_.get(); }
 
+  void copy_to_span(std::span<T, N> dest) const {
+    std::copy(state_array_.get(), state_array_.get() + N, dest.data());
+  }
   friend auto span(HeapState& state) {
     return std::span<T, N>{state.data(), state.size()};
   }

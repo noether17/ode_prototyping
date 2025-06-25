@@ -44,14 +44,11 @@ class HeapState {
   auto* data() { return state_array_.get(); }
   auto const* data() const { return state_array_.get(); }
 
-  operator std::span<T, N>() { return std::span<T, N>{data(), size()}; }
-  operator std::span<T const, N>() const {
-    return std::span<T const, N>{data(), size()};
+  friend auto span(HeapState& state) {
+    return std::span<T, N>{state.data(), state.size()};
   }
-
-  friend auto span(HeapState& state) { return std::span<T, N>{state}; }
   friend auto span(HeapState const& state) {
-    return std::span<T const, N>{state};
+    return std::span<T const, N>{state.data(), state.size()};
   }
 
   auto& operator[](std::size_t i) { return state_array_[i]; }

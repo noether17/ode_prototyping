@@ -34,11 +34,11 @@ struct RKEmbeddedParallel {
     output.save_state(t, x);
     while (t < tf) {
       // evaluate stages
-      ode(exe, x0, span(ks).template subspan<0, NVAR>());
+      ode(exe, span(x0), span(ks).template subspan<0, NVAR>());
       for (auto stage = 1; stage < ButcherTableau::n_stages; ++stage) {
         call_parallel_kernel<detail::rk_stage_kernel>(
             exe, n_var, stage, dt, span(temp_state), span(ks), span(x0));
-        ode(exe, temp_state,
+        ode(exe, span(temp_state),
             std::span<ValueType, NVAR>(ks.data() + stage * NVAR, NVAR));
       }
 
@@ -175,7 +175,7 @@ struct RKEmbeddedParallel {
           exe, n_var, span(error_target), span(x0), span(atol), span(rtol));
 
       auto f0 = StateType{};
-      ode(exe, x0, f0);
+      ode(exe, span(x0), span(f0));
       auto d0 = rk_norm(exe, x0, error_target);
       auto d1 = rk_norm(exe, f0, error_target);
       auto dt0 = (d0 < 1.0e-5 or d1 < 1.0e-5) ? 1.0e-6 : 0.01 * (d0 / d1);
@@ -184,7 +184,7 @@ struct RKEmbeddedParallel {
       call_parallel_kernel<euler_step_kernel>(exe, n_var, span(x1), span(x0),
                                               span(f0), dt0);
       auto df = StateType{};
-      ode(exe, x1, df);
+      ode(exe, span(x1), span(df));
       call_parallel_kernel<difference_kernel>(exe, n_var, span(df), span(f0));
       auto d2 = rk_norm(exe, df, error_target) / dt0;
 

@@ -6,7 +6,6 @@
 #include <utility>
 
 #include "CudaErrorCheck.cuh"
-#include "ODEState.hpp"
 
 template <std::floating_point T, std::size_t N>
 class CudaState {
@@ -63,20 +62,3 @@ class CudaState {
 template <typename R>
 CudaState(R&&) -> CudaState<typename std::remove_reference_t<R>::value_type,
                             std::tuple_size_v<std::remove_reference_t<R>>>;
-
-template <typename T>
-inline constexpr bool IsCudaState = std::false_type{};
-
-template <typename T, std::size_t N>
-inline constexpr bool IsCudaState<CudaState<T, N>> = std::true_type{};
-
-template <typename OutputStateType, typename InputStateType>
-  requires(IsCudaState<InputStateType>)
-auto copy_out(InputStateType const& x) {
-  auto output_state = OutputStateType{};
-  cudaMemcpy(output_state.data(), x.data(),
-             std::size(x) *
-                 sizeof(typename ode_state_traits<InputStateType>::value_type),
-             cudaMemcpyDeviceToHost);
-  return output_state;
-}

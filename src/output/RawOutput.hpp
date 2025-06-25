@@ -3,18 +3,6 @@
 #include <cstring>
 #include <vector>
 
-#include "ODEState.hpp"
-
-template <typename OutputStateType, typename InputStateType>
-auto copy_out(InputStateType const& x) {
-  auto output_state = OutputStateType{};
-  std::memcpy(
-      output_state.data(), x.data(),
-      std::size(x) *
-          sizeof(typename ode_state_traits<InputStateType>::value_type));
-  return output_state;
-}
-
 template <typename OutputStateType>
 class RawOutput {
  public:

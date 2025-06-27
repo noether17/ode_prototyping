@@ -12,8 +12,10 @@ template <ODEState StateType, typename ButcherTableau, typename ODE,
           typename Output, typename ParallelExecutor>
 struct RKEmbeddedParallel {
   using ODEStateTraits = ode_state_traits<StateType>;
-  using ValueType = typename ODEStateTraits::value_type;
+  using ValueType = ODEStateTraits::value_type;
   static constexpr auto NVAR = ODEStateTraits::size;
+  using SpanType = ODEStateTraits::span_type;
+  using ConstSpanType = ODEStateTraits::const_span_type;
 
   void integrate(StateType x0, ValueType t0, ValueType tf, StateType atol,
                  StateType rtol, ODE ode, Output& output,
@@ -38,8 +40,7 @@ struct RKEmbeddedParallel {
       for (auto stage = 1; stage < ButcherTableau::n_stages; ++stage) {
         call_parallel_kernel<detail::rk_stage_kernel>(
             exe, n_var, stage, dt, span(temp_state), span(ks), span(x0));
-        ode(exe, span(temp_state),
-            std::span<ValueType, NVAR>(ks.data() + stage * NVAR, NVAR));
+        ode(exe, span(temp_state), SpanType(ks.data() + stage * NVAR, NVAR));
       }
 
       // advance the state and compute the error estimate
@@ -80,9 +81,9 @@ struct RKEmbeddedParallel {
 
   struct detail {
     static constexpr auto rk_stage_kernel(
-        int i, int stage, ValueType dt, std::span<ValueType, NVAR> temp_state,
+        int i, int stage, ValueType dt, SpanType temp_state,
         std::span<ValueType const, ButcherTableau::n_stages * NVAR> ks,
-        std::span<ValueType const, NVAR> x0) {
+        ConstSpanType x0) {
       constexpr auto a = ButcherTableau::a;
       temp_state[i] = 0.0;
       for (auto j = 0; j < stage; ++j) {
@@ -92,10 +93,9 @@ struct RKEmbeddedParallel {
     }
 
     static constexpr auto update_state_and_error_kernel(
-        int i, ValueType dt, std::span<ValueType, NVAR> x,
-        std::span<ValueType, NVAR> error_estimate,
+        int i, ValueType dt, SpanType x, SpanType error_estimate,
         std::span<ValueType, ButcherTableau::n_stages * NVAR> ks,
-        std::span<ValueType const, NVAR> x0) {
+        ConstSpanType x0) {
       constexpr auto b = ButcherTableau::b;
       constexpr auto db = [] {
         auto db = ButcherTableau::b;
@@ -115,18 +115,14 @@ struct RKEmbeddedParallel {
     }
 
     static constexpr auto update_error_target_kernel(
-        int i, std::span<ValueType, NVAR> error_target,
-        std::span<ValueType const, NVAR> atol,
-        std::span<ValueType const, NVAR> rtol,
-        std::span<ValueType const, NVAR> x,
-        std::span<ValueType const, NVAR> x0) {
+        int i, SpanType error_target, ConstSpanType atol, ConstSpanType rtol,
+        ConstSpanType x, ConstSpanType x0) {
       error_target[i] =
           atol[i] + rtol[i] * std::max(std::abs(x[i]), std::abs(x0[i]));
     }
 
-    static constexpr auto scaled_value_squared_kernel(
-        int i, std::span<ValueType const, NVAR> v,
-        std::span<ValueType const, NVAR> scale) {
+    static constexpr auto scaled_value_squared_kernel(int i, ConstSpanType v,
+                                                      ConstSpanType scale) {
       auto scaled_value = v[i] / scale[i];
       return scaled_value * scaled_value;
     }
@@ -142,25 +138,22 @@ struct RKEmbeddedParallel {
           n_var);
     }
 
-    static constexpr auto compute_error_target_kernel(
-        int i, std::span<ValueType, NVAR> error_target,
-        std::span<ValueType const, NVAR> x0,
-        std::span<ValueType const, NVAR> atol,
-        std::span<ValueType const, NVAR> rtol) {
+    static constexpr auto compute_error_target_kernel(int i,
+                                                      SpanType error_target,
+                                                      ConstSpanType x0,
+                                                      ConstSpanType atol,
+                                                      ConstSpanType rtol) {
       error_target[i] = std::abs(x0[i]) * rtol[i] + atol[i];
     }
 
-    static constexpr auto euler_step_kernel(int i,
-                                            std::span<ValueType, NVAR> x1,
-                                            std::span<ValueType const, NVAR> x0,
-                                            std::span<ValueType const, NVAR> f0,
+    static constexpr auto euler_step_kernel(int i, SpanType x1,
+                                            ConstSpanType x0, ConstSpanType f0,
                                             ValueType dt0) {
       x1[i] = x0[i] + f0[i] * dt0;
     }
 
-    static constexpr auto difference_kernel(
-        int i, std::span<ValueType, NVAR> df,
-        std::span<ValueType const, NVAR> f0) {
+    static constexpr auto difference_kernel(int i, SpanType df,
+                                            ConstSpanType f0) {
       df[i] -= f0[i];
     }
 

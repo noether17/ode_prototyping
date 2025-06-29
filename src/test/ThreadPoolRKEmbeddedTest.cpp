@@ -17,7 +17,7 @@
 class ThreadPoolRKEmbeddedTest : public testing::Test {
  protected:
   template <typename ButcherTableau, typename ODE>
-  using Integrator = RKEmbeddedParallel<ButcherTableau, ODE>;
+  using Integrator = RKEmbeddedParallel<ButcherTableau>;
   ThreadPoolExecutor executor{8};
 };
 

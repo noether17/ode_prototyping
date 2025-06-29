@@ -8,9 +8,10 @@
 #include "ODEState.hpp"
 #include "ParallelExecutor.hpp"
 
-template <typename ButcherTableau, typename ODE>
+template <typename ButcherTableau>
 struct RKEmbeddedParallel {
-  template <typename Output, typename ParallelExecutor, ODEState StateType>
+  template <typename ODE, typename Output, typename ParallelExecutor,
+            ODEState StateType>
   void integrate(StateType x0, ode_state_traits<StateType>::value_type t0,
                  ode_state_traits<StateType>::value_type tf, StateType atol,
                  StateType rtol, ODE ode, Output& output,
@@ -22,7 +23,7 @@ struct RKEmbeddedParallel {
     static auto const safety_factor = std::pow(0.38, (1.0 / (1.0 + q)));
     auto ks = ResizedODEState<StateType, ButcherTableau::n_stages * n_var>{};
 
-    auto dt = detail<ParallelExecutor, StateType>::estimate_initial_step(
+    auto dt = detail<ODE, ParallelExecutor, StateType>::estimate_initial_step(
         exe, x0, atol, rtol, ode);
     auto t = t0;
     auto x = x0;
@@ -36,23 +37,23 @@ struct RKEmbeddedParallel {
       ode(exe, span(x0), k_stage_view);
       for (auto stage = 1; stage < ButcherTableau::n_stages; ++stage) {
         call_parallel_kernel<
-            detail<ParallelExecutor, StateType>::rk_stage_kernel>(
+            detail<ODE, ParallelExecutor, StateType>::rk_stage_kernel>(
             exe, n_var, stage, dt, span(temp_state), span(ks), span(x0));
         k_stage_view = decltype(k_stage_view){ks.data() + stage * n_var, n_var};
         ode(exe, span(temp_state), k_stage_view);
       }
 
       // advance the state and compute the error estimate
-      call_parallel_kernel<
-          detail<ParallelExecutor, StateType>::update_state_and_error_kernel>(
+      call_parallel_kernel<detail<ODE, ParallelExecutor,
+                                  StateType>::update_state_and_error_kernel>(
           exe, n_var, dt, span(x), span(error_estimate), span(ks), span(x0));
 
       // estimate error
       call_parallel_kernel<
-          detail<ParallelExecutor, StateType>::update_error_target_kernel>(
+          detail<ODE, ParallelExecutor, StateType>::update_error_target_kernel>(
           exe, n_var, span(error_target), span(atol), span(rtol), span(x),
           span(x0));
-      auto scaled_error = detail<ParallelExecutor, StateType>::rk_norm(
+      auto scaled_error = detail<ODE, ParallelExecutor, StateType>::rk_norm(
           exe, error_estimate, error_target);
 
       // accept or reject the step
@@ -81,7 +82,7 @@ struct RKEmbeddedParallel {
     }
   }
 
-  template <typename ParallelExecutor, ODEState StateType>
+  template <typename ODE, typename ParallelExecutor, ODEState StateType>
   struct detail {
     using ODEStateTraits = ode_state_traits<StateType>;
     using ValueType = ODEStateTraits::value_type;

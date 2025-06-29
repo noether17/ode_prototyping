@@ -36,11 +36,13 @@ struct RKEmbeddedParallel {
     output.save_state(t, x);
     while (t < tf) {
       // evaluate stages
-      ode(exe, span(x0), span(ks).template subspan<0, NVAR>());
+      auto k_stage_view = span(ks).template subspan<0, NVAR>();
+      ode(exe, span(x0), k_stage_view);
       for (auto stage = 1; stage < ButcherTableau::n_stages; ++stage) {
         call_parallel_kernel<detail::rk_stage_kernel>(
             exe, n_var, stage, dt, span(temp_state), span(ks), span(x0));
-        ode(exe, span(temp_state), SpanType(ks.data() + stage * NVAR, NVAR));
+        k_stage_view = decltype(k_stage_view){ks.data() + stage * NVAR, NVAR};
+        ode(exe, span(temp_state), k_stage_view);
       }
 
       // advance the state and compute the error estimate

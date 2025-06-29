@@ -1,9 +1,5 @@
 #include <gtest/gtest.h>
 
-#include <algorithm>
-#include <array>
-#include <numeric>
-
 #include "BTDOPRI5.hpp"
 #include "BTDVERK.hpp"
 #include "BTHE21.hpp"
@@ -21,10 +17,7 @@
 class ThreadPoolRKEmbeddedTest : public testing::Test {
  protected:
   template <typename ButcherTableau, typename ODE>
-  using Integrator =
-      RKEmbeddedParallel<HeapState<double, ODE::n_var>, ButcherTableau, ODE,
-                         RawOutput<HeapState<double, ODE::n_var>>,
-                         ThreadPoolExecutor>;
+  using Integrator = RKEmbeddedParallel<ButcherTableau, ODE>;
   ThreadPoolExecutor executor{8};
 };
 

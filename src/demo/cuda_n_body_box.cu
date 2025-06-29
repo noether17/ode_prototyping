@@ -1,6 +1,4 @@
-#include <array>
 #include <fstream>
-#include <span>
 #include <vector>
 
 #include "BTRKF78.hpp"
@@ -18,10 +16,7 @@ int main() {
   constexpr auto n_var = scenario.n_var;
 
   auto cuda_exe = CudaExecutor{};
-  auto integrator =
-      RKEmbeddedParallel<decltype(scenario.initial_state), BTRKF78,
-                         NBodyODE<double, n_var>,
-                         RawOutput<HeapState<double, n_var>>, CudaExecutor>{};
+  auto integrator = RKEmbeddedParallel<BTRKF78, NBodyODE<double, n_var>>{};
   auto output = RawOutput<HeapState<double, n_var>>{};
 
   auto t0 = 0.0;

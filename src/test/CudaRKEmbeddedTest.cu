@@ -1,8 +1,6 @@
 #include <gtest/gtest.h>
 
-#include <array>
 #include <limits>
-#include <numeric>
 
 #include "BTDOPRI5.hpp"
 #include "BTDVERK.hpp"
@@ -12,7 +10,6 @@
 #include "CudaExecutor.cuh"
 #include "CudaState.cuh"
 #include "ExponentialTest.hpp"
-#include "HeapState.hpp"
 #include "NBodyTest.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
@@ -22,10 +19,7 @@
 class CudaRKEmbeddedTest : public testing::Test {
  protected:
   template <typename ButcherTableau, typename ODE>
-  using Integrator =
-      RKEmbeddedParallel<CudaState<double, ODE::n_var>, ButcherTableau, ODE,
-                         RawOutput<HeapState<double, ODE::n_var>>,
-                         CudaExecutor>;
+  using Integrator = RKEmbeddedParallel<ButcherTableau, ODE>;
   CudaExecutor executor{};
 };
 

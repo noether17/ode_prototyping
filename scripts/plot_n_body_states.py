@@ -17,22 +17,22 @@ def main():
     #plt.gca().set_aspect('equal')
     #plt.show()
 
-    cpu_parallel_data = np.loadtxt("RKF78_threadpool_n_body_output.txt", delimiter=',')
-    cpu_parallel_times = cpu_parallel_data[:, 0]
-    state_offset = int((cpu_parallel_data.shape[1] - 1) / 2)
-    cpu_parallel_pos = cpu_parallel_data[:, 1:1+state_offset]
-    cpu_parallel_vel = cpu_parallel_data[:, 1+state_offset:]
-    n_particles = int((cpu_parallel_data.shape[1] - 1) / 6)
-    for i in np.arange(n_particles):
-        plt.plot(cpu_parallel_pos[:, 3*i], cpu_parallel_pos[:, 3*i + 1], label=f"Particle {i}")
-    plt.title("CPU Parallel Trajectories")
-    plt.xlabel("x")
-    plt.ylabel("y")
-    plt.legend()
-    plt.gca().set_aspect('equal')
-    plt.show()
+    #cpu_parallel_data = np.loadtxt("RKF78_threadpool_n_body_output.txt", delimiter=',')
+    #cpu_parallel_times = cpu_parallel_data[:, 0]
+    #state_offset = int((cpu_parallel_data.shape[1] - 1) / 2)
+    #cpu_parallel_pos = cpu_parallel_data[:, 1:1+state_offset]
+    #cpu_parallel_vel = cpu_parallel_data[:, 1+state_offset:]
+    #n_particles = int((cpu_parallel_data.shape[1] - 1) / 6)
+    #for i in np.arange(n_particles):
+    #    plt.plot(cpu_parallel_pos[:, 3*i], cpu_parallel_pos[:, 3*i + 1], label=f"Particle {i}")
+    #plt.title("CPU Parallel Trajectories")
+    #plt.xlabel("x")
+    #plt.ylabel("y")
+    #plt.legend()
+    #plt.gca().set_aspect('equal')
+    #plt.show()
 
-    cuda_data = np.loadtxt("RKF78_cuda_n_body_output.txt", delimiter=',')
+    cuda_data = np.loadtxt("leapfrog_cuda_n_body_output.txt", delimiter=',')
     cuda_times = cuda_data[:, 0]
     state_offset = int((cuda_data.shape[1] - 1) / 2)
     cuda_pos = cuda_data[:, 1:1+state_offset]

@@ -1,0 +1,3 @@
+add_library(LeapfrogParallel INTERFACE LeapfrogParallel.hpp)
+target_include_directories(LeapfrogParallel INTERFACE ${CMAKE_CURRENT_SOURCE_DIR})
+target_link_libraries(LeapfrogParallel INTERFACE ParallelExecutor)

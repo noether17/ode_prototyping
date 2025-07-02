@@ -21,6 +21,16 @@ target_link_libraries(cuda_n_body
   RKEmbeddedParallel
 )
 
+add_executable(cuda_n_body_leapfrog cuda_n_body_leapfrog.cu)
+target_link_libraries(cuda_n_body_leapfrog
+  CudaExecutor
+  CudaState
+  HeapState
+  LeapfrogParallel
+  NBodyODE
+  RawOutput
+)
+
 add_executable(cuda_n_body_box cuda_n_body_box.cu)
 target_link_libraries(cuda_n_body_box
   BTRKF78

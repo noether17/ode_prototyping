@@ -1,1 +1,2 @@
+add_subdirectory(leapfrog)
 add_subdirectory(RKEmbeddedParallel)

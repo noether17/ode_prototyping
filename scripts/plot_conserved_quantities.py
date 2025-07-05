@@ -6,32 +6,25 @@ import numpy as np
 import scipy.interpolate as interp
 import struct
 
+import caching
+import energy
+import nbody_io
+
 dim = 3 # number of dimensions
-global softening
 
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("filename")
     args = parser.parse_args()
     filename = args.filename
+    softening = nbody_io.read_binary_file_metadata(filename)[-1]
 
-    # read input file
-    with open(filename, mode='rb') as data_file:
-        print("Reading input file.")
-        n_times = int.from_bytes(data_file.read(8), 'little')
-        n_var = int.from_bytes(data_file.read(8), 'little')
-        global softening
-        softening = struct.unpack('d', data_file.read(8))[0]
-        print(softening)
-
-        times = np.empty(n_times, dtype=float)
-        states = np.empty([n_times, n_var], dtype=float)
-        for i in np.arange(n_times):
-            times[i] = struct.unpack('d', data_file.read(8))[0]
-            states[i] = [struct.unpack('d', data_file.read(8))[0]
-                         for j in np.arange(n_var)]
-
-    energies = compute_energies(states)
+    results = caching.compute_from_file(lambda positions, velocities:
+                                        energy.compute_softened_energies(
+                                            positions, velocities, softening),
+                                        "softened_energy", filename)
+    times = results[:, 0]
+    energies = results[:, 1]
 
     # interpolate
     max_points = 1001
@@ -56,38 +49,6 @@ def main():
     plt.ylabel(r"$\frac{E(t) - E_0}{E_0}$")
     plt.title("Fractional Change in Energy over Time")
     plt.show()
-
-# calculate potential energy for a single state. assumes all masses are 1.
-@numba.njit()
-def potential_energy(state_positions):
-    global softening
-    N = int(state_positions.size / dim)
-    energy = 0.0
-    for i in np.arange(N):
-        for j in np.arange(i + 1, N):
-            pos_i = state_positions[i*dim:(i+1)*dim]
-            pos_j = state_positions[j*dim:(j+1)*dim]
-            dr = pos_j - pos_i
-            energy -= 1.0 / np.sqrt(np.sum(dr*dr) + softening*softening)
-    return energy
-
-# calculate kinetic energy for a single state. assumes all masses are 1.
-@numba.njit()
-def kinetic_energy(state_velocities):
-    N = int(state_velocities.size / dim)
-    energy = np.sum(state_velocities*state_velocities) / 2.0
-    return energy
-
-@numba.njit(parallel=True)
-def compute_energies(states):
-    print("Computing energies.")
-    n_states = states.shape[0]
-    offset = int(states.shape[1] / 2)
-    energies = np.zeros(n_states)
-    for i in numba.prange(n_states):
-        energies[i] = potential_energy(states[i, :offset]) + \
-                kinetic_energy(states[i, offset:])
-    return energies
 
 if __name__ == "__main__":
     main()

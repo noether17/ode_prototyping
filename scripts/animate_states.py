@@ -6,6 +6,8 @@ import numpy as np
 import scipy.interpolate as interp
 import struct
 
+import nbody_io
+
 animation_time = 30.0 # seconds to run animation
 max_fps = 30 # maximum frames per second
 dim = 3 # number of dimensions
@@ -21,16 +23,7 @@ def main():
     method_str = method_str_from_filename(filename)
 
     # load and parse data
-    if filename.split('.')[-1] == 'bin':
-        with open(filename, mode='rb') as data_file:
-            n_times = int.from_bytes(data_file.read(8), 'little')
-            n_var = int.from_bytes(data_file.read(8), 'little')
-            softening = struct.unpack('d', data_file.read(8))[0]
-            states = np.array([[struct.unpack('d', data_file.read(8))[0]
-                                for j in np.arange(n_var + 1)]
-                               for i in np.arange(n_times)])
-    else:
-        states = np.loadtxt(filename, delimiter=',', dtype=float)
+    states, softening = nbody_io.load_from_binary_file(filename)
     times = states[:, 0]
     N = int((states.shape[1] - 1) / 6)
     dof = N * dim

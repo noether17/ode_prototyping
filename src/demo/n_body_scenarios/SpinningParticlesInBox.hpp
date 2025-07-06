@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <memory>
+#include <numbers>
 #include <random>
 #include <string>
 
@@ -16,25 +17,23 @@ struct SpinningParticlesInBox {
   static constexpr auto n_var = N * 6;
 
   // sqrt(L^3 / N) is a rough estimate of the dynamical time scale from
-  // dimensional analysis. Let the simulation go an order of magnitude longer
-  // than this to see interesting evolution.
-  static inline auto const tf = 10.0 * std::sqrt(L * L * L / N);
+  // dimensional analysis.
+  static inline auto const tf = std::sqrt(L * L * L / N);
 
   // Rough estimate of the angular velocity required to keep a
   // spherically-symmetrical uniform mass distribution in equilibrium (not meant
   // to be exact, just meant to prevent rapid collapse of the initial mass
   // distribution).
-  // TODO: Replace proportionality factor of 2.0 with "exact value" of 2 *
-  // sqrt(pi / 3).
-  static inline auto const omega = 2.0 / std::sqrt(L * L * L / N);
+  static inline auto const omega =
+      2.0 * std::sqrt(std::numbers::pi / 3.0) / std::sqrt(L * L * L / N);
 
   double softening{};
   double tolerance_value{};
   StateAllocator<ValueType, n_var> initial_state;
   StateAllocator<ValueType, n_var> tolerance_array;
 
-  SpinningParticlesInBox(ValueType sof_divisor, ValueType tolerance_factor)
-      : softening{4.0 * L / std::sqrt(N) / sof_divisor},
+  SpinningParticlesInBox(ValueType softening_factor, ValueType tolerance_factor)
+      : softening{softening_factor * 4.0 * L / std::sqrt(N)},
         tolerance_value{softening * tolerance_factor} {
     auto gen = std::mt19937{0};
     auto dist = std::uniform_real_distribution<ValueType>(0.0, L);

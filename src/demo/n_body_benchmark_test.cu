@@ -66,12 +66,11 @@ auto generate_filename(auto const& scenario) {
 }
 
 template <int N>
-void run_threadpool_scenario(double softening_divisor,
-                             double tolerance_factor) {
+void run_threadpool_scenario(double softening_factor, double tolerance_factor) {
   constexpr auto n_repetitions = 3;
   for (auto i = 0; i < n_repetitions; ++i) {
     auto scenario = SpinningParticlesInBox<N, HeapState, double>{
-        softening_divisor, tolerance_factor};
+        softening_factor, tolerance_factor};
     constexpr auto n_var = scenario.n_var;
 
     auto tp_exe = ThreadPoolExecutor{12};
@@ -95,11 +94,11 @@ void run_threadpool_scenario(double softening_divisor,
 }
 
 template <int N>
-void run_cuda_scenario(double softening_divisor, double tolerance_factor) {
+void run_cuda_scenario(double softening_factor, double tolerance_factor) {
   constexpr auto n_repetitions = 1;
   for (auto i = 0; i < n_repetitions; ++i) {
     auto scenario = SpinningParticlesInBox<N, CudaState, double>{
-        softening_divisor, tolerance_factor};
+        softening_factor, tolerance_factor};
     constexpr auto n_var = scenario.n_var;
 
     auto cuda_exe = CudaExecutor{};
@@ -126,13 +125,13 @@ template <int N>
 void do_multiple_scenario_run() {
   std::cout << "Starting scenarios with N = " << N << '\n';
   auto start = std::chrono::high_resolution_clock::now();
-  for (auto softening_divisor : {0.5, 1.0, 2.0, 4.0, 8.0, 16.0}) {
-    std::cout << "  Starting scenarios with softening divisor "
-              << softening_divisor << '\n';
-    for (auto tolerance_factor : {2.0, 1.0, 0.5, 0.25, 0.125, 0.0625}) {
+  for (auto softening_factor : {0.5}) {
+    std::cout << "  Starting scenarios with softening factor "
+              << softening_factor << '\n';
+    for (auto tolerance_factor : {0.5}) {
       std::cout << "    Starting scenario with tolerance factor "
                 << tolerance_factor << '\n';
-      run_cuda_scenario<N>(softening_divisor, tolerance_factor);
+      run_cuda_scenario<N>(softening_factor, tolerance_factor);
     }
   }
   auto duration = std::chrono::duration<double>(
@@ -142,10 +141,9 @@ void do_multiple_scenario_run() {
 }
 
 int main() {
-  do_multiple_scenario_run<64>();
-  do_multiple_scenario_run<256>();
   do_multiple_scenario_run<1024>();
   do_multiple_scenario_run<4096>();
   do_multiple_scenario_run<16384>();
   do_multiple_scenario_run<65536>();
+  do_multiple_scenario_run<262144>();
 }

@@ -8,7 +8,7 @@ dim = 3
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--file_pattern", "-fp", type=str,
+    parser.add_argument("--file_pattern", "--fp", type=str,
                         help="pattern for globbing input files")
     args = parser.parse_args()
     file_pattern = args.file_pattern

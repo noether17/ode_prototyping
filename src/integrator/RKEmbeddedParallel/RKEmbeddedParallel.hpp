@@ -12,10 +12,11 @@ template <typename ButcherTableau>
 struct RKEmbeddedParallel {
   template <typename ODE, typename Output, typename ParallelExecutor,
             ODEState StateType>
-  void integrate(StateType x0, ode_state_traits<StateType>::value_type t0,
-                 ode_state_traits<StateType>::value_type tf, StateType atol,
-                 StateType rtol, ODE ode, Output& output,
-                 ParallelExecutor& exe) {
+  static void integrate(StateType x0,
+                        ode_state_traits<StateType>::value_type t0,
+                        ode_state_traits<StateType>::value_type tf,
+                        StateType atol, StateType rtol, ODE ode, Output& output,
+                        ParallelExecutor& exe) {
     static constexpr auto n_var = x0.size();
     static constexpr auto max_step_scale = 6.0;
     static constexpr auto min_step_scale = 0.33;

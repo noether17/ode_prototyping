@@ -95,16 +95,15 @@ void run_threadpool_scenario(double softening_divisor,
     constexpr auto n_var = scenario.n_var;
 
     auto tp_exe = ThreadPoolExecutor{12};
-    auto integrator = RKEmbeddedParallel<BTRKF78>{};
     auto output = RawOutput<HeapState<double, n_var>>{};
 
     auto t0 = 0.0;
     auto tf = scenario.tf;
 
-    integrator.integrate(scenario.initial_state, t0, tf,
-                         scenario.tolerance_array, scenario.tolerance_array,
-                         NBodyODE<double, n_var>{scenario.softening}, output,
-                         tp_exe);
+    RKEmbeddedParallel<BTRKF78>::integrate(
+        scenario.initial_state, t0, tf, scenario.tolerance_array,
+        scenario.tolerance_array, NBodyODE<double, n_var>{scenario.softening},
+        output, tp_exe);
 
     auto filename = generate_filename<BTRKF78, ThreadPoolExecutor>(scenario);
     output_to_file(filename, output, scenario.softening);
@@ -124,16 +123,15 @@ void run_cuda_scenario(double softening_divisor, double tolerance_factor) {
     constexpr auto n_var = scenario.n_var;
 
     auto cuda_exe = CudaExecutor{};
-    auto integrator = RKEmbeddedParallel<BTRKF78>{};
     auto output = RawOutput<HeapState<double, n_var>>{};
 
     auto t0 = 0.0;
     auto tf = scenario.tf;
 
-    integrator.integrate(scenario.initial_state, t0, tf,
-                         scenario.tolerance_array, scenario.tolerance_array,
-                         NBodyODE<double, n_var>{scenario.softening}, output,
-                         cuda_exe);
+    RKEmbeddedParallel<BTRKF78>::integrate(
+        scenario.initial_state, t0, tf, scenario.tolerance_array,
+        scenario.tolerance_array, NBodyODE<double, n_var>{scenario.softening},
+        output, cuda_exe);
 
     auto filename = generate_filename<BTRKF78, CudaExecutor>(scenario);
     output_to_file(filename, output, scenario.softening);

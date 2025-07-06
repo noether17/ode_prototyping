@@ -18,8 +18,6 @@
 
 class CudaRKEmbeddedTest : public testing::Test {
  protected:
-  template <typename ButcherTableau, typename ODE>
-  using Integrator = RKEmbeddedParallel<ButcherTableau>;
   CudaExecutor executor{};
 };
 
@@ -29,10 +27,9 @@ class CudaRKEmbeddedTest : public testing::Test {
  * in small differences in output, these values may be updated. */
 TEST_F(CudaRKEmbeddedTest, HE21VanDerPolConsistencyTest) {
   auto test = VanDerPolTest<CudaState>{};
-  auto integrator = Integrator<BTHE21, VanDerPolTest<CudaState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTHE21>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                        test.rtol, test, test.output, executor);
 
   EXPECT_EQ(183012, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -54,10 +51,9 @@ TEST_F(CudaRKEmbeddedTest, HE21VanDerPolConsistencyTest) {
 // This test contains small, but nonzero differences from single-threaded.
 TEST_F(CudaRKEmbeddedTest, HE21ExponentialConsistencyTest) {
   auto test = ExponentialTest<CudaState>{};
-  auto integrator = Integrator<BTHE21, ExponentialTest<CudaState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTHE21>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                        test.rtol, test, test.output, executor);
 
   EXPECT_EQ(11026, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -85,10 +81,10 @@ TEST_F(CudaRKEmbeddedTest, HE21ExponentialConsistencyTest) {
 
 TEST_F(CudaRKEmbeddedTest, RKF45VanDerPolConsistencyTest) {
   auto test = VanDerPolTest<CudaState>{};
-  auto integrator = Integrator<BTRKF45, VanDerPolTest<CudaState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTRKF45>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   EXPECT_EQ(83, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -110,10 +106,10 @@ TEST_F(CudaRKEmbeddedTest, RKF45VanDerPolConsistencyTest) {
 // This test contains small, but nonzero differences from single-threaded.
 TEST_F(CudaRKEmbeddedTest, RKF45ExponentialConsistencyTest) {
   auto test = ExponentialTest<CudaState>{};
-  auto integrator = Integrator<BTRKF45, ExponentialTest<CudaState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTRKF45>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   EXPECT_EQ(50, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -140,10 +136,10 @@ TEST_F(CudaRKEmbeddedTest, RKF45ExponentialConsistencyTest) {
 
 TEST_F(CudaRKEmbeddedTest, DOPRI5VanDerPolConsistencyTest) {
   auto test = VanDerPolTest<CudaState>{};
-  auto integrator = Integrator<BTDOPRI5, VanDerPolTest<CudaState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTDOPRI5>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                          test.rtol, test, test.output,
+                                          executor);
 
   EXPECT_EQ(76, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -165,10 +161,10 @@ TEST_F(CudaRKEmbeddedTest, DOPRI5VanDerPolConsistencyTest) {
 // This test contains small, but nonzero differences from single-threaded.
 TEST_F(CudaRKEmbeddedTest, DOPRI5ExponentialConsistencyTest) {
   auto test = ExponentialTest<CudaState>{};
-  auto integrator = Integrator<BTDOPRI5, ExponentialTest<CudaState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTDOPRI5>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                          test.rtol, test, test.output,
+                                          executor);
 
   EXPECT_EQ(45, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -196,10 +192,10 @@ TEST_F(CudaRKEmbeddedTest, DOPRI5ExponentialConsistencyTest) {
 
 TEST_F(CudaRKEmbeddedTest, DVERKVanDerPolConsistencyTest) {
   auto test = VanDerPolTest<CudaState>{};
-  auto integrator = Integrator<BTDVERK, VanDerPolTest<CudaState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTDVERK>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   EXPECT_EQ(42, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -220,10 +216,10 @@ TEST_F(CudaRKEmbeddedTest, DVERKVanDerPolConsistencyTest) {
 
 TEST_F(CudaRKEmbeddedTest, DVERKExponentialConsistencyTest) {
   auto test = ExponentialTest<CudaState>{};
-  auto integrator = Integrator<BTDVERK, ExponentialTest<CudaState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTDVERK>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   EXPECT_EQ(32, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -251,10 +247,10 @@ TEST_F(CudaRKEmbeddedTest, DVERKExponentialConsistencyTest) {
 
 TEST_F(CudaRKEmbeddedTest, RKF78VanDerPolConsistencyTest) {
   auto test = VanDerPolTest<CudaState>{};
-  auto integrator = Integrator<BTRKF78, VanDerPolTest<CudaState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTRKF78>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   EXPECT_EQ(15, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -275,10 +271,10 @@ TEST_F(CudaRKEmbeddedTest, RKF78VanDerPolConsistencyTest) {
 
 TEST_F(CudaRKEmbeddedTest, RKF78ExponentialConsistencyTest) {
   auto test = ExponentialTest<CudaState>{};
-  auto integrator = Integrator<BTRKF78, ExponentialTest<CudaState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTRKF78>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   EXPECT_EQ(13, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -306,10 +302,10 @@ TEST_F(CudaRKEmbeddedTest, RKF78ExponentialConsistencyTest) {
 
 TEST_F(CudaRKEmbeddedTest, RKF78NBodyTest) {
   auto test = NBodyTest<CudaState>{};
-  auto integrator = Integrator<BTRKF78, NBodyTest<CudaState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTRKF78>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   // midpoint requires looser tolerance because errors resulting from
   // differences in the order operations are executed may result in the midpoint
@@ -352,11 +348,10 @@ TEST_F(CudaRKEmbeddedTest, RKF78NBodyTest) {
 TEST_F(CudaRKEmbeddedTest, RKF78SpinningCubeNBodyTest) {
   constexpr auto n_particles = 1024;
   auto test = SpinningCubeNBodyTest<n_particles, CudaState>{};
-  auto integrator =
-      Integrator<BTRKF78, SpinningCubeNBodyTest<n_particles, CudaState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTRKF78>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   auto const rounding_error = 10.0 * std::numeric_limits<double>::epsilon();
   EXPECT_EQ(4, test.output.times.size());

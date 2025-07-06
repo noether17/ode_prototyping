@@ -16,8 +16,8 @@
 
 class SingleThreadedRKEmbeddedTest : public testing::Test {
  protected:
-  template <typename ButcherTableau, typename ODE>
-  using Integrator = RKEmbeddedParallel<ButcherTableau>;
+  template <typename ButcherTableau>
+  using RKEmbeddedParallel = RKEmbeddedParallel<ButcherTableau>;
   SingleThreadedExecutor executor{};
 };
 
@@ -27,10 +27,9 @@ class SingleThreadedRKEmbeddedTest : public testing::Test {
  * in small differences in output, these values may be updated. */
 TEST_F(SingleThreadedRKEmbeddedTest, HE21VanDerPolConsistencyTest) {
   auto test = VanDerPolTest<HeapState>{};
-  auto integrator = Integrator<BTHE21, VanDerPolTest<HeapState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTHE21>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                        test.rtol, test, test.output, executor);
 
   EXPECT_EQ(183012, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -51,10 +50,9 @@ TEST_F(SingleThreadedRKEmbeddedTest, HE21VanDerPolConsistencyTest) {
 
 TEST_F(SingleThreadedRKEmbeddedTest, HE21ExponentialConsistencyTest) {
   auto test = ExponentialTest<HeapState>{};
-  auto integrator = Integrator<BTHE21, ExponentialTest<HeapState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTHE21>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                        test.rtol, test, test.output, executor);
 
   EXPECT_EQ(11026, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -82,10 +80,10 @@ TEST_F(SingleThreadedRKEmbeddedTest, HE21ExponentialConsistencyTest) {
 
 TEST_F(SingleThreadedRKEmbeddedTest, RKF45VanDerPolConsistencyTest) {
   auto test = VanDerPolTest<HeapState>{};
-  auto integrator = Integrator<BTRKF45, VanDerPolTest<HeapState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTRKF45>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   EXPECT_EQ(83, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -106,10 +104,10 @@ TEST_F(SingleThreadedRKEmbeddedTest, RKF45VanDerPolConsistencyTest) {
 
 TEST_F(SingleThreadedRKEmbeddedTest, RKF45ExponentialConsistencyTest) {
   auto test = ExponentialTest<HeapState>{};
-  auto integrator = Integrator<BTRKF45, ExponentialTest<HeapState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTRKF45>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   EXPECT_EQ(50, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -137,10 +135,10 @@ TEST_F(SingleThreadedRKEmbeddedTest, RKF45ExponentialConsistencyTest) {
 
 TEST_F(SingleThreadedRKEmbeddedTest, DOPRI5VanDerPolConsistencyTest) {
   auto test = VanDerPolTest<HeapState>{};
-  auto integrator = Integrator<BTDOPRI5, VanDerPolTest<HeapState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTDOPRI5>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                          test.rtol, test, test.output,
+                                          executor);
 
   EXPECT_EQ(76, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -161,10 +159,10 @@ TEST_F(SingleThreadedRKEmbeddedTest, DOPRI5VanDerPolConsistencyTest) {
 
 TEST_F(SingleThreadedRKEmbeddedTest, DOPRI5ExponentialConsistencyTest) {
   auto test = ExponentialTest<HeapState>{};
-  auto integrator = Integrator<BTDOPRI5, ExponentialTest<HeapState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTDOPRI5>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                          test.rtol, test, test.output,
+                                          executor);
 
   EXPECT_EQ(45, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -192,10 +190,10 @@ TEST_F(SingleThreadedRKEmbeddedTest, DOPRI5ExponentialConsistencyTest) {
 
 TEST_F(SingleThreadedRKEmbeddedTest, DVERKVanDerPolConsistencyTest) {
   auto test = VanDerPolTest<HeapState>{};
-  auto integrator = Integrator<BTDVERK, VanDerPolTest<HeapState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTDVERK>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   EXPECT_EQ(42, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -216,10 +214,10 @@ TEST_F(SingleThreadedRKEmbeddedTest, DVERKVanDerPolConsistencyTest) {
 
 TEST_F(SingleThreadedRKEmbeddedTest, DVERKExponentialConsistencyTest) {
   auto test = ExponentialTest<HeapState>{};
-  auto integrator = Integrator<BTDVERK, ExponentialTest<HeapState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTDVERK>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   EXPECT_EQ(32, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -247,10 +245,10 @@ TEST_F(SingleThreadedRKEmbeddedTest, DVERKExponentialConsistencyTest) {
 
 TEST_F(SingleThreadedRKEmbeddedTest, RKF78VanDerPolConsistencyTest) {
   auto test = VanDerPolTest<HeapState>{};
-  auto integrator = Integrator<BTRKF78, VanDerPolTest<HeapState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTRKF78>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   EXPECT_EQ(15, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -271,10 +269,10 @@ TEST_F(SingleThreadedRKEmbeddedTest, RKF78VanDerPolConsistencyTest) {
 
 TEST_F(SingleThreadedRKEmbeddedTest, RKF78ExponentialConsistencyTest) {
   auto test = ExponentialTest<HeapState>{};
-  auto integrator = Integrator<BTRKF78, ExponentialTest<HeapState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTRKF78>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   EXPECT_EQ(13, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -302,10 +300,10 @@ TEST_F(SingleThreadedRKEmbeddedTest, RKF78ExponentialConsistencyTest) {
 
 TEST_F(SingleThreadedRKEmbeddedTest, RKF78NBodyConsistencyTest) {
   auto test = NBodyTest<HeapState>{};
-  auto integrator = Integrator<BTRKF78, NBodyTest<HeapState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTRKF78>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   EXPECT_EQ(172, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());
@@ -339,11 +337,10 @@ TEST_F(SingleThreadedRKEmbeddedTest, RKF78NBodyConsistencyTest) {
 TEST_F(SingleThreadedRKEmbeddedTest, RKF78SpinningCubeNBodyTest) {
   constexpr auto n_particles = 1024;
   auto test = SpinningCubeNBodyTest<n_particles, HeapState>{};
-  auto integrator =
-      Integrator<BTRKF78, SpinningCubeNBodyTest<n_particles, HeapState>>{};
 
-  integrator.integrate(test.x0, test.t0, test.tf, test.atol, test.rtol, test,
-                       test.output, executor);
+  RKEmbeddedParallel<BTRKF78>::integrate(test.x0, test.t0, test.tf, test.atol,
+                                         test.rtol, test, test.output,
+                                         executor);
 
   EXPECT_EQ(4, test.output.times.size());
   EXPECT_DOUBLE_EQ(0.0, test.output.times.front());

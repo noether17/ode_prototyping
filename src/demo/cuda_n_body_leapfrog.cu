@@ -20,7 +20,6 @@ int main() {
   constexpr auto n_var = x0_data.size();
 
   auto cuda_exe = CudaExecutor{};
-  auto integrator = ParallelLeapfrogIntegrator{};
   auto output = RawOutput<HeapState<double, n_var>>{};
 
   auto t0 = 0.0;
@@ -28,8 +27,8 @@ int main() {
   auto n_steps = 1.0e4;
   auto dt = (tf - t0) / n_steps;
 
-  integrator.integrate(x0, t0, tf, dt, NBodyODE<double, n_var>{}, output,
-                       cuda_exe);
+  ParallelLeapfrogIntegrator::integrate(
+      x0, t0, tf, dt, NBodyODE<double, n_var>{}, output, cuda_exe);
 
   auto output_file = std::ofstream{"leapfrog_cuda_n_body_output.txt"};
   for (std::size_t i = 0; i < output.times.size(); ++i) {

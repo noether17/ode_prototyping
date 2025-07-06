@@ -1,7 +1,6 @@
 #include <array>
 #include <charconv>
 #include <chrono>
-#include <fstream>
 #include <iomanip>
 #include <string>
 #include <thread>
@@ -16,6 +15,7 @@
 #include "RawOutput.hpp"
 #include "SpinningParticlesInBox.hpp"
 #include "ThreadPoolExecutor.hpp"
+#include "nbody_io.hpp"
 
 template <typename IntegrationMethod, typename ParallelizationMethod>
 auto generate_filename(auto const& scenario) {
@@ -63,26 +63,6 @@ auto generate_filename(auto const& scenario) {
   filename += ".bin";
 
   return filename;
-}
-
-void output_to_file(std::string const& filename, auto const& output,
-                    double softening) {
-  auto const n_times = static_cast<std::size_t>(output.times.size());
-  auto const n_var = static_cast<std::size_t>(output.states[0].size());
-
-  auto output_file = std::ofstream{filename, std::ios::out | std::ios::binary};
-  output_file.write(reinterpret_cast<char const*>(&n_times), sizeof(n_times));
-  output_file.write(reinterpret_cast<char const*>(&n_var), sizeof(n_var));
-  output_file.write(reinterpret_cast<char const*>(&softening),
-                    sizeof(softening));
-  for (std::size_t i = 0; i < n_times; ++i) {
-    output_file.write(reinterpret_cast<char const*>(&output.times[i]),
-                      sizeof(output.times[i]));
-    for (std::size_t j = 0; j < n_var; ++j) {
-      output_file.write(reinterpret_cast<char const*>(&output.states[i][j]),
-                        sizeof(output.states[i][j]));
-    }
-  }
 }
 
 template <int N>

@@ -1,6 +1,4 @@
 #include <array>
-#include <fstream>
-#include <vector>
 
 #include "BTRKF78.hpp"
 #include "CudaExecutor.cuh"
@@ -9,6 +7,7 @@
 #include "NBodyODE.hpp"
 #include "RKEmbeddedParallel.hpp"
 #include "RawOutput.hpp"
+#include "nbody_io.hpp"
 
 int main() {
   // auto x0_data =
@@ -42,14 +41,8 @@ int main() {
   RKEmbeddedParallel<BTRKF78>::integrate(
       x0, t0, tf, tol, tol, NBodyODE<double, n_var>{}, output, cuda_exe);
 
-  auto output_file = std::ofstream{"RKF78_cuda_n_body_output.txt"};
-  for (std::size_t i = 0; i < output.times.size(); ++i) {
-    output_file << output.times[i];
-    for (std::size_t j = 0; j < n_var; ++j) {
-      output_file << ',' << output.states[i][j];
-    }
-    output_file << '\n';
-  }
+  constexpr auto filename = "RKF78_cuda_n_body_output.bin";
+  output_to_file(filename, output);
 
   return 0;
 }

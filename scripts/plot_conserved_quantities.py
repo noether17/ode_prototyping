@@ -6,9 +6,9 @@ import numpy as np
 import scipy.interpolate as interp
 import struct
 
-import caching
-import energy
-import nbody_io
+from nbody_io import caching
+from nbody_io import bin_reader as br
+from nbody_physics import energy
 
 dim = 3 # number of dimensions
 
@@ -17,7 +17,7 @@ def main():
     parser.add_argument("filename")
     args = parser.parse_args()
     filename = args.filename
-    softening = nbody_io.read_binary_file_metadata(filename)[-1]
+    softening = br.read_metadata(filename)[-1]
 
     results = caching.compute_from_file(lambda positions, velocities:
                                         energy.compute_softened_energies(

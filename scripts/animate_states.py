@@ -6,7 +6,7 @@ import numpy as np
 import scipy.interpolate as interp
 import struct
 
-import nbody_io
+import nbody_io.bin_reader as br
 
 animation_time = 30.0 # seconds to run animation
 max_fps = 30 # maximum frames per second
@@ -23,7 +23,7 @@ def main():
     method_str = method_str_from_filename(filename)
 
     # load and parse data
-    states, softening = nbody_io.load_from_binary_file(filename)
+    states, softening = br.read_states(filename)
     times = states[:, 0]
     N = int((states.shape[1] - 1) / 6)
     dof = N * dim

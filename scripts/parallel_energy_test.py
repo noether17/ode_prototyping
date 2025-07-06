@@ -1,10 +1,8 @@
 import argparse
 import glob
 
-import caching
-import energy
-
-from time import perf_counter
+from nbody_io import caching
+from nbody_physics import energy
 
 dim = 3
 

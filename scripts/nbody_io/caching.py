@@ -3,7 +3,7 @@ import os
 import os.path
 import struct
 
-import nbody_io
+from . import bin_reader as br
 
 dim = 3
 
@@ -13,7 +13,7 @@ def compute_from_file(compute_function, result_name, state_filename):
             os.path.getmtime(cache_filename) > os.path.getmtime(state_filename):
                 print(f"Reading cached {result_name} values for {state_filename}")
                 return np.load(cache_filename)
-    states, softening = nbody_io.load_from_binary_file(state_filename)
+    states, softening = br.read_states(state_filename)
     dof = int((states.shape[1] - 1) / 2) # degrees of freedom
     times = np.ascontiguousarray(states[:, 0])
     positions = np.ascontiguousarray(states[:, 1:dof + 1])

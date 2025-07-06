@@ -6,8 +6,8 @@ import numba as nb
 import numpy as np
 import struct
 
-import caching
-import energy
+from nbody_io import caching
+from nbody_physics import energy
 
 dim = 3
 

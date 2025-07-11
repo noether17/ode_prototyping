@@ -1,3 +1,4 @@
+add_subdirectory(benchmark)
 add_subdirectory(cuda_util)
 add_subdirectory(demo)
 add_subdirectory(integrator)

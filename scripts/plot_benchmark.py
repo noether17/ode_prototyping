@@ -34,20 +34,24 @@ def main():
         nsq_per_rt = system_sizes**2 / real_time
 
         # plot data
-        unique_int_methods = unique_list(int_methods)
-        unique_par_methods = unique_list(par_methods)
-        for int_method in unique_int_methods:
-            int_method_indices = np.where(int_methods == int_method)
-            for par_method in unique_par_methods:
-                par_method_indicies = np.where(par_methods == par_method)
-                current_indices = np.intersect1d(int_method_indices, par_method_indicies)
-                plt.loglog(system_sizes[current_indices], nsq_per_rt[current_indices], label=par_method)
-            plt.xlabel(r'$N$ (Number of Particles)')
-            plt.ylabel(r'$N^2$ / s')
-            plt.title(f"Performance of {int_method} with {data_type} elements")
-            plt.legend()
-            plt.grid()
-            plt.show()
+        plot_benchmarks(int_methods, par_methods, system_sizes, nsq_per_rt, data_type)
+        plot_benchmarks(par_methods, int_methods, system_sizes, nsq_per_rt, data_type)
+
+def plot_benchmarks(outer_field, inner_field, x, y, data_type):
+    unique_outer = unique_list(outer_field)
+    unique_inner = unique_list(inner_field)
+    for i_label in unique_outer:
+        i_label_indices = np.where(outer_field == i_label)
+        for j_label in unique_inner:
+            j_label_indices = np.where(inner_field == j_label)
+            current_indices = np.intersect1d(i_label_indices, j_label_indices)
+            plt.loglog(x[current_indices], y[current_indices], label=j_label)
+        plt.xlabel(r'$N$ (Number of Particles)')
+        plt.ylabel(f'$N^2$ / s')
+        plt.title(f"Performance of {i_label} with {data_type} elements")
+        plt.legend()
+        plt.grid()
+        plt.show()
 
 def unique_list(input_list):
     '''Get list of unique values that maintains order of first appearance.'''

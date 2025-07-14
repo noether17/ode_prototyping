@@ -17,7 +17,7 @@
 #include "SpinningParticlesInBox.hpp"
 #include "ThreadPoolExecutor.hpp"
 
-constexpr auto softening_factor = 0.5;  // Adjustment to Power softening.
+constexpr auto softening_factor = 0.5;   // Adjustment to Power softening.
 constexpr auto tolerance_factor = 0.25;  // Ratio of tolerance to softening.
 
 template <ODEState OutputStateType>
@@ -190,6 +190,5 @@ BENCHMARK_SET(64)
 BENCHMARK_SET(256)
 BENCHMARK_SET(1024)
 BENCHMARK_SET(4096)
-BENCHMARK_SET(8192)
-//BENCHMARK_SET(16384)
-//BENCHMARK_SET(65536)
+BENCHMARK_SET(16384)
+BENCHMARK_SET(65536)

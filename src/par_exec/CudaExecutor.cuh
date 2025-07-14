@@ -1,5 +1,7 @@
 #pragma once
 
+#include <cstddef>
+#include <limits>
 #include "CudaErrorCheck.cuh"
 #include "KernelConcepts.hpp"
 
@@ -9,7 +11,7 @@ template <auto kernel, typename... Args>
 __global__ void cuda_call_parallel_kernel(std::size_t n_items, Args... args)
   requires ParallelKernel<kernel, Args...>
 {
-  auto i = blockIdx.x * blockDim.x + threadIdx.x;
+  auto i = static_cast<std::size_t>(blockIdx.x * blockDim.x + threadIdx.x);
   while (i < n_items) {
     kernel(i, args...);
     i += blockDim.x * gridDim.x;
@@ -24,7 +26,7 @@ __global__ void cuda_transform_reduce(T* block_results, std::size_t n_items,
 {
   __shared__ T cache[block_size];
   auto thread_result = T{};
-  auto i = blockIdx.x * blockDim.x + threadIdx.x;
+  auto i = static_cast<std::size_t>(blockIdx.x * blockDim.x + threadIdx.x);
   auto cache_index = threadIdx.x;
   while (i < n_items) {
     auto transform_result = transform(i, transform_args...);
@@ -77,8 +79,9 @@ __global__ void cuda_transform_reduce_final(T* result, T const* block_results,
 
 class CudaExecutor {
   static constexpr auto block_size = static_cast<std::size_t>(256);
+  static constexpr auto max_blocks = std::numeric_limits<int>::max() / block_size;
   static constexpr auto n_blocks(std::size_t N) {
-    return (N + block_size - 1) / block_size;
+    return std::min((N + block_size - 1) / block_size, max_blocks);
   }
 
  public:

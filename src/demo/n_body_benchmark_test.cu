@@ -6,6 +6,10 @@
 #include <thread>
 #include <type_traits>
 
+#include "BTDOPRI5.hpp"
+#include "BTDVERK.hpp"
+#include "BTHE21.hpp"
+#include "BTRKF45.hpp"
 #include "BTRKF78.hpp"
 #include "CudaExecutor.cuh"
 #include "CudaState.cuh"
@@ -17,13 +21,30 @@
 #include "ThreadPoolExecutor.hpp"
 #include "nbody_io.hpp"
 
-template <typename IntegrationMethod, typename ParallelizationMethod>
+template <typename Integrator>
+struct butcher_tableau;
+
+template <typename ButcherTableau>
+struct butcher_tableau<RKEmbeddedParallel<ButcherTableau>> {
+  using type = ButcherTableau;
+};
+
+template <typename Integrator, typename ParallelizationMethod>
 auto generate_filename(auto const& scenario) {
   // scenario name and number of particles
   auto filename = scenario.name + '_' + std::to_string(scenario.n_particles);
 
   // integration method
-  if constexpr (std::is_same_v<IntegrationMethod, BTRKF78>) {
+  using BT = typename butcher_tableau<Integrator>::type;
+  if constexpr (std::is_same_v<BT, BTHE21>) {
+    filename += "_HE21";
+  } else if constexpr (std::is_same_v<BT, BTRKF45>) {
+    filename += "_RKF45";
+  } else if constexpr (std::is_same_v<BT, BTDOPRI5>) {
+    filename += "_DOPRI5";
+  } else if constexpr (std::is_same_v<BT, BTDVERK>) {
+    filename += "_DVERK";
+  } else if constexpr (std::is_same_v<BT, BTRKF78>) {
     filename += "_RKF78";
   } else {
     throw "Unrecognized integration method!\n";
@@ -93,7 +114,7 @@ void run_threadpool_scenario(double softening_factor, double tolerance_factor) {
   }
 }
 
-template <int N>
+template <int N, typename Integrator>
 void run_cuda_scenario(double softening_factor, double tolerance_factor) {
   constexpr auto n_repetitions = 1;
   for (auto i = 0; i < n_repetitions; ++i) {
@@ -107,12 +128,12 @@ void run_cuda_scenario(double softening_factor, double tolerance_factor) {
     auto t0 = 0.0;
     auto tf = scenario.tf;
 
-    RKEmbeddedParallel<BTRKF78>::integrate(
-        scenario.initial_state, t0, tf, scenario.tolerance_array,
-        scenario.tolerance_array, NBodyODE<double, n_var>{scenario.softening},
-        output, cuda_exe);
+    Integrator::integrate(scenario.initial_state, t0, tf,
+                          scenario.tolerance_array, scenario.tolerance_array,
+                          NBodyODE<double, n_var>{scenario.softening}, output,
+                          cuda_exe);
 
-    auto filename = generate_filename<BTRKF78, CudaExecutor>(scenario);
+    auto filename = generate_filename<Integrator, CudaExecutor>(scenario);
     output_to_file(filename, output, scenario.softening);
 
     using namespace std::chrono_literals;
@@ -121,17 +142,19 @@ void run_cuda_scenario(double softening_factor, double tolerance_factor) {
   }
 }
 
-template <int N>
+template <int N, typename Integrator>
 void do_multiple_scenario_run() {
-  std::cout << "Starting scenarios with N = " << N << '\n';
+  using BT = typename butcher_tableau<Integrator>::type;
+  std::cout << "Starting scenarios using " << typeid(BT).name()
+            << " with N = " << N << '\n';
   auto start = std::chrono::high_resolution_clock::now();
   for (auto softening_factor : {0.5}) {
     std::cout << "  Starting scenarios with softening factor "
               << softening_factor << '\n';
-    for (auto tolerance_factor : {0.5}) {
+    for (auto tolerance_factor : {0.5, 0.25, 0.125, 0.0625}) {
       std::cout << "    Starting scenario with tolerance factor "
                 << tolerance_factor << '\n';
-      run_cuda_scenario<N>(softening_factor, tolerance_factor);
+      run_cuda_scenario<N, Integrator>(softening_factor, tolerance_factor);
     }
   }
   auto duration = std::chrono::duration<double>(
@@ -140,10 +163,18 @@ void do_multiple_scenario_run() {
             << ". Scenarios completed in " << duration.count() << "s\n";
 }
 
+#define DO_MULTIPLE_SCENARIO_ALL_INTEGRATOR_RUN(N)             \
+  do_multiple_scenario_run<N, RKEmbeddedParallel<BTHE21>>();   \
+  do_multiple_scenario_run<N, RKEmbeddedParallel<BTRKF45>>();  \
+  do_multiple_scenario_run<N, RKEmbeddedParallel<BTDOPRI5>>(); \
+  do_multiple_scenario_run<N, RKEmbeddedParallel<BTDVERK>>();  \
+  do_multiple_scenario_run<N, RKEmbeddedParallel<BTRKF78>>();
+
 int main() {
-  do_multiple_scenario_run<1024>();
-  do_multiple_scenario_run<4096>();
-  do_multiple_scenario_run<16384>();
-  do_multiple_scenario_run<65536>();
-  do_multiple_scenario_run<262144>();
+  DO_MULTIPLE_SCENARIO_ALL_INTEGRATOR_RUN(256);
+  DO_MULTIPLE_SCENARIO_ALL_INTEGRATOR_RUN(1024);
+  DO_MULTIPLE_SCENARIO_ALL_INTEGRATOR_RUN(4096);
+  DO_MULTIPLE_SCENARIO_ALL_INTEGRATOR_RUN(16384);
+  DO_MULTIPLE_SCENARIO_ALL_INTEGRATOR_RUN(65536);
+  DO_MULTIPLE_SCENARIO_ALL_INTEGRATOR_RUN(262144);
 }

@@ -12,7 +12,7 @@
 #include "HeapState.hpp"
 #include "NBodyODE.hpp"
 #include "RKEmbeddedParallel.hpp"
-#include "RawOutput.hpp"
+#include "RawOutputWithLog.hpp"
 #include "SpinningParticlesInBox.hpp"
 #include "ThreadPoolExecutor.hpp"
 #include "nbody_io.hpp"
@@ -74,7 +74,7 @@ void run_threadpool_scenario(double softening_factor, double tolerance_factor) {
     constexpr auto n_var = scenario.n_var;
 
     auto tp_exe = ThreadPoolExecutor{12};
-    auto output = RawOutput<HeapState<double, n_var>>{};
+    auto output = RawOutputWithLog<HeapState<double, n_var>>{};
 
     auto t0 = 0.0;
     auto tf = scenario.tf;
@@ -102,7 +102,7 @@ void run_cuda_scenario(double softening_factor, double tolerance_factor) {
     constexpr auto n_var = scenario.n_var;
 
     auto cuda_exe = CudaExecutor{};
-    auto output = RawOutput<HeapState<double, n_var>>{};
+    auto output = RawOutputWithLog<HeapState<double, n_var>>{};
 
     auto t0 = 0.0;
     auto tf = scenario.tf;
